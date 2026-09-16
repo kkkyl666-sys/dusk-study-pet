@@ -1,0 +1,19 @@
+{
+  "name": "夕式学期桌宠",
+  "short_name": "夕式桌宠",
+  "description": "个人课程表、计划与学习陪伴",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101214",
+  "theme_color": "#101214",
+  "icons": [
+    {
+      "src": "dusk-pet.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101214">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="夕式桌宠">
+  <title>光电学习桌宠</title>
+  <link rel="icon" type="image/png" href="dusk-pet.png">
+  <link rel="apple-touch-icon" href="dusk-pet.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101214;
+      --panel: #1b1d20;
+      --panel-2: #24272b;
+      --panel-3: #17191c;
+      --line: #3a3f46;
+      --text: #f4f0e8;
+      --muted: #a9afb8;
+      --green: #5bc88e;
+      --amber: #f1b952;
+      --cyan: #57c9c2;
+      --red: #ee7676;
+      --blue: #7aa7ff;
+      --violet: #b59cff;
+      --ink: #111315;
+      font-family: "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(87, 201, 194, 0.14), transparent 28%),
+        radial-gradient(circle at 88% 22%, rgba(238, 118, 118, 0.1), transparent 30%),
+        linear-gradient(135deg, #0e1213 0%, #181916 52%, #0b1012 100%);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      position: relative;
+      isolation: isolate;
+    }
+    .private-gate { display: none; width: min(420px, calc(100vw - 32px)); padding: 28px; border: 1px solid var(--line); background: var(--panel); text-align: center; box-shadow: 0 24px 70px rgba(0,0,0,0.42); }
+    .private-gate img { width: 126px; height: 126px; object-fit: cover; margin-bottom: 16px; border: 1px solid rgba(87, 201, 194, 0.35); }
+    .private-gate h1 { margin: 0 0 10px; }
+    .private-gate p { margin: 0 0 18px; color: var(--muted); line-height: 1.65; font-size: 14px; }
+    .private-gate button { width: 100%; }
+    body.private-wait .app { display: none; }
+    body.private-wait .private-gate { display: block; }
+    body::before, body::after {
+      content: "";
+      position: fixed;
+      width: 260px;
+      height: 260px;
+      border-radius: 48% 52% 46% 54%;
+      background: rgba(87, 201, 194, 0.09);
+      filter: blur(28px);
+      opacity: 0.72;
+      z-index: -1;
+      animation: ink-drift 9s ease-in-out infinite;
+    }
+    body::before { left: -80px; bottom: 12%; }
+    body::after { right: -70px; top: 9%; width: 220px; height: 220px; background: rgba(238,118,118,0.08); animation-delay: -4s; }
+    @keyframes ink-drift { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(18px,-14px,0) scale(1.08); } }
+    h1, h2, h3, p { margin: 0; }
+    button, input, select { font: inherit; }
+    .app {
+      width: min(1500px, calc(100vw - 32px));
+      min-height: min(760px, calc(100vh - 44px));
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      background: rgba(27, 29, 32, 0.94);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.36);
+      overflow: hidden;
+    }
+    aside {
+      background: rgba(16, 18, 20, 0.76);
+      border-right: 1px solid var(--line);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    aside::before {
+      content: "夕";
+      position: absolute;
+      right: -30px;
+      top: 14px;
+      font-size: 148px;
+      line-height: 1;
+      color: rgba(255,255,255,0.035);
+      font-family: SimSun, serif;
+      pointer-events: none;
+    }
+    main { padding: 24px; display: grid; grid-template-rows: auto auto 1fr; gap: 16px; min-width: 0; }
+    .pet-wrap { display: grid; place-items: center; gap: 14px; padding-top: 8px; }
+    .pet-frame {
+      width: 176px;
+      height: 176px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(87, 201, 194, 0.28);
+      background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)), radial-gradient(circle at 50% 45%, rgba(87,201,194,0.16), transparent 70%);
+      box-shadow: 0 18px 38px rgba(0,0,0,0.32);
+      animation: breathe 3.4s ease-in-out infinite;
+      overflow: hidden;
+    }
+    .pet-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    @keyframes breathe { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-5px) scale(1.02); } }
+    h1 { font-size: 26px; line-height: 1.2; }
+    h2 { font-size: 18px; margin-bottom: 12px; }
+    h3 { font-size: 15px; line-height: 1.35; }
+    .subtitle { color: var(--muted); line-height: 1.65; font-size: 14px; text-align: center; }
+    .card, .quote, .task, .day-button, .course-block, .select-card, .summary-pill, .tab-button {
+      border: 1px solid rgba(255,255,255,0.08);
+      background: var(--panel-2);
+    }
+    .card, .quote { padding: 16px; }
+    .quote { color: #d8d7ce; line-height: 1.7; font-size: 14px; }
+    .voice-row { display: grid; grid-template-columns: 1fr 42px; gap: 8px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .today-title { display: grid; gap: 6px; min-width: 0; }
+    .today-title span { color: var(--muted); font-size: 14px; line-height: 1.5; }
+    .progress { min-width: 210px; display: grid; gap: 8px; }
+    .progress-label { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; }
+    .bar { height: 10px; background: #141517; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; }
+    .bar span { display: block; width: 0%; height: 100%; background: linear-gradient(90deg, var(--green), var(--cyan)); transition: width 220ms ease; }
+    .tabs { width: 100%; min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .tab-button { min-height: 42px; color: var(--text); cursor: pointer; background: rgba(255,255,255,0.04); }
+    .tab-button.active { border-color: rgba(87, 201, 194, 0.78); background: rgba(87, 201, 194, 0.15); }
+    .view { display: none; min-height: 0; min-width: 0; }
+    .view.active { display: block; }
+    .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 16px; }
+    .day-button { min-height: 58px; color: var(--text); cursor: pointer; display: grid; place-items: center; gap: 2px; padding: 8px 6px; }
+    .day-button strong { font-size: 15px; }
+    .day-button small { color: var(--muted); }
+    .day-button.active { border-color: rgba(122, 167, 255, 0.84); background: rgba(122, 167, 255, 0.15); }
+    .content { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 18px; min-height: 0; }
+    .tasks { display: grid; gap: 10px; align-content: start; }
+    .task { display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; align-items: center; padding: 14px; min-height: 70px; }
+    .task input { width: 20px; height: 20px; accent-color: var(--green); }
+    .task-title { display: grid; gap: 5px; min-width: 0; }
+    .task-title strong { font-size: 15px; line-height: 1.35; }
+    .task-title span { color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .tag { white-space: nowrap; padding: 6px 9px; font-size: 12px; color: #141517; background: var(--amber); }
+    .tag.hardware { background: #f2b84b; } .tag.software { background: #62c7d9; } .tag.prompt { background: #98d46d; } .tag.video { background: #f08bb4; } .tag.drive { background: #91a8ff; }
+    .task.done strong, .task.done span { text-decoration: line-through; color: #777d86; }
+    .task.current { border-color: rgba(91, 200, 142, 0.82); background: rgba(91, 200, 142, 0.13); }
+    .task.upcoming { border-color: rgba(122, 167, 255, 0.32); }
+    .time-state { color: var(--green); font-weight: 700; }
+    .sidebar-list { display: grid; gap: 10px; }
+    .focus-item { display: grid; grid-template-columns: 10px 1fr; gap: 10px; align-items: start; color: #d9dce2; font-size: 14px; line-height: 1.55; }
+    .dot { width: 10px; height: 10px; margin-top: 6px; background: var(--green); }
+    .dot.amber { background: var(--amber); } .dot.cyan { background: var(--cyan); } .dot.red { background: var(--red); } .dot.blue { background: var(--blue); } .dot.violet { background: var(--violet); }
+    .pet-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 0; }
+    .mode, .speak, .reset {
+      height: 42px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .speak { border-color: rgba(87, 201, 194, 0.35); background: rgba(87, 201, 194, 0.1); }
+    .reset { color: var(--muted); }
+    .sync-note { margin: -4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; text-align: center; }
+    dialog { width: min(440px, calc(100vw - 32px)); color: var(--text); background: var(--panel); border: 1px solid var(--line); padding: 0; box-shadow: 0 24px 70px rgba(0,0,0,0.58); }
+    dialog::backdrop { background: rgba(0,0,0,0.7); }
+    .sync-dialog { padding: 20px; display: grid; gap: 14px; }
+    .sync-dialog h2 { margin: 0; }
+    .sync-dialog p { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 0; }
+    .sync-dialog label { display: grid; gap: 7px; color: var(--muted); font-size: 13px; }
+    .sync-dialog input { height: 42px; color: var(--text); background: var(--panel-3); border: 1px solid var(--line); padding: 0 10px; font: inherit; }
+    .sync-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+    .schedule-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .schedule-toolbar label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+    .schedule-toolbar input { width: 72px; height: 36px; color: var(--text); background: var(--panel-3); border: 1px solid var(--line); padding: 0 10px; }
+    .summary { display: flex; gap: 8px; flex-wrap: wrap; }
+    .summary-pill { padding: 8px 10px; color: #dce2e8; font-size: 13px; }
+    .schedule-scroll { width: 100%; max-width: 100%; min-width: 0; overflow: auto; border: 1px solid rgba(255,255,255,0.08); background: rgba(16,18,20,0.46); }
+    .schedule-grid { min-width: 1040px; display: grid; grid-template-columns: 84px repeat(7, minmax(128px, 1fr)); }
+    .cell { min-height: 58px; border-right: 1px solid rgba(255,255,255,0.07); border-bottom: 1px solid rgba(255,255,255,0.07); padding: 6px; }
+    .head-cell, .time-cell { background: rgba(255,255,255,0.055); color: #dfe4ea; font-weight: 700; text-align: center; }
+    .time-cell { display: grid; place-items: center; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .course-block { padding: 6px; display: grid; gap: 3px; font-size: 11px; line-height: 1.28; background: rgba(122,167,255,0.15); border-color: rgba(122,167,255,0.24); }
+    .course-block strong { font-size: 12px; color: #f6f1e9; line-height: 1.22; }
+    .course-block small { color: var(--muted); font-size: 10px; line-height: 1.25; }
+    .course-block.public { background: rgba(87,201,194,0.14); border-color: rgba(87,201,194,0.26); }
+    .course-block.placeholder { background: rgba(241,185,82,0.14); border-color: rgba(241,185,82,0.32); }
+    .course-block.major { background: rgba(122,167,255,0.15); border-color: rgba(122,167,255,0.25); }
+    .course-block.lab { background: rgba(181,156,255,0.14); border-color: rgba(181,156,255,0.26); }
+    .select-list { display: grid; gap: 10px; }
+    .select-card { padding: 14px; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; }
+    .select-meta { display: grid; gap: 6px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .status { padding: 6px 10px; font-size: 12px; color: #101214; background: var(--green); white-space: nowrap; }
+    .status.bad { background: var(--red); color: #fff; }
+    .status.group { background: var(--amber); }
+    .conflict { color: #ffc3c3; }
+    .tip { color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 12px; }
+    @media (max-width: 900px) {
+      body { padding: 12px; }
+      .app { grid-template-columns: 1fr; }
+      aside { border-right: 0; border-bottom: 1px solid var(--line); }
+      .content { grid-template-columns: 1fr; }
+      .week { grid-template-columns: repeat(4, 1fr); }
+      .topbar { align-items: stretch; flex-direction: column; }
+      .progress { min-width: 0; }
+    }
+    body.pet-mode { min-height: 100vh; place-items: start end; padding: 16px; overflow: hidden; }
+    body.pet-mode .app { width: min(455px, calc(100vw - 32px)); min-height: 0; max-height: calc(100vh - 32px); grid-template-columns: 1fr; border-radius: 18px; overflow: auto; scrollbar-width: thin; }
+    body.pet-mode aside { border-right: 0; border-bottom: 1px solid var(--line); padding: 14px; gap: 12px; }
+    body.pet-mode .pet-wrap { grid-template-columns: 96px 1fr; place-items: center stretch; text-align: left; padding-top: 0; }
+    body.pet-mode .pet-frame { width: 96px; height: 96px; border-radius: 16px; }
+    body.pet-mode h1 { font-size: 20px; }
+    body.pet-mode .subtitle { text-align: left; font-size: 12px; line-height: 1.5; }
+    body.pet-mode .card.month-goal { display: none; }
+    body.pet-mode .voice-row { grid-template-columns: 1fr 40px; }
+    body.pet-mode .quote { padding: 12px; font-size: 13px; }
+    body.pet-mode main { padding: 14px; gap: 12px; }
+    body.pet-mode .topbar { align-items: stretch; flex-direction: column; gap: 10px; }
+    body.pet-mode .today-title h1 { font-size: 18px; }
+    body.pet-mode .today-title span { font-size: 12px; }
+    body.pet-mode .tabs { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    body.pet-mode .tab-button { min-height: 36px; font-size: 12px; }
+    body.pet-mode .progress { min-width: 0; }
+    body.pet-mode .week { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    body.pet-mode .day-button { min-height: 42px; padding: 6px 4px; }
+    body.pet-mode .day-button strong { font-size: 12px; }
+    body.pet-mode .day-button small { font-size: 10px; }
+    body.pet-mode .content { grid-template-columns: 1fr; }
+    body.pet-mode .content h2 { display: none; }
+    body.pet-mode .task { grid-template-columns: 24px 1fr; position: relative; min-height: 68px; padding: 12px 12px 34px; }
+    body.pet-mode .task input { width: 18px; height: 18px; }
+    body.pet-mode .task-title strong { font-size: 14px; }
+    body.pet-mode .task-title span { font-size: 12px; }
+    body.pet-mode .tag { position: absolute; right: 10px; bottom: 8px; padding: 4px 8px; font-size: 11px; }
+    body.pet-mode .schedule-grid { min-width: 720px; grid-template-columns: 78px repeat(7, 92px); }
+    body.pet-mode .cell { min-height: 70px; padding: 6px; }
+    body.pet-mode .course-block { padding: 6px; font-size: 11px; }
+    body.pet-mode .select-card { grid-template-columns: 1fr; }
+    body.pet-mode .mode, body.pet-mode .speak, body.pet-mode .reset { height: 36px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <section class="private-gate" id="privateGate" aria-labelledby="privateGateTitle">
+    <img src="dusk-pet.png" alt="夕式桌宠">
+    <h1 id="privateGateTitle">夕式学期桌宠</h1>
+    <p id="privateGateText">这是你的个人课表和计划。使用自己的邮箱登录后才能查看。</p>
+    <button class="speak" id="privateGateLogin" type="button">邮箱登录</button>
+  </section>
+  <div class="app">
+    <aside>
+      <div class="pet-wrap">
+        <div class="pet-frame" aria-label="夕式学习桌宠">
+          <img class="pet-img" src="dusk-pet.png" alt="夕式桌宠立绘">
+        </div>
+        <div>
+          <h1>光电学习桌宠</h1>
+          <p class="subtitle">你的个人课程表、学习计划与轻量陪伴。</p>
+        </div>
+      </div>
+      <div class="card month-goal">
+        <h2>近期重点</h2>
+        <div class="sidebar-list">
+          <div class="focus-item"><span class="dot amber"></span><span>先打开一项最重要的学习任务，再开始今天的节奏。</span></div>
+          <div class="focus-item"><span class="dot cyan"></span><span>课后当天轻复盘，把不会的地方留下可处理的线索。</span></div>
+          <div class="focus-item"><span class="dot"></span><span>安排学习、休息与生活，不把桌宠变成压力来源。</span></div>
+        </div>
+      </div>
+      <div class="voice-row">
+        <p class="quote" id="petLine">登录后，夕会带你回到自己的课表和计划。</p>
+        <button class="speak" id="speakBtn" type="button" title="朗读桌宠台词">声</button>
+      </div>
+      <div class="pet-actions">
+        <button class="mode" id="modeBtn" type="button">切到小窗</button>
+        <button class="reset" id="resetBtn" type="button">清空</button>
+        <button class="mode" id="syncBtn" type="button">云同步</button>
+      </div>
+      <p class="sync-note" id="syncStatus">云同步：尚未连接</p>
+    </aside>
+    <main>
+      <section class="topbar">
+        <div class="today-title">
+          <h1 id="mainHeading">光电学习课表</h1>
+          <span id="mainSub">按周查看上课安排，并在计划页执行每个时间段的学习计划。</span>
+        </div>
+        <div class="progress" id="taskProgress" style="display:none">
+          <div class="progress-label"><span>今日完成度</span><span id="progressText">0/0</span></div>
+          <div class="bar"><span id="progressBar"></span></div>
+        </div>
+      </section>
+      <nav class="tabs" aria-label="桌宠面板">
+        <button class="tab-button" type="button" data-view="tasksView">计划</button>
+        <button class="tab-button active" type="button" data-view="scheduleView">课表</button>
+        <button class="tab-button" type="button" data-view="selectView">策略</button>
+      </nav>
+      <section class="view" id="tasksView">
+        <nav class="week" id="weekNav" aria-label="一周计划"></nav>
+        <section class="content">
+          <div>
+            <h2>计划清单</h2>
+            <div class="tasks" id="tasks"></div>
+          </div>
+          <div class="card">
+            <h2>执行规则</h2>
+            <div class="sidebar-list">
+              <div class="focus-item"><span class="dot amber"></span><span>开计划前先定产出，别只写“学习一下”。</span></div>
+              <div class="focus-item"><span class="dot cyan"></span><span>上课当天必须复盘，超过24小时再补会明显变难。</span></div>
+              <div class="focus-item"><span class="dot"></span><span>13:00固定午睡；周日留给社团和休息，不安排专业课硬任务。</span></div>
+            </div>
+          </div>
+        </section>
+      </section>
+      <section class="view active" id="scheduleView">
+        <div class="schedule-toolbar">
+          <label>查看第 <input id="weekInput" type="number" min="1" max="20" value="1"> 周</label>
+          <div class="summary" id="scheduleSummary"></div>
+        </div>
+        <div class="schedule-scroll"><div class="schedule-grid" id="scheduleGrid"></div></div>
+      </section>
+      <section class="view" id="selectView">
+        <p class="tip">策略：登录后会从你的个人云端加载当前课表与学习安排。</p>
+        <div class="select-list" id="selectList"></div>
+      </section>
+    </main>
+  </div>
+  <dialog id="syncDialog" aria-labelledby="syncTitle">
+    <form class="sync-dialog" method="dialog">
+      <h2 id="syncTitle">云同步</h2>
+      <p id="syncDialogText">用同一个邮箱登录电脑和手机后，完成记录、当前周次和小窗偏好会自动同步。</p>
+      <label id="syncEmailLabel">邮箱
+        <input id="syncEmail" type="email" autocomplete="email" placeholder="name@example.com">
+      </label>
+      <div class="sync-dialog-actions">
+        <button class="reset" id="syncCloseBtn" type="button">关闭</button>
+        <button class="mode" id="syncNowBtn" type="button">立即同步</button>
+        <button class="speak" id="syncLoginBtn" type="button">发送登录链接</button>
+      </div>
+    </form>
+  </dialog>
+  <script src="sync-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const dayNames = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"];
+    const periods = [
+      [1, "08:00-08:45"], [2, "08:55-09:40"], [3, "10:10-10:55"], [4, "11:05-11:50"],
+      [5, "14:20-15:05"], [6, "15:15-16:00"], [7, "16:30-17:15"], [8, "17:25-18:10"],
+      [9, "19:00-19:45"], [10, "19:55-20:40"], [11, "20:50-21:35"]
+    ];
+    const periodGroups = [
+      { label: "第1-2节", periods: [1,2], time: "08:00-09:40" },
+      { label: "第3-4节", periods: [3,4], time: "10:10-11:50" },
+      { label: "第5-6节", periods: [5,6], time: "14:20-16:00" },
+      { label: "第7-8节", periods: [7,8], time: "16:30-18:10" },
+      { label: "第9-10节", periods: [9,10], time: "19:00-20:40" },
+      { label: "第11节", periods: [11], time: "20:50-21:35" }
+    ];
+    let selectedCourses = [];
+    const pendingCourses = [];
+    const marxOptions = [];
+    let days = [];
+    const tagClass = { "上课": "drive", "信号": "hardware", "复变": "software", "数电": "prompt", "量子": "video", "程序": "software", "实验": "hardware", "公共": "drive", "规划": "prompt", "恢复": "video", "社团": "drive", "学习": "software" };
+    const stateKey = "summer-study-pet-v2";
+    const modeKey = "summer-study-pet-mode-v2";
+    const stateUpdatedAtKey = "summer-study-pet-state-updated-at-v1";
+    const today = new Date();
+    const semesterStart = new Date(2026, 8, 8);
+    const currentWeek = Math.min(20, Math.max(1, Math.floor((today - semesterStart) / (7 * 24 * 60 * 60 * 1000)) + 1));
+    const todayIndex = (today.getDay() + 6) % 7;
+    let activeDay = Math.max(0, todayIndex);
+    let checked = JSON.parse(localStorage.getItem(stateKey) || "{}");
+    let stateUpdatedAt = Number(localStorage.getItem(stateUpdatedAtKey) || 0);
+    if (localStorage.getItem(modeKey) === "pet") document.body.classList.add("pet-mode");
+    function course(code, name, type, weeks, day, periods, room, teacher) { return { code, name, type, weeks, day, periods, room, teacher }; }
+    function pending(code, name, category, weeks, day, periods, room, teacher, note, extra = []) { return { code, name, category, weeks, day, periods, room, teacher, note, extra }; }
+    function weekText(ranges) { return ranges.map(([a,b]) => a === b ? `第${a}周` : `${a}-${b}周`).join("、"); }
+    function periodText(list) { return list.length === 1 ? `第${list[0]}节` : `第${list[0]}-${list[list.length - 1]}节`; }
+    function rangesOverlap(aRanges, bRanges) { return aRanges.some(([a,b]) => bRanges.some(([c,d]) => Math.max(a,c) <= Math.min(b,d))); }
+    function periodsOverlap(a, b) { return a.some(x => b.includes(x)); }
+    function conflictWithSelected(item) {
+      const allParts = [item, ...item.extra];
+      const hits = [];
+      allParts.forEach(part => selectedCourses.forEach(sel => {
+        if (part.day === sel.day && rangesOverlap(part.weeks, sel.weeks) && periodsOverlap(part.periods, sel.periods)) hits.push(sel);
+      }));
+      return hits;
+    }
+    const weekNav = document.querySelector("#weekNav");
+    const tasksEl = document.querySelector("#tasks");
+    const mainHeading = document.querySelector("#mainHeading");
+    const mainSub = document.querySelector("#mainSub");
+    const petLine = document.querySelector("#petLine");
+    const progressText = document.querySelector("#progressText");
+    const progressBar = document.querySelector("#progressBar");
+    const weekInput = document.querySelector("#weekInput");
+    weekInput.value = currentWeek;
+    function taskId(dayIndex, taskIndex) { return `${dayIndex}-${taskIndex}`; }
+    function activeWeek() { return Number(weekInput.value || currentWeek); }
+    function inWeekRange(ranges, week = activeWeek()) { return !ranges || ranges.some(([a,b]) => week >= a && week <= b); }
+    function visibleTasks(day) { return day.tasks.filter(task => inWeekRange(task[3])); }
+    function minutesNow() { const now = new Date(); return now.getHours() * 60 + now.getMinutes(); }
+    function parseTaskTime(title) {
+      const range = title.match(/^(\\d{2}):(\\d{2})-(\\d{2}):(\\d{2})/);
+      if (range) return { start: Number(range[1]) * 60 + Number(range[2]), end: Number(range[3]) * 60 + Number(range[4]) };
+      const before = title.match(/^(\\d{2}):(\\d{2})前/);
+      if (before) return { start: 0, end: Number(before[1]) * 60 + Number(before[2]) };
+      const after = title.match(/^(\\d{2}):(\\d{2})以后/);
+      if (after) return { start: Number(after[1]) * 60 + Number(after[2]), end: 24 * 60 };
+      return null;
+    }
+    function timeState(title) {
+      if (activeDay !== todayIndex || activeWeek() !== currentWeek) return { className: "", label: "" };
+      const time = parseTaskTime(title);
+      if (!time) return { className: "", label: "" };
+      const now = minutesNow();
+      if (now >= time.start && now <= time.end) return { className: "current", label: "现在" };
+      if (now < time.start) return { className: "upcoming", label: "稍后" };
+      return { className: "past", label: "已过" };
+    }
+    function markStateChanged() {
+      stateUpdatedAt = Date.now();
+      localStorage.setItem(stateUpdatedAtKey, String(stateUpdatedAt));
+      scheduleCloudSync();
+    }
+    function save() { localStorage.setItem(stateKey, JSON.stringify(checked)); markStateChanged(); }
+    function renderWeek() {
+      weekNav.innerHTML = "";
+      days.forEach((day, index) => {
+        const button = document.createElement("button");
+        button.className = `day-button ${index === activeDay ? "active" : ""}`;
+        button.type = "button";
+        button.innerHTML = `<strong>${day.date}</strong><small>${day.name}</small>`;
+        button.addEventListener("click", () => { activeDay = index; markStateChanged(); renderTasks(); renderWeek(); });
+        weekNav.appendChild(button);
+      });
+    }
+    function renderTasks() {
+      const day = days[activeDay];
+      const week = activeWeek();
+      const tasks = visibleTasks(day);
+      tasksEl.innerHTML = "";
+      mainHeading.textContent = `${day.date} · ${day.name}`;
+      mainSub.textContent = `第${week}周 · 按当前周次和时间自动调整，完成后勾选。`;
+      petLine.textContent = day.line;
+      tasks.forEach((task, index) => {
+        const [title, subject, note] = task;
+        const id = taskId(activeDay, day.tasks.indexOf(task));
+        const state = timeState(title);
+        const item = document.createElement("label");
+        item.className = `task ${checked[id] ? "done" : ""} ${state.className}`;
+        const noteText = state.label ? `<span><b class="time-state">${state.label}</b> · ${note}</span>` : `<span>${note}</span>`;
+        item.innerHTML = `<input type="checkbox" ${checked[id] ? "checked" : ""}><span class="task-title"><strong>${title}</strong>${noteText}</span><span class="tag ${tagClass[subject] || ""}">${subject}</span>`;
+        item.querySelector("input").addEventListener("change", event => { checked[id] = event.target.checked; save(); renderTasks(); });
+        tasksEl.appendChild(item);
+      });
+      const done = tasks.filter(task => checked[taskId(activeDay, day.tasks.indexOf(task))]).length;
+      const total = tasks.length;
+      progressText.textContent = `${done}/${total}`;
+      progressBar.style.width = total ? `${Math.round(done / total * 100)}%` : "0%";
+    }
+    function renderSchedule() {
+      const week = activeWeek();
+      const grid = document.querySelector("#scheduleGrid");
+      grid.innerHTML = `<div class="cell head-cell">节次</div>${dayNames.map(d => `<div class="cell head-cell">${d}</div>`).join("")}`;
+      periodGroups.forEach(group => {
+        grid.insertAdjacentHTML("beforeend", `<div class="cell time-cell"><strong>${group.label}</strong><span>${group.time}</span></div>`);
+        dayNames.forEach((_, dayIndex) => {
+          const lessons = selectedCourses.filter(c =>
+            c.day === dayIndex &&
+            c.weeks.some(([a,b]) => week >= a && week <= b) &&
+            c.periods.some(period => group.periods.includes(period))
+          );
+          const html = lessons.map(c => `<div class="course-block ${c.type}"><strong>${c.name}</strong><small>${c.teacher} · ${c.room}</small><small>${weekText(c.weeks)} · ${periodText(c.periods)}</small></div>`).join("");
+          grid.insertAdjacentHTML("beforeend", `<div class="cell">${html}</div>`);
+        });
+      });
+      const weekLessons = selectedCourses.filter(c => c.weeks.some(([a,b]) => week >= a && week <= b));
+      const summary = document.querySelector("#scheduleSummary");
+      summary.innerHTML = [`第${week}周`, `本周${weekLessons.length}段课`, `今日${visibleTasks(days[activeDay]).length}段计划`, `当前日期推算第${currentWeek}周`].map(t => `<span class="summary-pill">${t}</span>`).join("");
+    }    function renderPending() {
+      const list = document.querySelector("#selectList");
+      list.innerHTML = "";
+      if (pendingCourses.length === 0) {
+        list.innerHTML = `<article class="select-card"><div><h3>每周学习时间分配</h3><div class="select-meta"><span>建议课外总量 17-20 小时：信号 4-5h，复变 4-5h，数电 3.5-4.5h，量子/固体 3-4h，程序+Matlab 3.5-4.5h，实验报告按需补。</span><span>高质量时间优先给周一晚、周三晚、周五晚和周六下午；周六上午留作轻整理和机动，周日社团和休息。</span></div></div><span class="status group">执行中</span></article>`;
+        return;
+      }
+      pendingCourses.forEach(item => {
+        const conflicts = conflictWithSelected(item);
+        const isPe = item.code === "PE201";
+        const isMarx = false;
+        const canPick = conflicts.length === 0;
+        const statusClass = canPick ? (isPe || isMarx ? "group" : "") : "bad";
+        const statusText = canPick ? (isPe ? "可选其一" : isMarx ? "可选班级" : "可选") : "冲突";
+        const conflictText = conflicts.length ? `<span class="conflict">冲突：${[...new Set(conflicts.map(c => `${dayNames[c.day]} ${periodText(c.periods)} ${weekText(c.weeks)} ${c.code} ${c.name}`))].join("；")}</span>` : `<span>未发现与已选课的时间冲突。</span>`;
+        const optionText = isMarx ? `<span>推荐优先看：${marxOptions.join("；")}</span>` : "";
+        const card = document.createElement("article");
+        card.className = "select-card";
+        card.innerHTML = `<div><h3>${item.code} ${item.name}</h3><div class="select-meta"><span>${item.category} · ${dayNames[item.day]} ${periodText(item.periods)} · ${weekText(item.weeks)}</span><span>${item.teacher} · ${item.room}</span><span>${item.note}</span>${conflictText}${optionText}</div></div><span class="status ${statusClass}">${statusText}</span>`;
+        list.appendChild(card);
+      });
+    }
+    function syncModeButton() { document.querySelector("#modeBtn").textContent = document.body.classList.contains("pet-mode") ? "全展开" : "切到小窗"; }
+    document.querySelectorAll(".tab-button").forEach(button => button.addEventListener("click", () => {
+      document.querySelectorAll(".tab-button").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      button.classList.add("active");
+      document.querySelector(`#${button.dataset.view}`).classList.add("active");
+      document.querySelector("#taskProgress").style.display = button.dataset.view === "tasksView" ? "grid" : "none";
+      mainHeading.textContent = button.dataset.view === "scheduleView" ? "光电学习课表" : button.dataset.view === "selectView" ? "课表策略" : `${days[activeDay].date} · ${days[activeDay].name}`;
+      mainSub.textContent = button.dataset.view === "scheduleView" ? "按周查看上课安排，并在计划页执行每个时间段的学习计划。" : button.dataset.view === "selectView" ? "完整课表执行中，暑假计划已下线。" : "完成后勾选，桌宠会记住。";
+    }));
+    document.querySelector("#resetBtn").addEventListener("click", () => { checked = {}; save(); renderTasks(); });
+    document.querySelector("#modeBtn").addEventListener("click", () => { document.body.classList.toggle("pet-mode"); localStorage.setItem(modeKey, document.body.classList.contains("pet-mode") ? "pet" : "full"); markStateChanged(); syncModeButton(); });
+    document.querySelector("#speakBtn").addEventListener("click", () => {
+      if (!("speechSynthesis" in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(petLine.textContent);
+      utterance.lang = "zh-CN"; utterance.rate = 0.92; utterance.pitch = 0.9;
+      window.speechSynthesis.speak(utterance);
+    });
+    weekInput.addEventListener("input", () => { markStateChanged(); renderSchedule(); renderTasks(); });
+
+    const syncConfig = window.PET_SYNC_CONFIG || {};
+    const syncReady = Boolean(window.supabase && syncConfig.supabaseUrl && syncConfig.supabaseAnonKey);
+    const syncStatus = document.querySelector("#syncStatus");
+    const syncDialog = document.querySelector("#syncDialog");
+    const syncDialogText = document.querySelector("#syncDialogText");
+    const syncEmailLabel = document.querySelector("#syncEmailLabel");
+    const syncEmail = document.querySelector("#syncEmail");
+    const syncLoginBtn = document.querySelector("#syncLoginBtn");
+    const syncNowBtn = document.querySelector("#syncNowBtn");
+    let syncClient = null;
+    let syncUser = null;
+    let syncTimer = null;
+
+    function updateSyncStatus(message) { syncStatus.textContent = `云同步：${message}`; }
+    function snapshot() {
+      return {
+        selectedCourses,
+        days,
+        checked,
+        activeDay,
+        activeWeek: activeWeek(),
+        mode: document.body.classList.contains("pet-mode") ? "pet" : "full",
+        changedAt: stateUpdatedAt
+      };
+    }
+    function applySnapshot(data) {
+      if (!data || typeof data !== "object") return;
+      if (Array.isArray(data.selectedCourses) && data.selectedCourses.length) selectedCourses = data.selectedCourses;
+      if (Array.isArray(data.days) && data.days.length) days = data.days;
+      checked = data.checked && typeof data.checked === "object" ? data.checked : {};
+      activeDay = Number.isInteger(data.activeDay) ? Math.max(0, Math.min(days.length - 1, data.activeDay)) : Math.min(days.length - 1, Math.max(0, todayIndex));
+      weekInput.value = Number(data.activeWeek) || currentWeek;
+      stateUpdatedAt = Number(data.changedAt) || Date.now();
+      localStorage.setItem(stateKey, JSON.stringify(checked));
+      localStorage.setItem(stateUpdatedAtKey, String(stateUpdatedAt));
+      localStorage.setItem(modeKey, data.mode === "pet" ? "pet" : "full");
+      document.body.classList.toggle("pet-mode", data.mode === "pet");
+      startApp();
+    }
+    async function pullOrPushCloudState() {
+      if (!syncClient || !syncUser) return;
+      updateSyncStatus("正在同步");
+      const { data: remote, error } = await syncClient.from("pet_state").select("payload, updated_at").eq("user_id", syncUser.id).maybeSingle();
+      if (error) throw error;
+      const remoteChangedAt = Number(remote?.payload?.changedAt || 0);
+      if (remote && Array.isArray(remote.payload?.selectedCourses) && remote.payload.selectedCourses.length) {
+        applySnapshot(remote.payload);
+      } else if (selectedCourses.length && days.length) {
+        const { error: writeError } = await syncClient.from("pet_state").upsert({ user_id: syncUser.id, payload: snapshot() });
+        if (writeError) throw writeError;
+        startApp();
+      } else {
+        document.body.classList.add("private-wait");
+        document.querySelector("#privateGateText").textContent = "这个账号还没有导入课表。请先在电脑端登录一次，再回到手机打开。";
+        updateSyncStatus("等待电脑端导入课表");
+        return;
+      }
+      updateSyncStatus("已同步");
+    }
+    function scheduleCloudSync() {
+      if (!syncClient || !syncUser) return;
+      clearTimeout(syncTimer);
+      syncTimer = setTimeout(() => pullOrPushCloudState().catch(error => updateSyncStatus(`同步失败：${error.message}`)), 700);
+    }
+    async function setupCloudSync() {
+      if (!syncReady) return;
+      syncClient = window.supabase.createClient(syncConfig.supabaseUrl, syncConfig.supabaseAnonKey);
+      const { data: { session } } = await syncClient.auth.getSession();
+      syncUser = session?.user || null;
+      updateSyncStatus(syncUser ? "已登录，正在同步" : "等待登录");
+      if (syncUser) await pullOrPushCloudState();
+      syncClient.auth.onAuthStateChange((_event, sessionData) => {
+        syncUser = sessionData?.user || null;
+        updateSyncStatus(syncUser ? "已登录，正在同步" : "等待登录");
+        if (syncUser) pullOrPushCloudState().catch(error => updateSyncStatus(`同步失败：${error.message}`));
+      });
+    }
+    document.querySelector("#syncBtn").addEventListener("click", () => {
+      if (!syncReady) {
+        syncDialogText.textContent = "同步空间还没有连接。等电脑端填入自己的 Supabase 信息后，手机和电脑就能用同一个邮箱同步。";
+        syncEmailLabel.hidden = true; syncLoginBtn.hidden = true; syncNowBtn.hidden = true;
+      } else if (syncUser) {
+        syncDialogText.textContent = `已登录 ${syncUser.email || "当前账号"}。点击立即同步可马上核对两端状态。`;
+        syncEmailLabel.hidden = true; syncLoginBtn.hidden = true; syncNowBtn.hidden = false;
+      } else {
+        syncDialogText.textContent = "输入邮箱后会收到登录链接。电脑和手机使用同一个邮箱即可同步。";
+        syncEmailLabel.hidden = false; syncLoginBtn.hidden = false; syncNowBtn.hidden = true;
+      }
+      syncDialog.showModal();
+    });
+    document.querySelector("#privateGateLogin").addEventListener("click", () => document.querySelector("#syncBtn").click());
+    document.querySelector("#syncCloseBtn").addEventListener("click", () => syncDialog.close());
+    syncNowBtn.addEventListener("click", async () => {
+      try { await pullOrPushCloudState(); syncDialog.close(); }
+      catch (error) { syncDialogText.textContent = `同步失败：${error.message}`; updateSyncStatus("同步失败"); }
+    });
+    syncLoginBtn.addEventListener("click", async () => {
+      const email = syncEmail.value.trim();
+      if (!email) { syncEmail.focus(); return; }
+      try {
+        syncLoginBtn.disabled = true;
+        const { error } = await syncClient.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href.split("#")[0] } });
+        if (error) throw error;
+        syncDialogText.textContent = "登录链接已发送。请在这台设备的邮箱中打开它，然后回到桌宠即可。";
+        updateSyncStatus("等待邮箱登录");
+      } catch (error) {
+        syncDialogText.textContent = `发送失败：${error.message}`;
+      } finally { syncLoginBtn.disabled = false; }
+    });
+    function startApp() {
+      if (!selectedCourses.length || !days.length) { document.body.classList.add("private-wait"); return; }
+      document.body.classList.remove("private-wait");
+      syncModeButton(); renderWeek(); renderTasks(); renderSchedule(); renderPending(); document.querySelector('[data-view="scheduleView"]').click();
+    }
+    if (!selectedCourses.length || !days.length) document.body.classList.add("private-wait");
+    if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("./sw.js").catch(() => {});
+    setupCloudSync().then(() => { if (selectedCourses.length && days.length) startApp(); }).catch(error => updateSyncStatus(`同步初始化失败：${error.message}`));
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
