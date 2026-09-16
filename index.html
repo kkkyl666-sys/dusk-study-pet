@@ -271,8 +271,8 @@
   <section class="private-gate" id="privateGate" aria-labelledby="privateGateTitle">
     <img src="dusk-pet.png" alt="夕式桌宠">
     <h1 id="privateGateTitle">夕式学期桌宠</h1>
-    <p id="privateGateText">这是你的个人课表和计划。使用自己的邮箱登录后才能查看。</p>
-    <button class="speak" id="privateGateLogin" type="button">邮箱登录</button>
+    <p id="privateGateText">这是你的个人课表和计划。输入个人解锁码后才能查看。</p>
+    <button class="speak" id="privateGateLogin" type="button">输入解锁码</button>
   </section>
   <div class="app">
     <aside>
@@ -367,19 +367,18 @@
   <dialog id="syncDialog" aria-labelledby="syncTitle">
     <form class="sync-dialog" method="dialog">
       <h2 id="syncTitle">云同步</h2>
-      <p id="syncDialogText">用同一个邮箱登录电脑和手机后，完成记录、当前周次和小窗偏好会自动同步。</p>
-      <label id="syncEmailLabel">邮箱
-        <input id="syncEmail" type="email" autocomplete="email" placeholder="name@example.com">
+      <p id="syncDialogText">在这台设备输入一次个人解锁码。之后课表、计划和完成记录会自动同步。</p>
+      <label id="syncEmailLabel">个人解锁码
+        <input id="syncEmail" type="password" autocomplete="current-password" placeholder="输入解锁码">
       </label>
       <div class="sync-dialog-actions">
         <button class="reset" id="syncCloseBtn" type="button">关闭</button>
         <button class="mode" id="syncNowBtn" type="button">立即同步</button>
-        <button class="speak" id="syncLoginBtn" type="button">发送登录链接</button>
+        <button class="speak" id="syncLoginBtn" type="button">解锁并同步</button>
       </div>
     </form>
   </dialog>
   <script src="sync-config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const dayNames = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"];
     const periods = [
@@ -642,7 +641,7 @@
     weekInput.addEventListener("input", () => { markStateChanged(); renderSchedule(); renderTasks(); });
 
     const syncConfig = window.PET_SYNC_CONFIG || {};
-    const syncReady = Boolean(window.supabase && syncConfig.supabaseUrl && syncConfig.supabaseAnonKey);
+    const syncReady = Boolean(syncConfig.supabaseUrl && syncConfig.supabaseAnonKey);
     const syncStatus = document.querySelector("#syncStatus");
     const syncDialog = document.querySelector("#syncDialog");
     const syncDialogText = document.querySelector("#syncDialogText");
@@ -650,11 +649,25 @@
     const syncEmail = document.querySelector("#syncEmail");
     const syncLoginBtn = document.querySelector("#syncLoginBtn");
     const syncNowBtn = document.querySelector("#syncNowBtn");
-    let syncClient = null;
-    let syncUser = null;
+    const accessCodeKey = "dusk-study-pet-access-code-v1";
+    let accessCode = localStorage.getItem(accessCodeKey) || "";
     let syncTimer = null;
 
     function updateSyncStatus(message) { syncStatus.textContent = `云同步：${message}`; }
+    async function cloudRpc(functionName, body) {
+      const response = await fetch(`${syncConfig.supabaseUrl}/rest/v1/rpc/${functionName}`, {
+        method: "POST",
+        headers: {
+          apikey: syncConfig.supabaseAnonKey,
+          Authorization: `Bearer ${syncConfig.supabaseAnonKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.message || data?.hint || "无法连接云端");
+      return data;
+    }
     function snapshot() {
       return {
         selectedCourses,
@@ -681,32 +694,30 @@
       startApp();
     }
     async function pullOrPushCloudState(forcePush = false) {
-      if (!syncClient || !syncUser) return;
+      if (!syncReady || !accessCode) return;
       updateSyncStatus("正在同步");
-      const { data: remote, error } = await syncClient.from("pet_state").select("payload, updated_at").eq("user_id", syncUser.id).maybeSingle();
-      if (error) throw error;
-      const remoteChangedAt = Number(remote?.payload?.changedAt || 0);
-      if (remote && Array.isArray(remote.payload?.selectedCourses) && remote.payload.selectedCourses.length && !forcePush && remoteChangedAt >= stateUpdatedAt) {
-        applySnapshot(remote.payload);
+      const remote = await cloudRpc("pet_unlock", { access_code: accessCode });
+      const remoteChangedAt = Number(remote?.changedAt || 0);
+      if (remote && Array.isArray(remote.selectedCourses) && remote.selectedCourses.length && !forcePush && remoteChangedAt >= stateUpdatedAt) {
+        applySnapshot(remote);
       } else if (selectedCourses.length && days.length) {
-        const { error: writeError } = await syncClient.from("pet_state").upsert({ user_id: syncUser.id, payload: snapshot() });
-        if (writeError) throw writeError;
+        await cloudRpc("pet_save", { access_code: accessCode, new_payload: snapshot() });
         startApp();
       } else {
         document.body.classList.add("private-wait");
-        document.querySelector("#privateGateText").textContent = "这个账号还没有导入课表。请先在电脑端登录一次，再回到手机打开。";
-        updateSyncStatus("等待电脑端导入课表");
+        document.querySelector("#privateGateText").textContent = "云端里还没有课表。请确认已完成迁移后再试。";
+        updateSyncStatus("等待课表导入");
         return;
       }
       updateSyncStatus("已同步");
     }
     function scheduleCloudSync() {
-      if (!syncClient || !syncUser) return;
+      if (!syncReady || !accessCode) return;
       clearTimeout(syncTimer);
       syncTimer = setTimeout(() => pullOrPushCloudState().catch(error => updateSyncStatus(`同步失败：${error.message}`)), 700);
     }
     document.querySelector("#saveCloudBtn").addEventListener("click", async () => {
-      if (!syncUser) { updateSyncStatus("请先登录后再保存"); return; }
+      if (!accessCode) { updateSyncStatus("请先输入解锁码后再保存"); return; }
       if (!selectedCourses.length || !days.length) { updateSyncStatus("课程或计划不能为空"); return; }
       const button = document.querySelector("#saveCloudBtn");
       try {
@@ -723,26 +734,18 @@
     });
     async function setupCloudSync() {
       if (!syncReady) return;
-      syncClient = window.supabase.createClient(syncConfig.supabaseUrl, syncConfig.supabaseAnonKey);
-      const { data: { session } } = await syncClient.auth.getSession();
-      syncUser = session?.user || null;
-      updateSyncStatus(syncUser ? "已登录，正在同步" : "等待登录");
-      if (syncUser) await pullOrPushCloudState();
-      syncClient.auth.onAuthStateChange((_event, sessionData) => {
-        syncUser = sessionData?.user || null;
-        updateSyncStatus(syncUser ? "已登录，正在同步" : "等待登录");
-        if (syncUser) pullOrPushCloudState().catch(error => updateSyncStatus(`同步失败：${error.message}`));
-      });
+      updateSyncStatus(accessCode ? "已解锁，正在同步" : "等待解锁");
+      if (accessCode) await pullOrPushCloudState();
     }
     document.querySelector("#syncBtn").addEventListener("click", () => {
       if (!syncReady) {
-        syncDialogText.textContent = "同步空间还没有连接。等电脑端填入自己的 Supabase 信息后，手机和电脑就能用同一个邮箱同步。";
+        syncDialogText.textContent = "同步空间还没有连接。请稍后再试。";
         syncEmailLabel.hidden = true; syncLoginBtn.hidden = true; syncNowBtn.hidden = true;
-      } else if (syncUser) {
-        syncDialogText.textContent = `已登录 ${syncUser.email || "当前账号"}。点击立即同步可马上核对两端状态。`;
+      } else if (accessCode) {
+        syncDialogText.textContent = "这台设备已解锁。点击立即同步可马上核对两端状态。";
         syncEmailLabel.hidden = true; syncLoginBtn.hidden = true; syncNowBtn.hidden = false;
       } else {
-        syncDialogText.textContent = "输入邮箱后会收到登录链接。电脑和手机使用同一个邮箱即可同步。";
+        syncDialogText.textContent = "输入个人解锁码。这台设备记住后，以后不需要再输入。";
         syncEmailLabel.hidden = false; syncLoginBtn.hidden = false; syncNowBtn.hidden = true;
       }
       syncDialog.showModal();
@@ -754,19 +757,18 @@
       catch (error) { syncDialogText.textContent = `同步失败：${error.message}`; updateSyncStatus("同步失败"); }
     });
     syncLoginBtn.addEventListener("click", async () => {
-      const email = syncEmail.value.trim();
-      if (!email) { syncEmail.focus(); return; }
+      const code = syncEmail.value.trim();
+      if (!code) { syncEmail.focus(); return; }
       try {
         syncLoginBtn.disabled = true;
-        const { error } = await syncClient.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href.split("#")[0] } });
-        if (error) throw error;
-        syncDialogText.textContent = "登录链接已发送。请在这台设备的邮箱中打开它，然后回到桌宠即可。";
-        updateSyncStatus("等待邮箱登录");
+        const remote = await cloudRpc("pet_unlock", { access_code: code });
+        accessCode = code;
+        localStorage.setItem(accessCodeKey, accessCode);
+        if (remote && Array.isArray(remote.selectedCourses) && remote.selectedCourses.length) applySnapshot(remote);
+        updateSyncStatus("已解锁并同步");
+        syncDialog.close();
       } catch (error) {
-        const rateLimited = /rate limit/i.test(error.message || "");
-        syncDialogText.textContent = rateLimited
-          ? "邮件服务暂时达到免费额度。请约一小时后再试，期间不需要重复发送。"
-          : `发送失败：${error.message}`;
+        syncDialogText.textContent = "解锁码不正确或云端暂时无法访问，请检查后再试。";
       } finally { syncLoginBtn.disabled = false; }
     });
     function startApp() {

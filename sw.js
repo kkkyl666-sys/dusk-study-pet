@@ -1,4 +1,4 @@
-const CACHE_NAME = "dusk-study-pet-v2";
+const CACHE_NAME = "dusk-study-pet-v3";
 const APP_SHELL = ["./", "./index.html", "./dusk-pet.png", "./manifest.webmanifest", "./sync-config.js"];
 
 self.addEventListener("install", event => {
