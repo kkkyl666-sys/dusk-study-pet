@@ -133,7 +133,7 @@
     .progress-label { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; }
     .bar { height: 10px; background: #141517; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; }
     .bar span { display: block; width: 0%; height: 100%; background: linear-gradient(90deg, var(--green), var(--cyan)); transition: width 220ms ease; }
-    .tabs { width: 100%; min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .tabs { width: 100%; min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
     .tab-button { min-height: 42px; color: var(--text); cursor: pointer; background: rgba(255,255,255,0.04); }
     .tab-button.active { border-color: rgba(87, 201, 194, 0.78); background: rgba(87, 201, 194, 0.15); }
     .view { display: none; min-height: 0; min-width: 0; }
@@ -204,12 +204,31 @@
     .status.group { background: var(--amber); }
     .conflict { color: #ffc3c3; }
     .tip { color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 12px; }
+    .editor-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+    .editor-toolbar p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .editor-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .editor-list { display: grid; gap: 10px; }
+    .editor-card { border: 1px solid rgba(255,255,255,0.1); background: var(--panel-2); }
+    .editor-card summary { cursor: pointer; padding: 13px 14px; font-weight: 700; }
+    .editor-card[open] summary { border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .editor-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 14px; }
+    .editor-fields label { display: grid; gap: 6px; color: var(--muted); font-size: 12px; }
+    .editor-fields label.wide { grid-column: 1 / -1; }
+    .editor-fields input, .editor-fields select { width: 100%; height: 38px; color: var(--text); background: var(--panel-3); border: 1px solid var(--line); padding: 0 9px; font: inherit; }
+    .task-edit { display: grid; grid-template-columns: minmax(130px, 1fr) 100px minmax(160px, 1.4fr) 96px auto; gap: 8px; align-items: end; }
+    .task-edit input, .task-edit select { width: 100%; height: 36px; color: var(--text); background: var(--panel-3); border: 1px solid var(--line); padding: 0 8px; font: inherit; }
+    .delete-button { height: 36px; padding: 0 10px; border: 1px solid rgba(238,118,118,0.42); color: #ffc3c3; background: rgba(238,118,118,0.08); cursor: pointer; }
+    .save-state { color: var(--amber); font-size: 12px; }
     @media (max-width: 900px) {
       body { padding: 12px; }
       .app { grid-template-columns: 1fr; }
       aside { border-right: 0; border-bottom: 1px solid var(--line); }
       .content { grid-template-columns: 1fr; }
       .week { grid-template-columns: repeat(4, 1fr); }
+      .editor-fields { grid-template-columns: 1fr; }
+      .editor-fields label.wide { grid-column: auto; }
+      .task-edit { grid-template-columns: 1fr 90px; }
+      .task-edit input:nth-child(3), .task-edit input:nth-child(4) { grid-column: 1 / -1; }
       .topbar { align-items: stretch; flex-direction: column; }
       .progress { min-width: 0; }
     }
@@ -227,7 +246,7 @@
     body.pet-mode .topbar { align-items: stretch; flex-direction: column; gap: 10px; }
     body.pet-mode .today-title h1 { font-size: 18px; }
     body.pet-mode .today-title span { font-size: 12px; }
-    body.pet-mode .tabs { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    body.pet-mode .tabs { grid-template-columns: repeat(4, 1fr); gap: 6px; }
     body.pet-mode .tab-button { min-height: 36px; font-size: 12px; }
     body.pet-mode .progress { min-width: 0; }
     body.pet-mode .week { grid-template-columns: repeat(4, 1fr); gap: 6px; }
@@ -300,6 +319,7 @@
         <button class="tab-button" type="button" data-view="tasksView">计划</button>
         <button class="tab-button active" type="button" data-view="scheduleView">课表</button>
         <button class="tab-button" type="button" data-view="selectView">策略</button>
+        <button class="tab-button" type="button" data-view="editView">编辑</button>
       </nav>
       <section class="view" id="tasksView">
         <nav class="week" id="weekNav" aria-label="一周计划"></nav>
@@ -328,6 +348,19 @@
       <section class="view" id="selectView">
         <p class="tip">策略：登录后会从你的个人云端加载当前课表与学习安排。</p>
         <div class="select-list" id="selectList"></div>
+      </section>
+      <section class="view" id="editView">
+        <div class="editor-toolbar">
+          <p>在电脑上修改课程和计划。完成后点击保存，手机会在下次同步时更新。</p>
+          <div class="editor-actions">
+            <span class="save-state" id="editorState">未修改</span>
+            <button class="mode" id="addCourseBtn" type="button">添加课程</button>
+            <button class="speak" id="saveCloudBtn" type="button">保存到云端</button>
+          </div>
+        </div>
+        <div class="editor-list" id="courseEditor"></div>
+        <h2>一周计划</h2>
+        <div class="editor-list" id="planEditor"></div>
       </section>
     </main>
   </div>
@@ -488,7 +521,7 @@
       const list = document.querySelector("#selectList");
       list.innerHTML = "";
       if (pendingCourses.length === 0) {
-        list.innerHTML = `<article class="select-card"><div><h3>每周学习时间分配</h3><div class="select-meta"><span>建议课外总量 17-20 小时：信号 4-5h，复变 4-5h，数电 3.5-4.5h，量子/固体 3-4h，程序+Matlab 3.5-4.5h，实验报告按需补。</span><span>高质量时间优先给周一晚、周三晚、周五晚和周六下午；周六上午留作轻整理和机动，周日社团和休息。</span></div></div><span class="status group">执行中</span></article>`;
+        list.innerHTML = `<article class="select-card"><div><h3>每周学习时间分配</h3><div class="select-meta"><span>把高质量时间留给最难的课程；安排课后复盘、作业推进和适度休息。</span><span>课表和计划由你的云端数据决定，电脑编辑并保存后会同步到其他设备。</span></div></div><span class="status group">执行中</span></article>`;
         return;
       }
       pendingCourses.forEach(item => {
@@ -506,6 +539,82 @@
         list.appendChild(card);
       });
     }
+    const courseEditor = document.querySelector("#courseEditor");
+    const planEditor = document.querySelector("#planEditor");
+    const editorState = document.querySelector("#editorState");
+    let editorDirty = false;
+    function escapeHtml(value) { return String(value ?? "").replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]); }
+    function compactWeeks(ranges) { return ranges.map(([a, b]) => a === b ? a : `${a}-${b}`).join(","); }
+    function compactPeriods(periodList) { return periodList.join(","); }
+    function parseWeeks(value) {
+      const parts = String(value).match(/\d+(?:\s*-\s*\d+)?/g) || [];
+      return parts.map(part => {
+        const [first, last = first] = part.split("-").map(number => Number(number.trim()));
+        return [first, last];
+      }).filter(([first, last]) => first >= 1 && last >= first && last <= 20);
+    }
+    function parsePeriods(value) {
+      const parts = String(value).match(/\d+(?:\s*-\s*\d+)?/g) || [];
+      return [...new Set(parts.flatMap(part => {
+        const [first, last = first] = part.split("-").map(number => Number(number.trim()));
+        return Array.from({ length: Math.max(0, last - first + 1) }, (_, index) => first + index);
+      }).filter(number => number >= 1 && number <= 11))].sort((a, b) => a - b);
+    }
+    function markEditorDirty() { editorDirty = true; editorState.textContent = "有未保存修改"; }
+    function renderEditor() {
+      courseEditor.innerHTML = selectedCourses.map((courseItem, index) => `
+        <details class="editor-card"><summary>${escapeHtml(courseItem.name)} · ${dayNames[courseItem.day]} · ${compactWeeks(courseItem.weeks)}</summary><div class="editor-fields">
+          <label>课程名称<input data-course-index="${index}" data-course-key="name" value="${escapeHtml(courseItem.name)}"></label>
+          <label>教师<input data-course-index="${index}" data-course-key="teacher" value="${escapeHtml(courseItem.teacher)}"></label>
+          <label>地点<input data-course-index="${index}" data-course-key="room" value="${escapeHtml(courseItem.room)}"></label>
+          <label>上课日<select data-course-index="${index}" data-course-key="day">${dayNames.map((dayName, dayIndex) => `<option value="${dayIndex}" ${courseItem.day === dayIndex ? "selected" : ""}>${dayName}</option>`).join("")}</select></label>
+          <label>周次<input data-course-index="${index}" data-course-key="weeks" value="${compactWeeks(courseItem.weeks)}" placeholder="如 1-8,10-17"></label>
+          <label>节次<input data-course-index="${index}" data-course-key="periods" value="${compactPeriods(courseItem.periods)}" placeholder="如 1-2 或 5,6"></label>
+          <label>类别<select data-course-index="${index}" data-course-key="type"><option value="major" ${courseItem.type === "major" ? "selected" : ""}>专业课</option><option value="public" ${courseItem.type === "public" ? "selected" : ""}>公共课</option><option value="lab" ${courseItem.type === "lab" ? "selected" : ""}>实验课</option></select></label>
+          <button class="delete-button" type="button" data-delete-course="${index}">删除这段课</button>
+        </div></details>`).join("");
+      planEditor.innerHTML = days.map((day, dayIndex) => `
+        <details class="editor-card"><summary>${escapeHtml(day.date)} · ${escapeHtml(day.name)} · ${day.tasks.length} 项</summary><div class="editor-fields">
+          <label>星期<input data-plan-day="${dayIndex}" data-plan-key="date" value="${escapeHtml(day.date)}"></label>
+          <label>标题<input data-plan-day="${dayIndex}" data-plan-key="name" value="${escapeHtml(day.name)}"></label>
+          <label class="wide">当天说明<input data-plan-day="${dayIndex}" data-plan-key="line" value="${escapeHtml(day.line)}"></label>
+          <div class="wide editor-list">${day.tasks.map((task, taskIndex) => `<div class="task-edit"><input data-task-day="${dayIndex}" data-task-index="${taskIndex}" data-task-key="title" value="${escapeHtml(task[0])}" placeholder="时间与任务"><select data-task-day="${dayIndex}" data-task-index="${taskIndex}" data-task-key="subject">${Object.keys(tagClass).map(subject => `<option value="${subject}" ${task[1] === subject ? "selected" : ""}>${subject}</option>`).join("")}</select><input data-task-day="${dayIndex}" data-task-index="${taskIndex}" data-task-key="note" value="${escapeHtml(task[2])}" placeholder="说明"><input data-task-day="${dayIndex}" data-task-index="${taskIndex}" data-task-key="weeks" value="${task[3] ? compactWeeks(task[3]) : ""}" placeholder="周次，可留空"><button class="delete-button" type="button" data-delete-task="${dayIndex}:${taskIndex}">删除</button></div>`).join("")}</div>
+          <button class="mode" type="button" data-add-task="${dayIndex}">添加任务</button>
+        </div></details>`).join("");
+      editorState.textContent = editorDirty ? "有未保存修改" : "已保存";
+    }
+    document.querySelector("#editView").addEventListener("change", event => {
+      const target = event.target;
+      if (target.dataset.courseIndex !== undefined) {
+        const item = selectedCourses[Number(target.dataset.courseIndex)];
+        const key = target.dataset.courseKey;
+        if (key === "day") item.day = Number(target.value);
+        else if (key === "weeks") item.weeks = parseWeeks(target.value);
+        else if (key === "periods") item.periods = parsePeriods(target.value);
+        else item[key] = target.value.trim();
+        markEditorDirty();
+      }
+      if (target.dataset.planDay !== undefined) {
+        days[Number(target.dataset.planDay)][target.dataset.planKey] = target.value.trim();
+        markEditorDirty();
+      }
+      if (target.dataset.taskDay !== undefined) {
+        const task = days[Number(target.dataset.taskDay)].tasks[Number(target.dataset.taskIndex)];
+        const key = target.dataset.taskKey;
+        if (key === "weeks") {
+          const ranges = parseWeeks(target.value);
+          if (ranges.length) task[3] = ranges;
+          else task.splice(3, 1);
+        } else task[{ title: 0, subject: 1, note: 2 }[key]] = target.value.trim();
+        markEditorDirty();
+      }
+    });
+    document.querySelector("#editView").addEventListener("click", event => {
+      const target = event.target;
+      if (target.dataset.deleteCourse !== undefined) { selectedCourses.splice(Number(target.dataset.deleteCourse), 1); markEditorDirty(); renderEditor(); }
+      if (target.dataset.deleteTask) { const [dayIndex, taskIndex] = target.dataset.deleteTask.split(":").map(Number); days[dayIndex].tasks.splice(taskIndex, 1); markEditorDirty(); renderEditor(); }
+      if (target.dataset.addTask !== undefined) { days[Number(target.dataset.addTask)].tasks.push(["时间 任务", "学习", "写下这项任务要完成什么。"]); markEditorDirty(); renderEditor(); }
+    });
     function syncModeButton() { document.querySelector("#modeBtn").textContent = document.body.classList.contains("pet-mode") ? "全展开" : "切到小窗"; }
     document.querySelectorAll(".tab-button").forEach(button => button.addEventListener("click", () => {
       document.querySelectorAll(".tab-button").forEach(b => b.classList.remove("active"));
@@ -513,10 +622,15 @@
       button.classList.add("active");
       document.querySelector(`#${button.dataset.view}`).classList.add("active");
       document.querySelector("#taskProgress").style.display = button.dataset.view === "tasksView" ? "grid" : "none";
-      mainHeading.textContent = button.dataset.view === "scheduleView" ? "光电学习课表" : button.dataset.view === "selectView" ? "课表策略" : `${days[activeDay].date} · ${days[activeDay].name}`;
-      mainSub.textContent = button.dataset.view === "scheduleView" ? "按周查看上课安排，并在计划页执行每个时间段的学习计划。" : button.dataset.view === "selectView" ? "完整课表执行中，暑假计划已下线。" : "完成后勾选，桌宠会记住。";
+      if (button.dataset.view === "editView") renderEditor();
+      mainHeading.textContent = button.dataset.view === "scheduleView" ? "光电学习课表" : button.dataset.view === "selectView" ? "课表策略" : button.dataset.view === "editView" ? "编辑课表与计划" : `${days[activeDay].date} · ${days[activeDay].name}`;
+      mainSub.textContent = button.dataset.view === "scheduleView" ? "按周查看上课安排，并在计划页执行每个时间段的学习计划。" : button.dataset.view === "selectView" ? "完整课表执行中，暑假计划已下线。" : button.dataset.view === "editView" ? "修改后点击保存到云端，手机才会收到新版内容。" : "完成后勾选，桌宠会记住。";
     }));
     document.querySelector("#resetBtn").addEventListener("click", () => { checked = {}; save(); renderTasks(); });
+    document.querySelector("#addCourseBtn").addEventListener("click", () => {
+      selectedCourses.push(course("自定义", "新课程", "major", [[1, 17]], 0, [1, 2], "待填写", "待填写"));
+      markEditorDirty(); renderEditor();
+    });
     document.querySelector("#modeBtn").addEventListener("click", () => { document.body.classList.toggle("pet-mode"); localStorage.setItem(modeKey, document.body.classList.contains("pet-mode") ? "pet" : "full"); markStateChanged(); syncModeButton(); });
     document.querySelector("#speakBtn").addEventListener("click", () => {
       if (!("speechSynthesis" in window)) return;
@@ -566,13 +680,13 @@
       document.body.classList.toggle("pet-mode", data.mode === "pet");
       startApp();
     }
-    async function pullOrPushCloudState() {
+    async function pullOrPushCloudState(forcePush = false) {
       if (!syncClient || !syncUser) return;
       updateSyncStatus("正在同步");
       const { data: remote, error } = await syncClient.from("pet_state").select("payload, updated_at").eq("user_id", syncUser.id).maybeSingle();
       if (error) throw error;
       const remoteChangedAt = Number(remote?.payload?.changedAt || 0);
-      if (remote && Array.isArray(remote.payload?.selectedCourses) && remote.payload.selectedCourses.length) {
+      if (remote && Array.isArray(remote.payload?.selectedCourses) && remote.payload.selectedCourses.length && !forcePush && remoteChangedAt >= stateUpdatedAt) {
         applySnapshot(remote.payload);
       } else if (selectedCourses.length && days.length) {
         const { error: writeError } = await syncClient.from("pet_state").upsert({ user_id: syncUser.id, payload: snapshot() });
@@ -591,6 +705,22 @@
       clearTimeout(syncTimer);
       syncTimer = setTimeout(() => pullOrPushCloudState().catch(error => updateSyncStatus(`同步失败：${error.message}`)), 700);
     }
+    document.querySelector("#saveCloudBtn").addEventListener("click", async () => {
+      if (!syncUser) { updateSyncStatus("请先登录后再保存"); return; }
+      if (!selectedCourses.length || !days.length) { updateSyncStatus("课程或计划不能为空"); return; }
+      const button = document.querySelector("#saveCloudBtn");
+      try {
+        button.disabled = true; button.textContent = "正在保存";
+        stateUpdatedAt = Date.now();
+        localStorage.setItem(stateUpdatedAtKey, String(stateUpdatedAt));
+        await pullOrPushCloudState(true);
+        editorDirty = false;
+        renderEditor(); renderWeek(); renderTasks(); renderSchedule();
+        updateSyncStatus("课表与计划已保存");
+      } catch (error) {
+        updateSyncStatus(`保存失败：${error.message}`);
+      } finally { button.disabled = false; button.textContent = "保存到云端"; }
+    });
     async function setupCloudSync() {
       if (!syncReady) return;
       syncClient = window.supabase.createClient(syncConfig.supabaseUrl, syncConfig.supabaseAnonKey);
@@ -642,7 +772,7 @@
     function startApp() {
       if (!selectedCourses.length || !days.length) { document.body.classList.add("private-wait"); return; }
       document.body.classList.remove("private-wait");
-      syncModeButton(); renderWeek(); renderTasks(); renderSchedule(); renderPending(); document.querySelector('[data-view="scheduleView"]').click();
+      syncModeButton(); renderWeek(); renderTasks(); renderSchedule(); renderPending(); renderEditor(); document.querySelector('[data-view="scheduleView"]').click();
     }
     if (!selectedCourses.length || !days.length) document.body.classList.add("private-wait");
     if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("./sw.js").catch(() => {});
