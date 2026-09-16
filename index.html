@@ -633,7 +633,10 @@
         syncDialogText.textContent = "登录链接已发送。请在这台设备的邮箱中打开它，然后回到桌宠即可。";
         updateSyncStatus("等待邮箱登录");
       } catch (error) {
-        syncDialogText.textContent = `发送失败：${error.message}`;
+        const rateLimited = /rate limit/i.test(error.message || "");
+        syncDialogText.textContent = rateLimited
+          ? "邮件服务暂时达到免费额度。请约一小时后再试，期间不需要重复发送。"
+          : `发送失败：${error.message}`;
       } finally { syncLoginBtn.disabled = false; }
     });
     function startApp() {
