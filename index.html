@@ -225,9 +225,12 @@
     .review-guide span { border: 1px solid rgba(87,201,194,.28); color: #caeee9; padding: 6px 9px; font-size: 12px; background: rgba(87,201,194,.08); }
     .word-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .word-card { border: 1px solid rgba(255,255,255,.09); background: var(--panel-2); padding: 13px; display: grid; gap: 6px; }
+    .word-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .word-card strong { font-size: 18px; color: #f7e7b6; }
     .word-card span { color: var(--muted); font-size: 13px; }
     .word-card .example { color: #d9dce2; font-size: 13px; line-height: 1.5; padding-top: 3px; border-top: 1px solid rgba(255,255,255,.07); }
+    .sound-button { min-width: 36px; height: 32px; padding: 0 8px; border: 1px solid rgba(87,201,194,.38); background: rgba(87,201,194,.1); color: #d8fffb; cursor: pointer; font-weight: 700; }
+    .sound-button[disabled] { opacity: .62; cursor: wait; }
     .word-actions { display: flex; gap: 8px; margin-top: 4px; }
     .word-actions button { min-height: 32px; padding: 0 9px; border: 1px solid rgba(255,255,255,.14); background: var(--panel-3); color: var(--text); cursor: pointer; }
     .word-actions .forgot { border-color: rgba(238,118,118,.5); color: #ffc5c5; }
@@ -445,6 +448,7 @@
     };
     const englishStateKey = "dusk-study-pet-english-v1";
     const englishStartKey = "dusk-study-pet-english-start-v1";
+    const pronunciationCache = new Map();
     let englishProgress = JSON.parse(localStorage.getItem(englishStateKey) || "{}") || {};
     let englishStart = localStorage.getItem(englishStartKey);
     if (!englishStart) { englishStart = new Date().toISOString().slice(0, 10); localStorage.setItem(englishStartKey, englishStart); }
@@ -488,6 +492,49 @@
     function wordsFromLesson(lesson, day) { if (lesson.words) return lesson.words.map(item => ({ ...item, id: `${day}-${item.word}` })); return lesson[2].split(",").map(pair => { const [word, meaning] = pair.split("|"); return { word, pos: wordParts[word] || "n.", meaning, id: `${day}-${word}` }; }); }
     function lessonForToday() { const index = Math.min(englishDayIndex(), englishLessons.length - 1); const lesson = englishLessons[index]; return { index, title: lesson.title || lesson[0], scene: lesson.scene || lesson[1], words: wordsFromLesson(lesson, index) }; }
     function exampleForWord(word) { if (word.pos.startsWith("v")) return `We need to ${word.word} this idea before class.`; if (word.pos.startsWith("adj")) return `It was a ${word.word} result in the experiment.`; if (word.pos.startsWith("adv")) return `The result changed ${word.word}.`; return `This ${word.word} helps us understand the lesson.`; }
+    function speakEnglishWord(word) {
+      if (!("speechSynthesis" in window)) return;
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = "en-US";
+      utterance.rate = 0.86;
+      utterance.pitch = 1;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    }
+    async function findPronunciationAudio(word) {
+      const key = word.toLowerCase();
+      if (pronunciationCache.has(key)) return pronunciationCache.get(key);
+      try {
+        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+        if (!response.ok) throw new Error("not found");
+        const entries = await response.json();
+        const phonetics = entries.flatMap(entry => entry.phonetics || []);
+        let audio = phonetics.find(item => item.audio && item.audio.trim())?.audio || "";
+        if (audio.startsWith("//")) audio = `https:${audio}`;
+        pronunciationCache.set(key, audio || null);
+        return audio || null;
+      } catch {
+        pronunciationCache.set(key, null);
+        return null;
+      }
+    }
+    async function playWordPronunciation(word, button) {
+      const originalText = button.textContent;
+      button.disabled = true;
+      button.textContent = "...";
+      const audioUrl = await findPronunciationAudio(word);
+      if (audioUrl) {
+        try {
+          await new Audio(audioUrl).play();
+        } catch {
+          speakEnglishWord(word);
+        }
+      } else {
+        speakEnglishWord(word);
+      }
+      button.disabled = false;
+      button.textContent = originalText;
+    }
     function courseDate(dayIndex, week = activeWeek()) { const date = new Date(2026, 8, 14 + (week - 1) * 7 + dayIndex); return `${date.getMonth() + 1}月${date.getDate()}日`; }
     function saveEnglish() { localStorage.setItem(englishStateKey, JSON.stringify(englishProgress)); markStateChanged(); }
     function isReviewDue(wordDay) { const gap = englishDayIndex() - wordDay; return [1, 3, 7, 14, 30].includes(gap); }
@@ -574,7 +621,7 @@
       document.querySelector("#englishTitle").textContent = `六级词汇 · 第${lesson.index + 1}天`;
       document.querySelector("#englishTheme").textContent = `${lesson.title}：${lesson.scene}`;
       document.querySelector("#reviewCount").textContent = `今日待复习 ${reviews.length}`;
-      const wordCard = word => `<article class="word-card"><strong>${word.word}</strong><span>${word.pos} · ${word.meaning}</span><p class="example">${exampleForWord(word)}</p><div class="word-actions"><button type="button" data-remember-word="${word.id}">记住了</button><button class="forgot" type="button" data-forgot-word="${word.id}">忘了，明天加练</button></div></article>`;
+      const wordCard = word => `<article class="word-card"><div class="word-title"><strong>${word.word}</strong><button class="sound-button" type="button" data-pronounce-word="${word.word}" title="播放单词发音">声</button></div><span>${word.pos} · ${word.meaning}</span><p class="example">${exampleForWord(word)}</p><div class="word-actions"><button type="button" data-remember-word="${word.id}">记住了</button><button class="forgot" type="button" data-forgot-word="${word.id}">忘了，明天加练</button></div></article>`;
       document.querySelector("#newWords").innerHTML = lesson.words.map(wordCard).join("");
       document.querySelector("#reviewWords").innerHTML = reviews.length ? reviews.map(wordCard).join("") : `<p class="tip">今天没有到期复习词。学完新词后，明天会开始第 1 次复习。</p>`;
       const quizWord = reviews[0] || lesson.words[0];
@@ -584,6 +631,8 @@
       document.querySelector("#quizResult").textContent = "";
     }
     document.querySelector("#englishView").addEventListener("click", event => {
+      const pronounceButton = event.target.closest("[data-pronounce-word]");
+      if (pronounceButton) { playWordPronunciation(pronounceButton.dataset.pronounceWord, pronounceButton); return; }
       const id = event.target.dataset.forgotWord || event.target.dataset.rememberWord;
       if (id) { englishProgress.forgotten ||= {}; if (event.target.dataset.forgotWord) englishProgress.forgotten[id] = englishDayIndex(); else delete englishProgress.forgotten[id]; saveEnglish(); renderEnglish(); }
       if (event.target.dataset.quizAnswer !== undefined) { const correct = event.target.dataset.quizAnswer === "true"; document.querySelector("#quizResult").textContent = correct ? "答对了，继续保持。" : "这题先标记为忘记，明天会自动加练。"; if (!correct) { const word = reviewWords()[0] || lessonForToday().words[0]; englishProgress.forgotten ||= {}; englishProgress.forgotten[word.id] = englishDayIndex(); saveEnglish(); } }
