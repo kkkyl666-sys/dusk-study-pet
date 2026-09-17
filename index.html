@@ -133,7 +133,7 @@
     .progress-label { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; }
     .bar { height: 10px; background: #141517; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; }
     .bar span { display: block; width: 0%; height: 100%; background: linear-gradient(90deg, var(--green), var(--cyan)); transition: width 220ms ease; }
-    .tabs { width: 100%; min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .tabs { width: 100%; min-width: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
     .tab-button { min-height: 42px; color: var(--text); cursor: pointer; background: rgba(255,255,255,0.04); }
     .tab-button.active { border-color: rgba(87, 201, 194, 0.78); background: rgba(87, 201, 194, 0.15); }
     .view { display: none; min-height: 0; min-width: 0; }
@@ -219,6 +219,21 @@
     .task-edit input, .task-edit select { width: 100%; height: 36px; color: var(--text); background: var(--panel-3); border: 1px solid var(--line); padding: 0 8px; font: inherit; }
     .delete-button { height: 36px; padding: 0 10px; border: 1px solid rgba(238,118,118,0.42); color: #ffc3c3; background: rgba(238,118,118,0.08); cursor: pointer; }
     .save-state { color: var(--amber); font-size: 12px; }
+    .english-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; margin-bottom: 14px; flex-wrap: wrap; }
+    .english-head p { color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .review-guide { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .review-guide span { border: 1px solid rgba(87,201,194,.28); color: #caeee9; padding: 6px 9px; font-size: 12px; background: rgba(87,201,194,.08); }
+    .word-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .word-card { border: 1px solid rgba(255,255,255,.09); background: var(--panel-2); padding: 13px; display: grid; gap: 6px; }
+    .word-card strong { font-size: 18px; color: #f7e7b6; }
+    .word-card span { color: var(--muted); font-size: 13px; }
+    .word-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .word-actions button { min-height: 32px; padding: 0 9px; border: 1px solid rgba(255,255,255,.14); background: var(--panel-3); color: var(--text); cursor: pointer; }
+    .word-actions .forgot { border-color: rgba(238,118,118,.5); color: #ffc5c5; }
+    .quiz { margin-top: 16px; padding: 16px; border: 1px solid rgba(255,255,255,.08); background: var(--panel-2); display: grid; gap: 12px; }
+    .quiz-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .quiz-options button { min-height: 42px; color: var(--text); background: var(--panel-3); border: 1px solid var(--line); cursor: pointer; text-align: left; padding: 9px; }
+    .quiz-result { min-height: 20px; color: var(--muted); font-size: 13px; }
     @media (max-width: 900px) {
       body { padding: 12px; }
       .app { grid-template-columns: 1fr; }
@@ -231,6 +246,7 @@
       .task-edit input:nth-child(3), .task-edit input:nth-child(4) { grid-column: 1 / -1; }
       .topbar { align-items: stretch; flex-direction: column; }
       .progress { min-width: 0; }
+      .word-list, .quiz-options { grid-template-columns: 1fr; }
     }
     body.pet-mode { min-height: 100vh; place-items: start end; padding: 16px; overflow: hidden; }
     body.pet-mode .app { width: min(455px, calc(100vw - 32px)); min-height: 0; max-height: calc(100vh - 32px); grid-template-columns: 1fr; border-radius: 18px; overflow: auto; scrollbar-width: thin; }
@@ -246,7 +262,7 @@
     body.pet-mode .topbar { align-items: stretch; flex-direction: column; gap: 10px; }
     body.pet-mode .today-title h1 { font-size: 18px; }
     body.pet-mode .today-title span { font-size: 12px; }
-    body.pet-mode .tabs { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    body.pet-mode .tabs { grid-template-columns: repeat(5, 1fr); gap: 6px; }
     body.pet-mode .tab-button { min-height: 36px; font-size: 12px; }
     body.pet-mode .progress { min-width: 0; }
     body.pet-mode .week { grid-template-columns: repeat(4, 1fr); gap: 6px; }
@@ -319,6 +335,7 @@
         <button class="tab-button" type="button" data-view="tasksView">计划</button>
         <button class="tab-button active" type="button" data-view="scheduleView">课表</button>
         <button class="tab-button" type="button" data-view="selectView">策略</button>
+        <button class="tab-button" type="button" data-view="englishView">英语</button>
         <button class="tab-button" type="button" data-view="editView">编辑</button>
       </nav>
       <section class="view" id="tasksView">
@@ -348,6 +365,13 @@
       <section class="view" id="selectView">
         <p class="tip">策略：登录后会从你的个人云端加载当前课表与学习安排。</p>
         <div class="select-list" id="selectList"></div>
+      </section>
+      <section class="view" id="englishView">
+        <div class="english-head"><div><h2 id="englishTitle">六级词汇</h2><p id="englishTheme"></p></div><button class="mode" id="exportWordsBtn" type="button">导出今日单词</button></div>
+        <div class="review-guide"><span>第1天复习</span><span>第3天复习</span><span>第7天复习</span><span>第14天复习</span><span>第30天复习</span><span id="reviewCount">今日待复习 0</span></div>
+        <h3>今日 10 个新词</h3><div class="word-list" id="newWords"></div>
+        <h3 style="margin-top:16px">今日复习</h3><div class="word-list" id="reviewWords"></div>
+        <section class="quiz"><h3>快速小测</h3><p id="quizPrompt"></p><div class="quiz-options" id="quizOptions"></div><p class="quiz-result" id="quizResult"></p></section>
       </section>
       <section class="view" id="editView">
         <div class="editor-toolbar">
@@ -398,7 +422,21 @@
     const pendingCourses = [];
     const marxOptions = [];
     let days = [];
-    const tagClass = { "上课": "drive", "信号": "hardware", "复变": "software", "数电": "prompt", "量子": "video", "程序": "software", "实验": "hardware", "公共": "drive", "规划": "prompt", "恢复": "video", "社团": "drive", "学习": "software" };
+    const englishLessons = [
+      ["校园与学习", "在课堂、图书馆和实验室里建立学习节奏。", "allocate|分配,comprehend|理解,concentrate|专注,derive|推导,facilitate|促进,formulate|阐述,illustrate|说明,interpret|解释,perceive|察觉,retain|记住"],
+      ["表达观点", "用英语描述想法、证据与结论。", "advocate|提倡,assert|断言,clarify|澄清,contradict|反驳,emphasize|强调,justify|证明合理,maintain|坚持主张,outline|概述,postulate|假定,refute|驳斥"],
+      ["合作与项目", "把任务推进、协作和反馈说清楚。", "collaborate|协作,coordinate|协调,delegate|委派,implement|实施,integrate|整合,negotiate|协商,participate|参与,prioritize|优先处理,resolve|解决,supervise|监督"],
+      ["变化与结果", "描述事情如何发生、发展和产生影响。", "accelerate|加速,alter|改变,anticipate|预期,consequently|因此,deteriorate|恶化,eliminate|消除,enhance|提升,fluctuate|波动,inevitably|不可避免地,transform|转变"],
+      ["科技与研究", "阅读科技文章和研究报告时常见的词。", "algorithm|算法,compile|编译,conventional|传统的,device|设备,empirical|实证的,innovative|创新的,monitor|监测,precise|精确的,simulate|模拟,validate|验证"],
+      ["社会与环境", "谈论城市、资源与公共议题。", "advocate|倡导,conserve|节约保护,consumption|消耗,contaminate|污染,demographic|人口统计的,distribute|分配,legislation|立法,municipal|市政的,scarce|稀缺的,sustainable|可持续的"],
+      ["沟通与情绪", "在对话中表达态度、关系与感受。", "appreciate|欣赏感激,confront|面对,convince|说服,cooperate|合作,frustrate|使受挫,hesitate|犹豫,indifferent|冷漠的,mutual|相互的,reluctant|不情愿的,sincere|真诚的"]
+    ];
+    const englishStateKey = "dusk-study-pet-english-v1";
+    const englishStartKey = "dusk-study-pet-english-start-v1";
+    let englishProgress = JSON.parse(localStorage.getItem(englishStateKey) || "{}") || {};
+    let englishStart = localStorage.getItem(englishStartKey);
+    if (!englishStart) { englishStart = new Date().toISOString().slice(0, 10); localStorage.setItem(englishStartKey, englishStart); }
+    const tagClass = { "上课": "drive", "信号": "hardware", "复变": "software", "数电": "prompt", "量子": "video", "程序": "software", "实验": "hardware", "公共": "drive", "规划": "prompt", "恢复": "video", "社团": "drive", "学习": "software", "英语": "video" };
     const stateKey = "summer-study-pet-v2";
     const modeKey = "summer-study-pet-mode-v2";
     const stateUpdatedAtKey = "summer-study-pet-state-updated-at-v1";
@@ -434,6 +472,24 @@
     const weekInput = document.querySelector("#weekInput");
     weekInput.value = currentWeek;
     function taskId(dayIndex, taskIndex) { return `${dayIndex}-${taskIndex}`; }
+    function englishDayIndex() { return Math.max(0, Math.floor((Date.now() - new Date(`${englishStart}T00:00:00`).getTime()) / 86400000)); }
+    function lessonForToday() { const lesson = englishLessons[englishDayIndex() % englishLessons.length]; return { index: englishDayIndex(), title: lesson[0], scene: lesson[1], words: lesson[2].split(",").map(pair => { const [word, meaning] = pair.split("|"); return { word, meaning, id: `${englishDayIndex()}-${word}` }; }) }; }
+    function saveEnglish() { localStorage.setItem(englishStateKey, JSON.stringify(englishProgress)); markStateChanged(); }
+    function isReviewDue(wordDay) { const gap = englishDayIndex() - wordDay; return [1, 3, 7, 14, 30].includes(gap); }
+    function reviewWords() {
+      const result = [];
+      for (let day = Math.max(0, englishDayIndex() - 30); day < englishDayIndex(); day++) {
+        const lesson = englishLessons[day % englishLessons.length];
+        lesson[2].split(",").forEach(pair => { const [word, meaning] = pair.split("|"); const id = `${day}-${word}`; if (isReviewDue(day) || englishProgress.forgotten?.[id] === englishDayIndex() - 1) result.push({ word, meaning, id, day }); });
+      }
+      return result;
+    }
+    function englishTaskItems() {
+      if (activeDay !== todayIndex) return [];
+      const lesson = lessonForToday();
+      return [[`英语单词 · 第${lesson.index + 1}天`, "英语", `${lesson.title} · 10 个新词，另有 ${reviewWords().length} 个待复习`, null, `english-${lesson.index}-words`], ["豆包英语对话 20min", "英语", "围绕今日主题用英语对话，至少说出 3 个今日单词。", null, `english-${lesson.index}-dialogue`]];
+    }
+    function checkId(dayIndex, task, taskIndex) { return task[4] || taskId(dayIndex, taskIndex); }
     function activeWeek() { return Number(weekInput.value || currentWeek); }
     function inWeekRange(ranges, week = activeWeek()) { return !ranges || ranges.some(([a,b]) => week >= a && week <= b); }
     function visibleTasks(day) { return day.tasks.filter(task => inWeekRange(task[3])); }
@@ -476,14 +532,14 @@
     function renderTasks() {
       const day = days[activeDay];
       const week = activeWeek();
-      const tasks = visibleTasks(day);
+      const tasks = [...visibleTasks(day), ...englishTaskItems()];
       tasksEl.innerHTML = "";
       mainHeading.textContent = `${day.date} · ${day.name}`;
       mainSub.textContent = `第${week}周 · 按当前周次和时间自动调整，完成后勾选。`;
       petLine.textContent = day.line;
       tasks.forEach((task, index) => {
         const [title, subject, note] = task;
-        const id = taskId(activeDay, day.tasks.indexOf(task));
+        const id = checkId(activeDay, task, day.tasks.indexOf(task));
         const state = timeState(title);
         const item = document.createElement("label");
         item.className = `task ${checked[id] ? "done" : ""} ${state.className}`;
@@ -492,11 +548,35 @@
         item.querySelector("input").addEventListener("change", event => { checked[id] = event.target.checked; save(); renderTasks(); });
         tasksEl.appendChild(item);
       });
-      const done = tasks.filter(task => checked[taskId(activeDay, day.tasks.indexOf(task))]).length;
+      const done = tasks.filter(task => checked[checkId(activeDay, task, day.tasks.indexOf(task))]).length;
       const total = tasks.length;
       progressText.textContent = `${done}/${total}`;
       progressBar.style.width = total ? `${Math.round(done / total * 100)}%` : "0%";
     }
+    function renderEnglish() {
+      const lesson = lessonForToday();
+      const reviews = reviewWords();
+      document.querySelector("#englishTitle").textContent = `六级词汇 · 第${lesson.index + 1}天`;
+      document.querySelector("#englishTheme").textContent = `${lesson.title}：${lesson.scene}`;
+      document.querySelector("#reviewCount").textContent = `今日待复习 ${reviews.length}`;
+      const wordCard = word => `<article class="word-card"><strong>${word.word}</strong><span>${word.meaning}</span><div class="word-actions"><button type="button" data-remember-word="${word.id}">记住了</button><button class="forgot" type="button" data-forgot-word="${word.id}">忘了，明天加练</button></div></article>`;
+      document.querySelector("#newWords").innerHTML = lesson.words.map(wordCard).join("");
+      document.querySelector("#reviewWords").innerHTML = reviews.length ? reviews.map(wordCard).join("") : `<p class="tip">今天没有到期复习词。学完新词后，明天会开始第 1 次复习。</p>`;
+      const quizWord = reviews[0] || lesson.words[0];
+      const choices = [...new Set([quizWord.meaning, ...lesson.words.filter(word => word.meaning !== quizWord.meaning).slice(1, 4).map(word => word.meaning)])].sort(() => Math.random() - .5);
+      document.querySelector("#quizPrompt").textContent = `“${quizWord.word}” 最接近下面哪一个意思？`;
+      document.querySelector("#quizOptions").innerHTML = choices.map(choice => `<button type="button" data-quiz-answer="${choice === quizWord.meaning}">${choice}</button>`).join("");
+      document.querySelector("#quizResult").textContent = "";
+    }
+    document.querySelector("#englishView").addEventListener("click", event => {
+      const id = event.target.dataset.forgotWord || event.target.dataset.rememberWord;
+      if (id) { englishProgress.forgotten ||= {}; if (event.target.dataset.forgotWord) englishProgress.forgotten[id] = englishDayIndex(); else delete englishProgress.forgotten[id]; saveEnglish(); renderEnglish(); }
+      if (event.target.dataset.quizAnswer !== undefined) { const correct = event.target.dataset.quizAnswer === "true"; document.querySelector("#quizResult").textContent = correct ? "答对了，继续保持。" : "这题先标记为忘记，明天会自动加练。"; if (!correct) { const word = reviewWords()[0] || lessonForToday().words[0]; englishProgress.forgotten ||= {}; englishProgress.forgotten[word.id] = englishDayIndex(); saveEnglish(); } }
+    });
+    document.querySelector("#exportWordsBtn").addEventListener("click", () => {
+      const lesson = lessonForToday(); const text = `# 今日六级单词\n\n第${lesson.index + 1}天：${lesson.title}\n${lesson.scene}\n\n${lesson.words.map((word, index) => `${index + 1}. ${word.word} - ${word.meaning}`).join("\n")}\n\n今日任务：豆包英语对话 20 分钟。`;
+      const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([text], { type: "text/markdown;charset=utf-8" })); link.download = `今日英语单词-${new Date().toISOString().slice(0, 10)}.md`; link.click(); URL.revokeObjectURL(link.href);
+    });
     function renderSchedule() {
       const week = activeWeek();
       const grid = document.querySelector("#scheduleGrid");
@@ -622,8 +702,9 @@
       document.querySelector(`#${button.dataset.view}`).classList.add("active");
       document.querySelector("#taskProgress").style.display = button.dataset.view === "tasksView" ? "grid" : "none";
       if (button.dataset.view === "editView") renderEditor();
-      mainHeading.textContent = button.dataset.view === "scheduleView" ? "光电学习课表" : button.dataset.view === "selectView" ? "课表策略" : button.dataset.view === "editView" ? "编辑课表与计划" : `${days[activeDay].date} · ${days[activeDay].name}`;
-      mainSub.textContent = button.dataset.view === "scheduleView" ? "按周查看上课安排，并在计划页执行每个时间段的学习计划。" : button.dataset.view === "selectView" ? "完整课表执行中，暑假计划已下线。" : button.dataset.view === "editView" ? "修改后点击保存到云端，手机才会收到新版内容。" : "完成后勾选，桌宠会记住。";
+      mainHeading.textContent = button.dataset.view === "scheduleView" ? "光电学习课表" : button.dataset.view === "selectView" ? "课表策略" : button.dataset.view === "englishView" ? "六级英语记忆" : button.dataset.view === "editView" ? "编辑课表与计划" : `${days[activeDay].date} · ${days[activeDay].name}`;
+      mainSub.textContent = button.dataset.view === "scheduleView" ? "按周查看上课安排，并在计划页执行每个时间段的学习计划。" : button.dataset.view === "selectView" ? "完整课表执行中，暑假计划已下线。" : button.dataset.view === "englishView" ? "新词、艾宾浩斯复习和错词加练都在这里。" : button.dataset.view === "editView" ? "修改后点击保存到云端，手机才会收到新版内容。" : "完成后勾选，桌宠会记住。";
+      if (button.dataset.view === "englishView") renderEnglish();
     }));
     document.querySelector("#resetBtn").addEventListener("click", () => { checked = {}; save(); renderTasks(); });
     document.querySelector("#addCourseBtn").addEventListener("click", () => {
@@ -675,6 +756,8 @@
         checked,
         activeDay,
         activeWeek: activeWeek(),
+        englishProgress,
+        englishStart,
         mode: document.body.classList.contains("pet-mode") ? "pet" : "full",
         changedAt: stateUpdatedAt
       };
@@ -684,6 +767,10 @@
       if (Array.isArray(data.selectedCourses) && data.selectedCourses.length) selectedCourses = data.selectedCourses;
       if (Array.isArray(data.days) && data.days.length) days = data.days;
       checked = data.checked && typeof data.checked === "object" ? data.checked : {};
+      englishProgress = data.englishProgress && typeof data.englishProgress === "object" ? data.englishProgress : englishProgress;
+      englishStart = typeof data.englishStart === "string" ? data.englishStart : englishStart;
+      localStorage.setItem(englishStateKey, JSON.stringify(englishProgress));
+      localStorage.setItem(englishStartKey, englishStart);
       activeDay = Number.isInteger(data.activeDay) ? Math.max(0, Math.min(days.length - 1, data.activeDay)) : Math.min(days.length - 1, Math.max(0, todayIndex));
       weekInput.value = Number(data.activeWeek) || currentWeek;
       stateUpdatedAt = Number(data.changedAt) || Date.now();
@@ -774,7 +861,7 @@
     function startApp() {
       if (!selectedCourses.length || !days.length) { document.body.classList.add("private-wait"); return; }
       document.body.classList.remove("private-wait");
-      syncModeButton(); renderWeek(); renderTasks(); renderSchedule(); renderPending(); renderEditor(); document.querySelector('[data-view="scheduleView"]').click();
+      syncModeButton(); renderWeek(); renderTasks(); renderSchedule(); renderPending(); renderEditor(); renderEnglish(); document.querySelector('[data-view="scheduleView"]').click();
     }
     if (!selectedCourses.length || !days.length) document.body.classList.add("private-wait");
     if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("./sw.js").catch(() => {});
