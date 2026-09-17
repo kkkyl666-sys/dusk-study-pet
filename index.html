@@ -235,6 +235,8 @@
     .word-actions { display: flex; gap: 8px; margin-top: 4px; }
     .word-actions button { min-height: 32px; padding: 0 9px; border: 1px solid rgba(255,255,255,.14); background: var(--panel-3); color: var(--text); cursor: pointer; }
     .word-actions .forgot { border-color: rgba(238,118,118,.5); color: #ffc5c5; }
+    .word-status { color: #caeee9; border: 1px solid rgba(87,201,194,.28); background: rgba(87,201,194,.08); padding: 8px 9px; font-size: 13px; width: fit-content; }
+    .word-status.forgot { color: #ffc5c5; border-color: rgba(238,118,118,.45); background: rgba(238,118,118,.08); }
     .quiz { margin-top: 16px; padding: 16px; border: 1px solid rgba(255,255,255,.08); background: var(--panel-2); display: grid; gap: 12px; }
     .quiz-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
     .quiz-options button { min-height: 42px; color: var(--text); background: var(--panel-3); border: 1px solid var(--line); cursor: pointer; text-align: left; padding: 9px; }
@@ -508,8 +510,10 @@
     async function findPronunciationInfo(word) {
       const key = word.toLowerCase();
       if (pronunciationCache.has(key)) return pronunciationCache.get(key);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6500);
       try {
-        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`, { signal: controller.signal });
         if (!response.ok) throw new Error("not found");
         const entries = await response.json();
         const phonetics = entries.flatMap(entry => entry.phonetics || []);
@@ -524,10 +528,12 @@
         const info = { phonetic: "音标暂缺", audio: "" };
         pronunciationCache.set(key, info);
         return info;
+      } finally {
+        clearTimeout(timer);
       }
     }
     async function hydratePhonetics() {
-      const targets = [...document.querySelectorAll("[data-phonetic-word]")];
+      const targets = [...document.querySelectorAll("[data-phonetic-word]")].filter(target => target.textContent === "英式音标加载中");
       await Promise.all(targets.map(async target => {
         const info = await findPronunciationInfo(target.dataset.phoneticWord);
         target.textContent = info.phonetic;
@@ -565,6 +571,11 @@
       if (activeDay !== todayIndex) return [];
       const lesson = lessonForToday();
       return [[`英语单词 · 第${lesson.index + 1}天`, "英语", `${lesson.title} · 10 个新词，另有 ${reviewWords().length} 个待复习`, null, `english-${lesson.index}-words`], ["豆包英语对话 20min", "英语", "围绕今日主题用英语对话，至少说出 3 个今日单词。", null, `english-${lesson.index}-dialogue`]];
+    }
+    function wordActionHtml(word) {
+      if (englishProgress.forgotten?.[word.id] === englishDayIndex()) return `<p class="word-status forgot">已标记：明天加练</p>`;
+      if (englishProgress.remembered?.[word.id] === englishDayIndex()) return `<p class="word-status">已完成</p>`;
+      return `<div class="word-actions"><button type="button" data-remember-word="${word.id}">记住了</button><button class="forgot" type="button" data-forgot-word="${word.id}">忘了，明天加练</button></div>`;
     }
     function checkId(dayIndex, task, taskIndex) { return task[4] || taskId(dayIndex, taskIndex); }
     function activeWeek() { return Number(weekInput.value || currentWeek); }
@@ -636,7 +647,7 @@
       document.querySelector("#englishTitle").textContent = `六级词汇 · 第${lesson.index + 1}天`;
       document.querySelector("#englishTheme").textContent = `${lesson.title}：${lesson.scene}`;
       document.querySelector("#reviewCount").textContent = `今日待复习 ${reviews.length}`;
-      const wordCard = word => `<article class="word-card"><div class="word-title"><strong>${word.word}</strong><button class="sound-button" type="button" data-pronounce-word="${word.word}" title="播放英式发音">声</button></div><span class="phonetic" data-phonetic-word="${word.word}">英式音标加载中</span><span>${word.pos} · ${word.meaning}</span><p class="example">${exampleForWord(word)}</p><div class="word-actions"><button type="button" data-remember-word="${word.id}">记住了</button><button class="forgot" type="button" data-forgot-word="${word.id}">忘了，明天加练</button></div></article>`;
+      const wordCard = word => `<article class="word-card"><div class="word-title"><strong>${word.word}</strong><button class="sound-button" type="button" data-pronounce-word="${word.word}" title="播放英式发音">声</button></div><span class="phonetic" data-phonetic-word="${word.word}">${word.phonetic || "英式音标加载中"}</span><span>${word.pos} · ${word.meaning}</span><p class="example">${exampleForWord(word)}</p>${wordActionHtml(word)}</article>`;
       document.querySelector("#newWords").innerHTML = lesson.words.map(wordCard).join("");
       document.querySelector("#reviewWords").innerHTML = reviews.length ? reviews.map(wordCard).join("") : `<p class="tip">今天没有到期复习词。学完新词后，明天会开始第 1 次复习。</p>`;
       const quizWord = reviews[0] || lesson.words[0];
@@ -649,8 +660,9 @@
     document.querySelector("#englishView").addEventListener("click", event => {
       const pronounceButton = event.target.closest("[data-pronounce-word]");
       if (pronounceButton) { playWordPronunciation(pronounceButton.dataset.pronounceWord, pronounceButton); return; }
-      const id = event.target.dataset.forgotWord || event.target.dataset.rememberWord;
-      if (id) { englishProgress.forgotten ||= {}; if (event.target.dataset.forgotWord) englishProgress.forgotten[id] = englishDayIndex(); else delete englishProgress.forgotten[id]; saveEnglish(); renderEnglish(); }
+      const actionButton = event.target.closest("[data-forgot-word], [data-remember-word]");
+      const id = actionButton?.dataset.forgotWord || actionButton?.dataset.rememberWord;
+      if (id) { englishProgress.forgotten ||= {}; englishProgress.remembered ||= {}; if (actionButton.dataset.forgotWord) { englishProgress.forgotten[id] = englishDayIndex(); delete englishProgress.remembered[id]; } else { englishProgress.remembered[id] = englishDayIndex(); delete englishProgress.forgotten[id]; } saveEnglish(); renderEnglish(); }
       if (event.target.dataset.quizAnswer !== undefined) { const correct = event.target.dataset.quizAnswer === "true"; document.querySelector("#quizResult").textContent = correct ? "答对了，继续保持。" : "这题先标记为忘记，明天会自动加练。"; if (!correct) { const word = reviewWords()[0] || lessonForToday().words[0]; englishProgress.forgotten ||= {}; englishProgress.forgotten[word.id] = englishDayIndex(); saveEnglish(); } }
     });
     document.querySelector("#exportWordsBtn").addEventListener("click", () => {
@@ -786,6 +798,8 @@
       mainSub.textContent = button.dataset.view === "scheduleView" ? "按周查看上课安排，并在计划页执行每个时间段的学习计划。" : button.dataset.view === "selectView" ? "完整课表执行中，暑假计划已下线。" : button.dataset.view === "englishView" ? "新词、艾宾浩斯复习和错词加练都在这里。" : button.dataset.view === "editView" ? "修改后点击保存到云端，手机才会收到新版内容。" : "完成后勾选，桌宠会记住。";
       if (button.dataset.view === "englishView") renderEnglish();
     }));
+    function currentViewId() { return document.querySelector(".tab-button.active")?.dataset.view || "scheduleView"; }
+    function activateView(viewId) { (document.querySelector(`[data-view="${viewId}"]`) || document.querySelector('[data-view="scheduleView"]')).click(); }
     document.querySelector("#resetBtn").addEventListener("click", () => { checked = {}; save(); renderTasks(); });
     document.querySelector("#addCourseBtn").addEventListener("click", () => {
       selectedCourses.push(course("自定义", "新课程", "major", [[1, 17]], 0, [1, 2], "待填写", "待填写"));
@@ -938,10 +952,10 @@
         syncDialogText.textContent = "解锁码不正确或云端暂时无法访问，请检查后再试。";
       } finally { syncLoginBtn.disabled = false; }
     });
-    function startApp() {
+    function startApp(preferredView = currentViewId()) {
       if (!selectedCourses.length || !days.length) { document.body.classList.add("private-wait"); return; }
       document.body.classList.remove("private-wait");
-      syncModeButton(); renderWeek(); renderTasks(); renderSchedule(); renderPending(); renderEditor(); renderEnglish(); document.querySelector('[data-view="scheduleView"]').click();
+      syncModeButton(); renderWeek(); renderTasks(); renderSchedule(); renderPending(); renderEditor(); renderEnglish(); activateView(preferredView);
     }
     if (!selectedCourses.length || !days.length) document.body.classList.add("private-wait");
     if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("./sw.js").catch(() => {});
