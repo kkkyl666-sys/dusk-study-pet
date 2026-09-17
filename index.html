@@ -403,6 +403,7 @@
     </form>
   </dialog>
   <script src="sync-config.js"></script>
+  <script src="cet6-35.js"></script>
   <script>
     const dayNames = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"];
     const periods = [
@@ -422,7 +423,7 @@
     const pendingCourses = [];
     const marxOptions = [];
     let days = [];
-    const englishLessons = [
+    const fallbackEnglishLessons = [
       ["校园与学习", "在课堂、图书馆和实验室里建立学习节奏。", "allocate|分配,comprehend|理解,concentrate|专注,derive|推导,facilitate|促进,formulate|阐述,illustrate|说明,interpret|解释,perceive|察觉,retain|记住"],
       ["表达观点", "用英语描述想法、证据与结论。", "advocate|提倡,assert|断言,clarify|澄清,contradict|反驳,emphasize|强调,justify|证明合理,maintain|坚持主张,outline|概述,postulate|假定,refute|驳斥"],
       ["合作与项目", "把任务推进、协作和反馈说清楚。", "collaborate|协作,coordinate|协调,delegate|委派,implement|实施,integrate|整合,negotiate|协商,participate|参与,prioritize|优先处理,resolve|解决,supervise|监督"],
@@ -431,6 +432,7 @@
       ["社会与环境", "谈论城市、资源与公共议题。", "advocate|倡导,conserve|节约保护,consumption|消耗,contaminate|污染,demographic|人口统计的,distribute|分配,legislation|立法,municipal|市政的,scarce|稀缺的,sustainable|可持续的"],
       ["沟通与情绪", "在对话中表达态度、关系与感受。", "appreciate|欣赏感激,confront|面对,convince|说服,cooperate|合作,frustrate|使受挫,hesitate|犹豫,indifferent|冷漠的,mutual|相互的,reluctant|不情愿的,sincere|真诚的"]
     ];
+    const englishLessons = window.CET6_35 || fallbackEnglishLessons;
     const wordParts = {
       allocate: "v.", comprehend: "v.", concentrate: "v.", derive: "v.", facilitate: "v.", formulate: "v.", illustrate: "v.", interpret: "v.", perceive: "v.", retain: "v.",
       advocate: "v.", assert: "v.", clarify: "v.", contradict: "v.", emphasize: "v.", justify: "v.", maintain: "v.", outline: "v.", postulate: "v.", refute: "v.",
@@ -482,14 +484,15 @@
     weekInput.value = currentWeek;
     function taskId(dayIndex, taskIndex) { return `${dayIndex}-${taskIndex}`; }
     function englishDayIndex() { return Math.max(0, Math.floor((Date.now() - new Date(`${englishStart}T00:00:00`).getTime()) / 86400000)); }
-    function lessonForToday() { const lesson = englishLessons[englishDayIndex() % englishLessons.length]; return { index: englishDayIndex(), title: lesson[0], scene: lesson[1], words: lesson[2].split(",").map(pair => { const [word, meaning] = pair.split("|"); return { word, pos: wordParts[word] || "n.", meaning, id: `${englishDayIndex()}-${word}` }; }) }; }
+    function wordsFromLesson(lesson, day) { if (lesson.words) return lesson.words.map(item => ({ ...item, id: `${day}-${item.word}` })); return lesson[2].split(",").map(pair => { const [word, meaning] = pair.split("|"); return { word, pos: wordParts[word] || "n.", meaning, id: `${day}-${word}` }; }); }
+    function lessonForToday() { const index = Math.min(englishDayIndex(), englishLessons.length - 1); const lesson = englishLessons[index]; return { index, title: lesson.title || lesson[0], scene: lesson.scene || lesson[1], words: wordsFromLesson(lesson, index) }; }
     function saveEnglish() { localStorage.setItem(englishStateKey, JSON.stringify(englishProgress)); markStateChanged(); }
     function isReviewDue(wordDay) { const gap = englishDayIndex() - wordDay; return [1, 3, 7, 14, 30].includes(gap); }
     function reviewWords() {
       const result = [];
       for (let day = Math.max(0, englishDayIndex() - 30); day < englishDayIndex(); day++) {
-        const lesson = englishLessons[day % englishLessons.length];
-        lesson[2].split(",").forEach(pair => { const [word, meaning] = pair.split("|"); const id = `${day}-${word}`; if (isReviewDue(day) || englishProgress.forgotten?.[id] === englishDayIndex() - 1) result.push({ word, pos: wordParts[word] || "n.", meaning, id, day }); });
+        const lesson = englishLessons[Math.min(day, englishLessons.length - 1)];
+        wordsFromLesson(lesson, day).forEach(word => { if (isReviewDue(day) || englishProgress.forgotten?.[word.id] === englishDayIndex() - 1) result.push({ ...word, day }); });
       }
       return result;
     }

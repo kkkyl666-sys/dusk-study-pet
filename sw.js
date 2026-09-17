@@ -1,5 +1,5 @@
-const CACHE_NAME = "dusk-study-pet-v4";
-const APP_SHELL = ["./", "./index.html", "./dusk-pet.png", "./manifest.webmanifest", "./sync-config.js"];
+const CACHE_NAME = "dusk-study-pet-v5";
+const APP_SHELL = ["./", "./index.html", "./dusk-pet.png", "./manifest.webmanifest", "./sync-config.js", "./cet6-35.js"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
