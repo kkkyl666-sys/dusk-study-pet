@@ -431,6 +431,15 @@
       ["社会与环境", "谈论城市、资源与公共议题。", "advocate|倡导,conserve|节约保护,consumption|消耗,contaminate|污染,demographic|人口统计的,distribute|分配,legislation|立法,municipal|市政的,scarce|稀缺的,sustainable|可持续的"],
       ["沟通与情绪", "在对话中表达态度、关系与感受。", "appreciate|欣赏感激,confront|面对,convince|说服,cooperate|合作,frustrate|使受挫,hesitate|犹豫,indifferent|冷漠的,mutual|相互的,reluctant|不情愿的,sincere|真诚的"]
     ];
+    const wordParts = {
+      allocate: "v.", comprehend: "v.", concentrate: "v.", derive: "v.", facilitate: "v.", formulate: "v.", illustrate: "v.", interpret: "v.", perceive: "v.", retain: "v.",
+      advocate: "v.", assert: "v.", clarify: "v.", contradict: "v.", emphasize: "v.", justify: "v.", maintain: "v.", outline: "v.", postulate: "v.", refute: "v.",
+      collaborate: "v.", coordinate: "v.", delegate: "v.", implement: "v.", integrate: "v.", negotiate: "v.", participate: "v.", prioritize: "v.", resolve: "v.", supervise: "v.",
+      accelerate: "v.", alter: "v.", anticipate: "v.", consequently: "adv.", deteriorate: "v.", eliminate: "v.", enhance: "v.", fluctuate: "v.", inevitably: "adv.", transform: "v.",
+      algorithm: "n.", compile: "v.", conventional: "adj.", device: "n.", empirical: "adj.", innovative: "adj.", monitor: "v.", precise: "adj.", simulate: "v.", validate: "v.",
+      conserve: "v.", consumption: "n.", contaminate: "v.", demographic: "adj.", distribute: "v.", legislation: "n.", municipal: "adj.", scarce: "adj.", sustainable: "adj.",
+      appreciate: "v.", confront: "v.", convince: "v.", cooperate: "v.", frustrate: "v.", hesitate: "v.", indifferent: "adj.", mutual: "adj.", reluctant: "adj.", sincere: "adj."
+    };
     const englishStateKey = "dusk-study-pet-english-v1";
     const englishStartKey = "dusk-study-pet-english-start-v1";
     let englishProgress = JSON.parse(localStorage.getItem(englishStateKey) || "{}") || {};
@@ -473,14 +482,14 @@
     weekInput.value = currentWeek;
     function taskId(dayIndex, taskIndex) { return `${dayIndex}-${taskIndex}`; }
     function englishDayIndex() { return Math.max(0, Math.floor((Date.now() - new Date(`${englishStart}T00:00:00`).getTime()) / 86400000)); }
-    function lessonForToday() { const lesson = englishLessons[englishDayIndex() % englishLessons.length]; return { index: englishDayIndex(), title: lesson[0], scene: lesson[1], words: lesson[2].split(",").map(pair => { const [word, meaning] = pair.split("|"); return { word, meaning, id: `${englishDayIndex()}-${word}` }; }) }; }
+    function lessonForToday() { const lesson = englishLessons[englishDayIndex() % englishLessons.length]; return { index: englishDayIndex(), title: lesson[0], scene: lesson[1], words: lesson[2].split(",").map(pair => { const [word, meaning] = pair.split("|"); return { word, pos: wordParts[word] || "n.", meaning, id: `${englishDayIndex()}-${word}` }; }) }; }
     function saveEnglish() { localStorage.setItem(englishStateKey, JSON.stringify(englishProgress)); markStateChanged(); }
     function isReviewDue(wordDay) { const gap = englishDayIndex() - wordDay; return [1, 3, 7, 14, 30].includes(gap); }
     function reviewWords() {
       const result = [];
       for (let day = Math.max(0, englishDayIndex() - 30); day < englishDayIndex(); day++) {
         const lesson = englishLessons[day % englishLessons.length];
-        lesson[2].split(",").forEach(pair => { const [word, meaning] = pair.split("|"); const id = `${day}-${word}`; if (isReviewDue(day) || englishProgress.forgotten?.[id] === englishDayIndex() - 1) result.push({ word, meaning, id, day }); });
+        lesson[2].split(",").forEach(pair => { const [word, meaning] = pair.split("|"); const id = `${day}-${word}`; if (isReviewDue(day) || englishProgress.forgotten?.[id] === englishDayIndex() - 1) result.push({ word, pos: wordParts[word] || "n.", meaning, id, day }); });
       }
       return result;
     }
@@ -559,7 +568,7 @@
       document.querySelector("#englishTitle").textContent = `六级词汇 · 第${lesson.index + 1}天`;
       document.querySelector("#englishTheme").textContent = `${lesson.title}：${lesson.scene}`;
       document.querySelector("#reviewCount").textContent = `今日待复习 ${reviews.length}`;
-      const wordCard = word => `<article class="word-card"><strong>${word.word}</strong><span>${word.meaning}</span><div class="word-actions"><button type="button" data-remember-word="${word.id}">记住了</button><button class="forgot" type="button" data-forgot-word="${word.id}">忘了，明天加练</button></div></article>`;
+      const wordCard = word => `<article class="word-card"><strong>${word.word}</strong><span>${word.pos} · ${word.meaning}</span><div class="word-actions"><button type="button" data-remember-word="${word.id}">记住了</button><button class="forgot" type="button" data-forgot-word="${word.id}">忘了，明天加练</button></div></article>`;
       document.querySelector("#newWords").innerHTML = lesson.words.map(wordCard).join("");
       document.querySelector("#reviewWords").innerHTML = reviews.length ? reviews.map(wordCard).join("") : `<p class="tip">今天没有到期复习词。学完新词后，明天会开始第 1 次复习。</p>`;
       const quizWord = reviews[0] || lesson.words[0];
