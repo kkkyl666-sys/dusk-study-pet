@@ -237,6 +237,9 @@
     .word-actions .forgot { border-color: rgba(238,118,118,.5); color: #ffc5c5; }
     .word-status { color: #caeee9; border: 1px solid rgba(87,201,194,.28); background: rgba(87,201,194,.08); padding: 8px 9px; font-size: 13px; width: fit-content; }
     .word-status.forgot { color: #ffc5c5; border-color: rgba(238,118,118,.45); background: rgba(238,118,118,.08); }
+    .completion-quote { margin-top: 14px; padding: 14px; border: 1px solid rgba(247,231,182,.22); background: rgba(247,231,182,.06); display: grid; gap: 7px; }
+    .completion-quote strong { color: #f7e7b6; font-size: 15px; line-height: 1.5; }
+    .completion-quote span { color: var(--muted); font-size: 13px; line-height: 1.55; }
     .quiz { margin-top: 16px; padding: 16px; border: 1px solid rgba(255,255,255,.08); background: var(--panel-2); display: grid; gap: 12px; }
     .quiz-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
     .quiz-options button { min-height: 42px; color: var(--text); background: var(--panel-3); border: 1px solid var(--line); cursor: pointer; text-align: left; padding: 9px; }
@@ -577,6 +580,52 @@
       if (englishProgress.remembered?.[word.id] === englishDayIndex()) return `<p class="word-status">已完成</p>`;
       return `<div class="word-actions"><button type="button" data-remember-word="${word.id}">记住了</button><button class="forgot" type="button" data-forgot-word="${word.id}">忘了，明天加练</button></div>`;
     }
+    function wordHandled(word) { return englishProgress.remembered?.[word.id] === englishDayIndex() || englishProgress.forgotten?.[word.id] === englishDayIndex(); }
+    const completionQuotes = [
+      ["Small steps every day lead to big changes.", "每天一小步，慢慢就会走出很远。"],
+      ["The secret of getting ahead is getting started.", "前进的秘诀，就是先开始。"],
+      ["What you learn today becomes your strength tomorrow.", "今天学下的东西，会成为明天的底气。"],
+      ["Discipline is choosing what you want most over what you want now.", "自律，是选择最想要的未来，而不是眼前的轻松。"],
+      ["One more word remembered is one more door opened.", "多记住一个词，就多打开一扇门。"],
+      ["A little progress is still progress.", "一点点进步，也是进步。"],
+      ["Learning is a treasure that will follow its owner everywhere.", "学习是会一路跟着你的宝藏。"],
+      ["Do not wait for confidence. Build it by practice.", "不要等自信出现，用练习把它建起来。"],
+      ["The effort you make today quietly changes tomorrow.", "今天的努力，会悄悄改写明天。"],
+      ["Words become power when you use them.", "词汇被用起来，才会变成力量。"],
+      ["Keep going. The page turns only when you move.", "继续走，书页只会在你行动时翻过去。"],
+      ["Every review makes memory less fragile.", "每一次复习，都会让记忆更稳一点。"],
+      ["A calm mind learns deeper.", "心静下来，学得更深。"],
+      ["Practice turns difficulty into familiarity.", "练习会把困难变成熟悉。"],
+      ["Today’s patience is tomorrow’s fluency.", "今天的耐心，是明天的流利。"],
+      ["You do not need to be fast. You need to return.", "不必很快，但要记得回来继续。"],
+      ["A word repeated is a word rescued.", "一个被复习的词，就是一个被救回来的词。"],
+      ["The best time to learn is the moment you begin.", "最好的学习时间，就是你开始的这一刻。"],
+      ["Focus on the next word, not the whole mountain.", "先看下一个词，不必盯着整座山。"],
+      ["Memory grows by meeting the same word again.", "记忆是在一次次重逢里长出来的。"],
+      ["Your future self is listening to what you practise today.", "未来的你，会听见今天练过的声音。"],
+      ["A steady pace beats a perfect plan.", "稳定前进，比完美计划更有用。"],
+      ["Mistakes are not failure; they are directions.", "错误不是失败，是提示方向。"],
+      ["The words you keep will keep you company.", "你留下的词，也会陪你走远。"],
+      ["Review is not going back; it is building higher.", "复习不是后退，是往上加固。"],
+      ["Confidence comes after showing up many times.", "自信通常在很多次出现之后才来。"],
+      ["One focused hour can change the texture of a day.", "专注的一小时，会改变一天的质感。"],
+      ["What feels hard now will become normal later.", "现在觉得难的，后来会变成平常。"],
+      ["Learn slowly enough to remember clearly.", "慢到能记清楚，也是一种快。"],
+      ["The quiet work counts, even when no one sees it.", "没人看见的安静努力，也算数。"],
+      ["A remembered word is a small victory.", "记住一个词，就是一场小胜利。"],
+      ["Use the word once, and it starts to belong to you.", "把词用一次，它就开始属于你。"],
+      ["Consistency is kinder than pressure.", "持续，比逼迫自己更温柔也更有力。"],
+      ["Your attention is the place where learning begins.", "注意力落在哪里，学习就从哪里开始。"],
+      ["Carry today well, and tomorrow becomes lighter.", "把今天走稳，明天就会轻一点。"],
+      ["The habit is small, but the result is not.", "习惯很小，结果不小。"],
+      ["You are building a mind that can return to hard things.", "你正在练出一种能回到难题前的能力。"],
+      ["Finish the small thing. Let it prove you can.", "完成这件小事，让它证明你可以。"]
+    ];
+    function completionQuoteHtml(lesson) {
+      if (!lesson.words.every(wordHandled)) return "";
+      const quote = completionQuotes[lesson.index % completionQuotes.length];
+      return `<div class="completion-quote"><strong>${quote[0]}</strong><span>${quote[1]}</span></div>`;
+    }
     function checkId(dayIndex, task, taskIndex) { return task[4] || taskId(dayIndex, taskIndex); }
     function activeWeek() { return Number(weekInput.value || currentWeek); }
     function inWeekRange(ranges, week = activeWeek()) { return !ranges || ranges.some(([a,b]) => week >= a && week <= b); }
@@ -648,7 +697,9 @@
       document.querySelector("#englishTheme").textContent = `${lesson.title}：${lesson.scene}`;
       document.querySelector("#reviewCount").textContent = `今日待复习 ${reviews.length}`;
       const wordCard = word => `<article class="word-card"><div class="word-title"><strong>${word.word}</strong><button class="sound-button" type="button" data-pronounce-word="${word.word}" title="播放英式发音">声</button></div><span class="phonetic" data-phonetic-word="${word.word}">${word.phonetic || "英式音标加载中"}</span><span>${word.pos} · ${word.meaning}</span><p class="example">${exampleForWord(word)}</p>${wordActionHtml(word)}</article>`;
+      document.querySelector(".completion-quote")?.remove();
       document.querySelector("#newWords").innerHTML = lesson.words.map(wordCard).join("");
+      document.querySelector("#newWords").insertAdjacentHTML("afterend", completionQuoteHtml(lesson));
       document.querySelector("#reviewWords").innerHTML = reviews.length ? reviews.map(wordCard).join("") : `<p class="tip">今天没有到期复习词。学完新词后，明天会开始第 1 次复习。</p>`;
       const quizWord = reviews[0] || lesson.words[0];
       const choices = [...new Set([quizWord.meaning, ...lesson.words.filter(word => word.meaning !== quizWord.meaning).slice(1, 4).map(word => word.meaning)])].sort(() => Math.random() - .5);
