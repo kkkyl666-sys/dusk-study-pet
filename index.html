@@ -228,6 +228,7 @@
     .word-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .word-card strong { font-size: 18px; color: #f7e7b6; }
     .word-card span { color: var(--muted); font-size: 13px; }
+    .word-card .phonetic { color: #caeee9; font-size: 13px; }
     .word-card .example { color: #d9dce2; font-size: 13px; line-height: 1.5; padding-top: 3px; border-top: 1px solid rgba(255,255,255,.07); }
     .sound-button { min-width: 36px; height: 32px; padding: 0 8px; border: 1px solid rgba(87,201,194,.38); background: rgba(87,201,194,.1); color: #d8fffb; cursor: pointer; font-weight: 700; }
     .sound-button[disabled] { opacity: .62; cursor: wait; }
@@ -495,13 +496,16 @@
     function speakEnglishWord(word) {
       if (!("speechSynthesis" in window)) return;
       const utterance = new SpeechSynthesisUtterance(word);
-      utterance.lang = "en-US";
+      utterance.lang = "en-GB";
       utterance.rate = 0.86;
       utterance.pitch = 1;
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utterance);
     }
-    async function findPronunciationAudio(word) {
+    function normalizeAudioUrl(audio) { return audio?.startsWith("//") ? `https:${audio}` : audio || ""; }
+    function isBritishAudio(audio = "") { return /[-_]uk|[-_]gb|_gb_|uk\.mp3|gb\.mp3/i.test(audio); }
+    function wrapPhonetic(text) { return text ? (text.startsWith("/") ? text : `/${text}/`) : "英式音标加载中"; }
+    async function findPronunciationInfo(word) {
       const key = word.toLowerCase();
       if (pronunciationCache.has(key)) return pronunciationCache.get(key);
       try {
@@ -509,23 +513,34 @@
         if (!response.ok) throw new Error("not found");
         const entries = await response.json();
         const phonetics = entries.flatMap(entry => entry.phonetics || []);
-        let audio = phonetics.find(item => item.audio && item.audio.trim())?.audio || "";
-        if (audio.startsWith("//")) audio = `https:${audio}`;
-        pronunciationCache.set(key, audio || null);
-        return audio || null;
+        const british = phonetics.find(item => isBritishAudio(item.audio) && item.text);
+        const withText = british || phonetics.find(item => item.text);
+        const withBritishAudio = phonetics.find(item => isBritishAudio(item.audio));
+        const withAudio = withBritishAudio || phonetics.find(item => item.audio && item.audio.trim());
+        const info = { phonetic: wrapPhonetic(withText?.text || entries[0]?.phonetic || ""), audio: normalizeAudioUrl(withAudio?.audio) };
+        pronunciationCache.set(key, info);
+        return info;
       } catch {
-        pronunciationCache.set(key, null);
-        return null;
+        const info = { phonetic: "音标暂缺", audio: "" };
+        pronunciationCache.set(key, info);
+        return info;
       }
+    }
+    async function hydratePhonetics() {
+      const targets = [...document.querySelectorAll("[data-phonetic-word]")];
+      await Promise.all(targets.map(async target => {
+        const info = await findPronunciationInfo(target.dataset.phoneticWord);
+        target.textContent = info.phonetic;
+      }));
     }
     async function playWordPronunciation(word, button) {
       const originalText = button.textContent;
       button.disabled = true;
       button.textContent = "...";
-      const audioUrl = await findPronunciationAudio(word);
-      if (audioUrl) {
+      const info = await findPronunciationInfo(word);
+      if (info.audio) {
         try {
-          await new Audio(audioUrl).play();
+          await new Audio(info.audio).play();
         } catch {
           speakEnglishWord(word);
         }
@@ -621,7 +636,7 @@
       document.querySelector("#englishTitle").textContent = `六级词汇 · 第${lesson.index + 1}天`;
       document.querySelector("#englishTheme").textContent = `${lesson.title}：${lesson.scene}`;
       document.querySelector("#reviewCount").textContent = `今日待复习 ${reviews.length}`;
-      const wordCard = word => `<article class="word-card"><div class="word-title"><strong>${word.word}</strong><button class="sound-button" type="button" data-pronounce-word="${word.word}" title="播放单词发音">声</button></div><span>${word.pos} · ${word.meaning}</span><p class="example">${exampleForWord(word)}</p><div class="word-actions"><button type="button" data-remember-word="${word.id}">记住了</button><button class="forgot" type="button" data-forgot-word="${word.id}">忘了，明天加练</button></div></article>`;
+      const wordCard = word => `<article class="word-card"><div class="word-title"><strong>${word.word}</strong><button class="sound-button" type="button" data-pronounce-word="${word.word}" title="播放英式发音">声</button></div><span class="phonetic" data-phonetic-word="${word.word}">英式音标加载中</span><span>${word.pos} · ${word.meaning}</span><p class="example">${exampleForWord(word)}</p><div class="word-actions"><button type="button" data-remember-word="${word.id}">记住了</button><button class="forgot" type="button" data-forgot-word="${word.id}">忘了，明天加练</button></div></article>`;
       document.querySelector("#newWords").innerHTML = lesson.words.map(wordCard).join("");
       document.querySelector("#reviewWords").innerHTML = reviews.length ? reviews.map(wordCard).join("") : `<p class="tip">今天没有到期复习词。学完新词后，明天会开始第 1 次复习。</p>`;
       const quizWord = reviews[0] || lesson.words[0];
@@ -629,6 +644,7 @@
       document.querySelector("#quizPrompt").textContent = `“${quizWord.word}” 最接近下面哪一个意思？`;
       document.querySelector("#quizOptions").innerHTML = choices.map(choice => `<button type="button" data-quiz-answer="${choice === quizWord.meaning}">${choice}</button>`).join("");
       document.querySelector("#quizResult").textContent = "";
+      hydratePhonetics();
     }
     document.querySelector("#englishView").addEventListener("click", event => {
       const pronounceButton = event.target.closest("[data-pronounce-word]");
