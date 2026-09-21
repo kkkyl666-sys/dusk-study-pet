@@ -497,7 +497,13 @@
     function englishDayIndex() { return Math.max(0, Math.floor((Date.now() - new Date(`${englishStart}T00:00:00`).getTime()) / 86400000)); }
     function wordsFromLesson(lesson, day) { if (lesson.words) return lesson.words.map(item => ({ ...item, id: `${day}-${item.word}` })); return lesson[2].split(",").map(pair => { const [word, meaning] = pair.split("|"); return { word, pos: wordParts[word] || "n.", meaning, id: `${day}-${word}` }; }); }
     function lessonForToday() { const index = Math.min(englishDayIndex(), englishLessons.length - 1); const lesson = englishLessons[index]; return { index, title: lesson.title || lesson[0], scene: lesson.scene || lesson[1], words: wordsFromLesson(lesson, index) }; }
-    function exampleForWord(word) { if (word.pos.startsWith("v")) return `We need to ${word.word} this idea before class.`; if (word.pos.startsWith("adj")) return `It was a ${word.word} result in the experiment.`; if (word.pos.startsWith("adv")) return `The result changed ${word.word}.`; return `This ${word.word} helps us understand the lesson.`; }
+    function exampleForWord(word) {
+      if (word.example) return word.example;
+      if (word.pos.startsWith("v")) return `Try to use "${word.word}" in your own sentence.`;
+      if (word.pos.startsWith("adj")) return `The word "${word.word}" describes a quality or state.`;
+      if (word.pos.startsWith("adv")) return `The word "${word.word}" shows how something happens.`;
+      return `The word "${word.word}" appears in today's reading.`;
+    }
     function speakEnglishWord(word) {
       if (!("speechSynthesis" in window)) return false;
       const utterance = new SpeechSynthesisUtterance(word);
