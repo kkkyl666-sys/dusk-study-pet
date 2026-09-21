@@ -227,6 +227,14 @@
     .word-card { border: 1px solid rgba(255,255,255,.09); background: var(--panel-2); padding: 13px; display: grid; gap: 6px; }
     .word-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .word-card strong { font-size: 18px; color: #f7e7b6; }
+    .word-lookup { min-width: 0; }
+    .word-lookup summary { color: #f7e7b6; cursor: pointer; font-size: 18px; font-weight: 800; list-style: none; width: fit-content; }
+    .word-lookup summary::-webkit-details-marker { display: none; }
+    .word-lookup summary::after { content: "查"; display: inline-grid; place-items: center; width: 22px; height: 22px; margin-left: 7px; vertical-align: 2px; border: 1px solid rgba(247,231,182,.35); color: #f7e7b6; font-size: 11px; font-weight: 700; }
+    .word-lookup summary:hover, .word-lookup[open] summary { color: #fff3cc; }
+    .lookup-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; padding: 8px; border: 1px solid rgba(87,201,194,.22); background: rgba(87,201,194,.06); }
+    .lookup-actions a, .lookup-actions button { min-height: 30px; padding: 0 8px; border: 1px solid rgba(87,201,194,.34); background: var(--panel-3); color: #d8fffb; font: inherit; font-size: 12px; line-height: 28px; text-decoration: none; cursor: pointer; }
+    .lookup-actions button.copied { border-color: rgba(98,214,147,.65); color: #d3ffe4; }
     .word-card span { color: var(--muted); font-size: 13px; }
     .word-card .phonetic { color: #caeee9; font-size: 13px; }
     .word-card .example { color: #d9dce2; font-size: 13px; line-height: 1.5; padding-top: 3px; border-top: 1px solid rgba(255,255,255,.07); }
@@ -714,7 +722,11 @@
       document.querySelector("#englishTitle").textContent = `六级词汇 · 第${lesson.index + 1}天`;
       document.querySelector("#englishTheme").textContent = `${lesson.title}：${lesson.scene}`;
       document.querySelector("#reviewCount").textContent = `今日待复习 ${reviews.length}`;
-      const wordCard = word => `<article class="word-card"><div class="word-title"><strong>${word.word}</strong><button class="sound-button" type="button" data-pronounce-word="${word.word}" title="播放英式发音">声</button></div><span class="phonetic" data-phonetic-word="${word.word}">${word.phonetic || "英式音标加载中"}</span><span>${word.pos} · ${word.meaning}</span><p class="example">${exampleForWord(word)}</p>${wordActionHtml(word)}</article>`;
+      const lookupLinks = word => {
+        const term = encodeURIComponent(word.word);
+        return `<details class="word-lookup"><summary title="展开查词方式">${word.word}</summary><div class="lookup-actions"><a href="https://youdao.com/result?lang=en&word=${term}" target="_blank" rel="noopener noreferrer">有道</a><a href="https://dictionary.cambridge.org/dictionary/english-chinese-simplified/${term}" target="_blank" rel="noopener noreferrer">剑桥</a><a href="https://www.merriam-webster.com/dictionary/${term}" target="_blank" rel="noopener noreferrer">韦氏</a><button type="button" data-copy-word="${word.word}">复制</button></div></details>`;
+      };
+      const wordCard = word => `<article class="word-card"><div class="word-title">${lookupLinks(word)}<button class="sound-button" type="button" data-pronounce-word="${word.word}" title="播放英式发音">声</button></div><span class="phonetic" data-phonetic-word="${word.word}">${word.phonetic || "英式音标加载中"}</span><span>${word.pos} · ${word.meaning}</span><p class="example">${exampleForWord(word)}</p>${wordActionHtml(word)}</article>`;
       document.querySelector(".completion-quote")?.remove();
       document.querySelector("#newWords").innerHTML = lesson.words.map(wordCard).join("");
       document.querySelector("#newWords").insertAdjacentHTML("afterend", completionQuoteHtml(lesson));
@@ -729,6 +741,14 @@
     document.querySelector("#englishView").addEventListener("click", event => {
       const pronounceButton = event.target.closest("[data-pronounce-word]");
       if (pronounceButton) { playWordPronunciation(pronounceButton.dataset.pronounceWord, pronounceButton); return; }
+      const copyButton = event.target.closest("[data-copy-word]");
+      if (copyButton) {
+        const word = copyButton.dataset.copyWord;
+        const copied = () => { copyButton.textContent = "已复制"; copyButton.classList.add("copied"); setTimeout(() => { copyButton.textContent = "复制"; copyButton.classList.remove("copied"); }, 1300); };
+        if (navigator.clipboard?.writeText) navigator.clipboard.writeText(word).then(copied).catch(() => window.prompt("复制这个单词：", word));
+        else window.prompt("复制这个单词：", word);
+        return;
+      }
       const actionButton = event.target.closest("[data-forgot-word], [data-remember-word]");
       const id = actionButton?.dataset.forgotWord || actionButton?.dataset.rememberWord;
       if (id) { englishProgress.forgotten ||= {}; englishProgress.remembered ||= {}; if (actionButton.dataset.forgotWord) { englishProgress.forgotten[id] = englishDayIndex(); delete englishProgress.remembered[id]; } else { englishProgress.remembered[id] = englishDayIndex(); delete englishProgress.forgotten[id]; } saveEnglish(); renderEnglish(); }
