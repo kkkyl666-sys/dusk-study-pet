@@ -499,13 +499,14 @@
     function lessonForToday() { const index = Math.min(englishDayIndex(), englishLessons.length - 1); const lesson = englishLessons[index]; return { index, title: lesson.title || lesson[0], scene: lesson.scene || lesson[1], words: wordsFromLesson(lesson, index) }; }
     function exampleForWord(word) { if (word.pos.startsWith("v")) return `We need to ${word.word} this idea before class.`; if (word.pos.startsWith("adj")) return `It was a ${word.word} result in the experiment.`; if (word.pos.startsWith("adv")) return `The result changed ${word.word}.`; return `This ${word.word} helps us understand the lesson.`; }
     function speakEnglishWord(word) {
-      if (!("speechSynthesis" in window)) return;
+      if (!("speechSynthesis" in window)) return false;
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.lang = "en-GB";
       utterance.rate = 0.86;
       utterance.pitch = 1;
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utterance);
+      return true;
     }
     function normalizeAudioUrl(audio) { return audio?.startsWith("//") ? `https:${audio}` : audio || ""; }
     function isBritishAudio(audio = "") { return /[-_]uk|[-_]gb|_gb_|uk\.mp3|gb\.mp3/i.test(audio); }
@@ -542,22 +543,33 @@
         target.textContent = info.phonetic;
       }));
     }
+    function setSoundButton(button, text, disabled = false) {
+      button.disabled = disabled;
+      button.textContent = text;
+    }
     async function playWordPronunciation(word, button) {
       const originalText = button.textContent;
-      button.disabled = true;
-      button.textContent = "...";
-      const info = await findPronunciationInfo(word);
-      if (info.audio) {
+      const key = word.toLowerCase();
+      const cached = pronunciationCache.get(key);
+      if (cached?.audio) {
         try {
-          await new Audio(info.audio).play();
+          setSoundButton(button, "播", true);
+          await new Audio(cached.audio).play();
+          setSoundButton(button, originalText);
+          return;
         } catch {
-          speakEnglishWord(word);
+          // Continue to the direct user-gesture fallback below.
         }
-      } else {
-        speakEnglishWord(word);
       }
-      button.disabled = false;
-      button.textContent = originalText;
+
+      // Mobile browsers often block audio if playback waits for a network request.
+      // Trigger browser TTS immediately from the tap, then warm the online audio cache.
+      const spoke = speakEnglishWord(word);
+      setSoundButton(button, spoke ? "朗" : "...", true);
+      if (!cached) {
+        findPronunciationInfo(word).catch(() => null);
+      }
+      window.setTimeout(() => setSoundButton(button, originalText), 900);
     }
     function courseDate(dayIndex, week = activeWeek()) { const date = new Date(2026, 8, 14 + (week - 1) * 7 + dayIndex); return `${date.getMonth() + 1}月${date.getDate()}日`; }
     function saveEnglish() { localStorage.setItem(englishStateKey, JSON.stringify(englishProgress)); markStateChanged(); }
