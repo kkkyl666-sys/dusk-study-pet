@@ -386,7 +386,7 @@
       </section>
       <section class="view" id="englishView">
         <div class="english-head"><div><h2 id="englishTitle">六级词汇</h2><p id="englishTheme"></p></div><button class="mode" id="exportWordsBtn" type="button">导出今日单词</button></div>
-        <div class="review-guide"><span>第1天复习</span><span>第3天复习</span><span>第7天复习</span><span>第14天复习</span><span>第30天复习</span><span id="reviewCount">今日待复习 0</span></div>
+        <div class="review-guide"><span>每日凌晨4点更新</span><span>第1天复习</span><span>第3天复习</span><span>第7天复习</span><span>第14天复习</span><span>第30天复习</span><span id="reviewCount">今日待复习 0</span></div>
         <h3>今日 10 个新词</h3><div class="word-list" id="newWords"></div>
         <h3 style="margin-top:16px">今日复习</h3><div class="word-list" id="reviewWords"></div>
         <section class="quiz"><h3>快速小测</h3><p id="quizPrompt"></p><div class="quiz-options" id="quizOptions"></div><p class="quiz-result" id="quizResult"></p></section>
@@ -503,7 +503,14 @@
     const weekInput = document.querySelector("#weekInput");
     weekInput.value = currentWeek;
     function taskId(dayIndex, taskIndex) { return `${dayIndex}-${taskIndex}`; }
-    function englishDayIndex() { return Math.max(0, Math.floor((Date.now() - new Date(`${englishStart}T00:00:00`).getTime()) / 86400000)); }
+    function localDateStart(isoDate) { const [year, month, day] = isoDate.split("-").map(Number); return new Date(year, month - 1, day); }
+    function englishStudyDate(now = new Date()) {
+      const studyDate = new Date(now);
+      if (studyDate.getHours() < 4) studyDate.setDate(studyDate.getDate() - 1);
+      studyDate.setHours(0, 0, 0, 0);
+      return studyDate;
+    }
+    function englishDayIndex(now = new Date()) { return Math.max(0, Math.floor((englishStudyDate(now) - localDateStart(englishStart)) / 86400000)); }
     function wordsFromLesson(lesson, day) { if (lesson.words) return lesson.words.map(item => ({ ...item, id: `${day}-${item.word}` })); return lesson[2].split(",").map(pair => { const [word, meaning] = pair.split("|"); return { word, pos: wordParts[word] || "n.", meaning, id: `${day}-${word}` }; }); }
     function lessonForToday() { const index = Math.min(englishDayIndex(), englishLessons.length - 1); const lesson = englishLessons[index]; return { index, title: lesson.title || lesson[0], scene: lesson.scene || lesson[1], words: wordsFromLesson(lesson, index) }; }
     function exampleForWord(word) {
