@@ -388,7 +388,7 @@
         <nav class="week" id="weekNav" aria-label="一周计划"></nav>
         <section class="content">
           <div>
-            <div class="utility-actions"><h2>计划清单</h2><button class="mode utility-button" id="quickAddTask" type="button"><i data-lucide="calendar-plus"></i>加日程</button></div>
+            <div class="utility-actions"><h2>计划清单</h2><button class="mode utility-button" id="planTodayBtn" type="button"><i data-lucide="calendar-days"></i>回到今天</button><button class="mode utility-button" id="quickAddTask" type="button"><i data-lucide="calendar-plus"></i>加日程</button></div>
             <div class="tasks" id="tasks"></div>
           </div>
           <div class="card">
@@ -404,6 +404,7 @@
       <section class="view active" id="scheduleView">
         <div class="schedule-toolbar">
           <label>查看第 <input id="weekInput" type="number" min="1" max="20" value="1"> 周</label>
+          <button class="mode utility-button" id="scheduleTodayBtn" type="button"><i data-lucide="calendar-days"></i>回到本周</button>
           <div class="summary" id="scheduleSummary"></div>
         </div>
         <div class="schedule-scroll"><div class="schedule-grid" id="scheduleGrid"></div></div>
@@ -502,11 +503,15 @@
     const stateKey = "summer-study-pet-v2";
     const modeKey = "summer-study-pet-mode-v2";
     const stateUpdatedAtKey = "summer-study-pet-state-updated-at-v1";
-    const today = new Date();
+    let today = new Date();
     // 第 1 周从 2026 年 9 月 7 日（星期一）开始。
     const semesterStart = new Date(2026, 8, 7);
-    const currentWeek = Math.min(20, Math.max(1, Math.floor((today - semesterStart) / (7 * 24 * 60 * 60 * 1000)) + 1));
-    const todayIndex = (today.getDay() + 6) % 7;
+    function teachingWeek(date) {
+      const elapsedDays = (Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) - Date.UTC(semesterStart.getFullYear(), semesterStart.getMonth(), semesterStart.getDate())) / 86400000;
+      return Math.min(20, Math.max(1, Math.floor(elapsedDays / 7) + 1));
+    }
+    let currentWeek = teachingWeek(today);
+    let todayIndex = (today.getDay() + 6) % 7;
     let activeDay = Math.max(0, todayIndex);
     let checked = JSON.parse(localStorage.getItem(stateKey) || "{}");
     let stateUpdatedAt = Number(localStorage.getItem(stateUpdatedAtKey) || 0);
@@ -637,7 +642,7 @@
       return result;
     }
     function englishTaskItems() {
-      if (activeDay !== todayIndex) return [];
+      if (activeDay !== todayIndex || activeWeek() !== currentWeek) return [];
       const lesson = lessonForToday();
       return [[`英语单词 · 第${lesson.index + 1}天`, "英语", `${lesson.title} · 10 个新词，另有 ${reviewWords().length} 个待复习`, null, `english-${lesson.index}-words`], ["豆包英语对话 20min", "英语", "围绕今日主题用英语对话，至少说出 3 个今日单词。", null, `english-${lesson.index}-dialogue`]];
     }
@@ -923,7 +928,7 @@
       document.querySelector(`#${button.dataset.view}`).classList.add("active");
       document.querySelector("#taskProgress").style.display = button.dataset.view === "tasksView" ? "grid" : "none";
       if (button.dataset.view === "editView") renderEditor();
-      mainHeading.textContent = button.dataset.view === "scheduleView" ? "光电学习课表" : button.dataset.view === "selectView" ? "课表策略" : button.dataset.view === "englishView" ? "六级英语记忆" : button.dataset.view === "editView" ? "编辑课表与计划" : `${days[activeDay].date} · ${days[activeDay].name}`;
+      mainHeading.textContent = button.dataset.view === "scheduleView" ? "光电学习课表" : button.dataset.view === "selectView" ? "课表策略" : button.dataset.view === "englishView" ? "六级英语记忆" : button.dataset.view === "editView" ? "编辑课表与计划" : `${courseDate(activeDay)} · ${days[activeDay].name}`;
       mainSub.textContent = button.dataset.view === "scheduleView" ? "按周查看上课安排，并在计划页执行每个时间段的学习计划。" : button.dataset.view === "selectView" ? "完整课表执行中，暑假计划已下线。" : button.dataset.view === "englishView" ? "新词、艾宾浩斯复习和错词加练都在这里。" : button.dataset.view === "editView" ? "修改后点击保存到云端，手机才会收到新版内容。" : "完成后勾选，桌宠会记住。";
       if (button.dataset.view === "englishView") renderEnglish();
     }));
@@ -942,7 +947,7 @@
       utterance.lang = "zh-CN"; utterance.rate = 0.82; utterance.pitch = 0.78;
       window.speechSynthesis.speak(utterance);
     });
-    weekInput.addEventListener("input", () => { renderSchedule(); renderTasks(); saveResumePoint(); });
+    weekInput.addEventListener("input", () => { renderSchedule(); renderTasks(); renderWeek(); saveResumePoint(); });
 
     const syncConfig = window.PET_SYNC_CONFIG || {};
     const syncReady = Boolean(syncConfig.supabaseUrl && syncConfig.supabaseAnonKey);

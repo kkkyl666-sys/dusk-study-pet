@@ -41,19 +41,39 @@ function clearEditorDraft() { localStorage.removeItem(editorDraftKey); document.
 function saveResumePoint(wordId) {
   if (restoringResume) return;
   const previous = readStored(resumeKey) || {};
-  const data = { view:currentViewId(),scroll:window.scrollY,activeDay,activeWeek:activeWeek(),date:dateISO(new Date()),wordId:wordId || previous.wordId };
+  const data = { view:currentViewId(),scroll:window.scrollY,date:dateISO(new Date()),studyDate:dateISO(englishStudyDate()),wordId:wordId || previous.wordId };
   localStorage.setItem(resumeKey,JSON.stringify(data));
 }
 function restoreResumePoint() {
   const resume = readStored(resumeKey);
   if (!resume) return;
-  if (resume.date === dateISO(new Date())) { activeDay = Math.max(0,Math.min(6,Number(resume.activeDay)||0)); weekInput.value = Number(resume.activeWeek)||currentWeek; }
   startApp(resume.view || "scheduleView");
   requestAnimationFrame(() => {
     const card = [...document.querySelectorAll("[data-word-card]")].find(c => c.dataset.wordCard === resume.wordId);
-    if (currentViewId() === "englishView" && card) card.scrollIntoView({block:"center"});
-    else window.scrollTo(0,Number(resume.scroll)||0);
+    if (currentViewId() === "englishView" && resume.studyDate === dateISO(englishStudyDate()) && card) card.scrollIntoView({block:"center"});
+    else if (currentViewId() === "englishView" && resume.studyDate === dateISO(englishStudyDate())) window.scrollTo(0,Number(resume.scroll)||0);
+    else window.scrollTo(0,0);
   });
+}
+let calendarDate = dateISO(today);
+let vocabularyDate = dateISO(englishStudyDate());
+function refreshCalendarNavigation(force = false) {
+  const now = new Date();
+  const nextDate = dateISO(now), nextVocabularyDate = dateISO(englishStudyDate(now));
+  const calendarChanged = nextDate !== calendarDate, vocabularyChanged = nextVocabularyDate !== vocabularyDate;
+  today = now;
+  currentWeek = teachingWeek(now);
+  todayIndex = (now.getDay() + 6) % 7;
+  calendarDate = nextDate;
+  vocabularyDate = nextVocabularyDate;
+  if (force || calendarChanged) { activeDay = todayIndex; weekInput.value = currentWeek; }
+  if (!(force || calendarChanged || vocabularyChanged) || days.length !== 7) return;
+  const view = currentViewId(), heading = mainHeading.textContent, sub = mainSub.textContent, scroll = window.scrollY;
+  renderWeek(); renderTasks(); renderSchedule();
+  if (view !== "tasksView") { mainHeading.textContent = heading; mainSub.textContent = sub; }
+  if (vocabularyChanged) renderEnglish();
+  window.scrollTo(0,scroll);
+  saveResumePoint();
 }
 const oldApplySnapshot = applySnapshot;
 applySnapshot = function(data) {
@@ -229,8 +249,11 @@ document.querySelector("#editView").addEventListener("input",event=>{
 });
 document.querySelectorAll(".tab-button").forEach(b=>b.addEventListener("click",()=>{saveResumePoint();refreshIcons();}));
 document.querySelector("#retryCloudBtn").onclick=()=>setupCloudSync().then(restoreResumePoint).catch(handleSyncFailure);
+document.querySelectorAll("#planTodayBtn,#scheduleTodayBtn").forEach(button => button.onclick=()=>refreshCalendarNavigation(true));
 window.addEventListener("pagehide",()=>{saveResumePoint();persistLocalState();if(editorDirty)persistEditorDraft();});
-document.addEventListener("visibilitychange",()=>{if(document.hidden){saveResumePoint();persistLocalState();}else if(accessCode){pullOrPushCloudState().catch(handleSyncFailure);}});
+document.addEventListener("visibilitychange",()=>{if(document.hidden){saveResumePoint();persistLocalState();}else{refreshCalendarNavigation(true);if(accessCode)pullOrPushCloudState().catch(handleSyncFailure);}});
+window.addEventListener("pageshow",event=>{if(event.persisted)refreshCalendarNavigation(true);});
+window.setInterval(()=>{if(!document.hidden)refreshCalendarNavigation();},30000);
 window.addEventListener("online",()=>{if(accessCode)pullOrPushCloudState().catch(handleSyncFailure);});
 window.addEventListener("offline",()=>updateSyncStatus("离线使用，联网后补传"));
 
