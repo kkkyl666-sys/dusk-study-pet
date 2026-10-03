@@ -327,7 +327,7 @@
     button:active { transform:translateY(1px); }
     @media(max-width:600px) { .utility-actions { gap:6px; } .quick-dialog { margin:auto; } }
   </style>
-  <link rel="stylesheet" href="atelier.css">
+  <link rel="stylesheet" href="atelier.css?v=20">
 </head>
 <body>
   <section class="private-gate" id="privateGate" aria-labelledby="privateGateTitle">
@@ -1102,13 +1102,13 @@
       syncModeButton(); renderWeek(); renderTasks(); renderSchedule(); renderPending(); renderEditor(); renderEnglish(); activateView(preferredView);
     }
     if (!selectedCourses.length || !days.length) document.body.classList.add("private-wait");
-    if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("./sw.js").catch(() => {});
+    if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("./sw.js", {updateViaCache:"none"}).then(registration => registration.update()).catch(() => {});
     // Complete local restoration before starting any cloud request.
   </script>
   <script src="lucide.min.js"></script>
-  <script src="experience.js"></script>
+  <script src="experience.js?v=20"></script>
   <script src="assets/motion.js"></script>
-  <script src="atelier.js"></script>
+  <script src="atelier.js?v=20"></script>
 </body>
 </html>
 
