@@ -14,7 +14,7 @@ let restoringResume = true;
 let resumeRestored = false;
 const readStored = key => { try { return JSON.parse(localStorage.getItem(key) || "null"); } catch { return null; } };
 function dateISO(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`; }
-function selectedDateISO() { return dateISO(new Date(2026,8,7 + (activeWeek()-1)*7 + activeDay)); }
+function selectedDateISO(dayIndex = activeDay) { return dateISO(new Date(2026,8,7 + (activeWeek()-1)*7 + dayIndex)); }
 function validSnapshot(data) { return !!data && Array.isArray(data.selectedCourses) && data.selectedCourses.length > 0 && data.selectedCourses.every(c => c && typeof c.name === "string" && Array.isArray(c.weeks) && Array.isArray(c.periods)) && Array.isArray(data.days) && data.days.length === 7 && data.days.every(d => d && Array.isArray(d.tasks)); }
 const originalSnapshot = snapshot;
 snapshot = function() { return { ...originalSnapshot(), appointments, englishAdjustments }; };
@@ -152,7 +152,15 @@ document.querySelector("#englishView").addEventListener("click",event => {
 
 const oldVisibleTasks=visibleTasks;
 const oldCheckId=checkId;
-checkId=function(dayIndex,task,taskIndex){const entry=appointments.find(t=>t.id===task[4]);return entry?.repeat==="weekly"?`${entry.id}@${selectedDateISO()}`:oldCheckId(dayIndex,task,taskIndex);};
+checkId=function(dayIndex,task,taskIndex){
+  const id=oldCheckId(dayIndex,task,taskIndex);
+  const entry=appointments.find(t=>t.id===task[4]);
+  // One-off appointments already identify one date; recurring plans need an occurrence key.
+  if(entry?.repeat!=="weekly" && entry)return id;
+  const date=String(id).startsWith("english-")?dateISO(englishStudyDate()):selectedDateISO(dayIndex);
+  // Undated legacy checks remain archived, never guessed to belong to today's occurrence.
+  return `${id}@${date}`;
+};
 visibleTasks=function(day) {
   const date=selectedDateISO();
   const added=appointments.filter(t=>t.repeat==="weekly" ? date>=t.date && new Date(t.date+"T12:00:00").getDay()===new Date(date+"T12:00:00").getDay() : t.date===date)
