@@ -810,7 +810,7 @@
             c.weeks.some(([a,b]) => week >= a && week <= b) &&
             c.periods.some(period => group.periods.includes(period))
           );
-          const html = lessons.map(c => `<div class="course-block ${c.type}" data-course-index="${selectedCourses.indexOf(c)}"><strong>${c.name}</strong><small>${c.teacher} · ${c.room}</small><small>${weekText(c.weeks)} · ${periodText(c.periods)}</small></div>`).join("");
+          const html = lessons.map(c => `<div class="course-block ${escapeHtml(c.type)}" data-course-index="${selectedCourses.indexOf(c)}"><strong>${escapeHtml(c.name)}</strong><small>${escapeHtml(c.teacher)} · ${escapeHtml(c.room)}</small><small>${weekText(c.weeks)} · ${periodText(c.periods)}</small></div>`).join("");
           grid.insertAdjacentHTML("beforeend", `<div class="cell">${html}</div>`);
         });
       });
