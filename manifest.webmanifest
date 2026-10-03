@@ -1,13 +1,13 @@
 {
-  "name": "夕式学期桌宠",
+  "name": "夕的案台画室",
   "short_name": "夕式桌宠",
   "description": "个人课程表、计划与学习陪伴",
   "lang": "zh-CN",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#101214",
-  "theme_color": "#101214",
+  "background_color": "#f8faf3",
+  "theme_color": "#e4ebe3",
   "icons": [
     {
       "src": "dusk-pet.png",

@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101214">
+  <meta name="theme-color" content="#e4ebe3">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="夕式桌宠">
-  <title>光电学习桌宠</title>
+  <title>夕的案台画室</title>
   <link rel="icon" type="image/png" href="dusk-pet.png">
   <link rel="apple-touch-icon" href="dusk-pet.png">
   <link rel="manifest" href="manifest.webmanifest">
@@ -327,6 +327,7 @@
     button:active { transform:translateY(1px); }
     @media(max-width:600px) { .utility-actions { gap:6px; } .quick-dialog { margin:auto; } }
   </style>
+  <link rel="stylesheet" href="atelier.css">
 </head>
 <body>
   <section class="private-gate" id="privateGate" aria-labelledby="privateGateTitle">
@@ -378,12 +379,14 @@
         </div>
       </section>
       <nav class="tabs" aria-label="桌宠面板">
+        <button class="tab-button" type="button" data-view="homeView">今天</button>
         <button class="tab-button" type="button" data-view="tasksView">计划</button>
         <button class="tab-button active" type="button" data-view="scheduleView">课表</button>
         <button class="tab-button" type="button" data-view="selectView">策略</button>
         <button class="tab-button" type="button" data-view="englishView">英语</button>
         <button class="tab-button" type="button" data-view="editView">编辑</button>
       </nav>
+      <section class="view" id="homeView"></section>
       <section class="view" id="tasksView">
         <nav class="week" id="weekNav" aria-label="一周计划"></nav>
         <section class="content">
@@ -1104,6 +1107,8 @@
   </script>
   <script src="lucide.min.js"></script>
   <script src="experience.js"></script>
+  <script src="assets/motion.js"></script>
+  <script src="atelier.js"></script>
 </body>
 </html>
 

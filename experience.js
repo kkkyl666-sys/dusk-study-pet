@@ -11,6 +11,7 @@ let toastTimer = null;
 let undoAction = null;
 let syncJob = Promise.resolve();
 let restoringResume = true;
+let resumeRestored = false;
 const readStored = key => { try { return JSON.parse(localStorage.getItem(key) || "null"); } catch { return null; } };
 function dateISO(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`; }
 function selectedDateISO() { return dateISO(new Date(2026,8,7 + (activeWeek()-1)*7 + activeDay)); }
@@ -35,16 +36,20 @@ function persistLocalState() {
 function cacheCommittedState() { ensureTaskIds(); committedState = structuredClone(snapshot()); persistLocalState(); }
 function persistEditorDraft() {
   document.querySelector("#discardDraftBtn").hidden = false;
-  localStorage.setItem(editorDraftKey,JSON.stringify({selectedCourses,days}));
+  try { localStorage.setItem(editorDraftKey,JSON.stringify({selectedCourses,days})); }
+  catch { editorState.textContent = "草稿未保存，请保留页面；本机空间不足"; }
 }
 function clearEditorDraft() { localStorage.removeItem(editorDraftKey); document.querySelector("#discardDraftBtn").hidden = true; }
 function saveResumePoint(wordId) {
   if (restoringResume) return;
   const previous = readStored(resumeKey) || {};
   const data = { view:currentViewId(),scroll:window.scrollY,date:dateISO(new Date()),studyDate:dateISO(englishStudyDate()),wordId:wordId || previous.wordId };
-  localStorage.setItem(resumeKey,JSON.stringify(data));
+  try { localStorage.setItem(resumeKey,JSON.stringify(data)); } catch { /* The full snapshot remains the recovery source. */ }
 }
 function restoreResumePoint() {
+  if (resumeRestored) return;
+  resumeRestored = true;
+  if (matchMedia("(max-width: 760px)").matches) { startApp("homeView"); return; }
   const resume = readStored(resumeKey);
   if (!resume) return;
   startApp(resume.view || "scheduleView");
@@ -196,8 +201,15 @@ function openTaskEditor(id=null) {
 document.querySelector("#quickAddTask").onclick=()=>openTaskEditor();
 document.querySelector("#editorAddTask").onclick=()=>openTaskEditor();
 function commitQuickChange(message,undo) {
-  ensureTaskIds();committedState=structuredClone(snapshot());markStateChanged();renderTasks();renderSchedule();renderEditor();
+  ensureTaskIds();
+  const data = snapshot(); data.changedAt = Math.max(Date.now(),stateUpdatedAt+1);
+  try { localStorage.setItem(localSnapshotKey,JSON.stringify(data)); }
+  catch { showActionToast("未保存，本机空间不足；请保留草稿后重试"); return false; }
+  stateUpdatedAt = data.changedAt;
+  try { localStorage.setItem(stateUpdatedAtKey,String(stateUpdatedAt)); } catch { /* changedAt is also in the full snapshot. */ }
+  committedState=structuredClone(data);scheduleCloudSync();renderTasks();renderSchedule();renderEditor();
   showActionToast(message+" · 已存本机",undo?()=>{undo();commitQuickChange("已撤销");}:null);
+  return true;
 }
 document.querySelector("#taskQuickForm").onsubmit=e=>{
   e.preventDefault();const title=document.querySelector("#quickTaskTitle").value.trim(),date=document.querySelector("#quickTaskDate").value,start=document.querySelector("#quickTaskStart").value,end=document.querySelector("#quickTaskEnd").value,note=document.querySelector("#quickTaskNote").value.trim();
@@ -205,12 +217,16 @@ document.querySelector("#taskQuickForm").onsubmit=e=>{
   const before={appointments:structuredClone(appointments),days:structuredClone(days)},weekly=editedItem?findWeeklyTask(editedItem):null;
   if(weekly){weekly.task[0]=`${start?start+(end?"-"+end:"")+" ":""}${title}`;weekly.task[2]=note;}
   else{const task={id:editedItem||crypto.randomUUID(),title,date,start,end,note,repeat:document.querySelector("#quickTaskRepeat").value};const i=appointments.findIndex(t=>t.id===editedItem);if(i>=0)appointments[i]=task;else appointments.push(task);}
-  closeQuickDialog();commitQuickChange("日程已保存"+(date!==selectedDateISO()?" · "+date:""),()=>{appointments=before.appointments;days=before.days;});
+  if (!commitQuickChange("日程已保存"+(date!==selectedDateISO()?" · "+date:""),()=>{appointments=before.appointments;days=before.days;})) {
+    appointments=before.appointments;days=before.days;document.querySelector("#quickTaskError").textContent="未保存，请保留当前草稿，释放本机空间后重试。";return;
+  }
+  closeQuickDialog();
 };
 document.querySelector("#quickTaskDelete").onclick=()=>{
   const before={appointments:structuredClone(appointments),days:structuredClone(days)},weekly=findWeeklyTask(editedItem);
   if(weekly)days[weekly.day].tasks.splice(weekly.index,1);else appointments=appointments.filter(t=>t.id!==editedItem);
-  closeQuickDialog();commitQuickChange("已删除日程",()=>{appointments=before.appointments;days=before.days;});
+  if (!commitQuickChange("已删除日程",()=>{appointments=before.appointments;days=before.days;})) { appointments=before.appointments;days=before.days;return; }
+  closeQuickDialog();
 };
 
 function rewindPreview() {
@@ -239,7 +255,9 @@ renderSchedule=function(){oldRenderSchedule();document.querySelectorAll(".course
 document.querySelector("#courseQuickForm").onsubmit=e=>{
   e.preventDefault();const weeks=parseWeeks(document.querySelector("#quickCourseWeeks").value),periods=parsePeriods(document.querySelector("#quickCoursePeriods").value),name=document.querySelector("#quickCourseName").value.trim();
   if(!weeks.length||!periods.length||!name){document.querySelector("#quickCourseError").textContent="课程名称、周次和节次不能为空。";return;}
-  const index=editedItem,c=selectedCourses[index],previous=structuredClone(c);Object.assign(c,{name,weeks,periods,teacher:document.querySelector("#quickCourseTeacher").value.trim(),room:document.querySelector("#quickCourseRoom").value.trim()});closeQuickDialog();commitQuickChange("课程已保存",()=>{selectedCourses[index]=structuredClone(previous);});
+  const index=editedItem,c=selectedCourses[index],previous=structuredClone(c);Object.assign(c,{name,weeks,periods,teacher:document.querySelector("#quickCourseTeacher").value.trim(),room:document.querySelector("#quickCourseRoom").value.trim()});
+  if (!commitQuickChange("课程已保存",()=>{selectedCourses[index]=structuredClone(previous);})) { selectedCourses[index]=previous;document.querySelector("#quickCourseError").textContent="未保存，请保留草稿后重试。";return; }
+  closeQuickDialog();
 };
 document.querySelector("#discardDraftBtn").onclick=()=>{
   if(!committedState)return;selectedCourses=structuredClone(committedState.selectedCourses);days=structuredClone(committedState.days);editorDirty=false;clearEditorDraft();renderEditor();renderTasks();renderSchedule();persistLocalState();scheduleCloudSync();showActionToast("已撤销未保存修改");

@@ -1,5 +1,5 @@
-const CACHE_NAME = "dusk-study-pet-v18";
-const APP_SHELL = ["./", "./index.html", "./dusk-pet.png", "./manifest.webmanifest", "./sync-config.js", "./cet6-35.js", "./experience.js", "./lucide.min.js"];
+const CACHE_NAME = "dusk-study-pet-v19-atelier";
+const APP_SHELL = ["./", "./index.html", "./dusk-pet.png", "./manifest.webmanifest", "./sync-config.js", "./cet6-35.js", "./experience.js", "./lucide.min.js", "./atelier.js", "./atelier.css", "./assets/motion.js", "./assets/fonts/smiley.woff2", "./assets/fonts/wenkai.woff2", "./assets/fonts/lora.woff2", "./assets/wallpapers/dusk-studio-concept.png", "./assets/wallpapers/dusk-realm-concept.png"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
@@ -7,7 +7,7 @@ self.addEventListener("install", event => {
 });
 
 self.addEventListener("activate", event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)))));
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith("dusk-study-pet-") && key !== CACHE_NAME).map(key => caches.delete(key)))));
   self.clients.claim();
 });
 
@@ -18,11 +18,19 @@ self.addEventListener("fetch", event => {
     event.respondWith(fetch(event.request));
     return;
   }
-  event.respondWith(fetch(event.request).then(response => {
-    if (response.ok) {
-      const copy = response.clone();
-      caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-    }
-    return response;
-  }).catch(() => caches.match(event.request).then(cached => cached || caches.match("./index.html"))));
+  event.respondWith((async () => {
+    const cached = await caches.match(event.request) || (event.request.mode === "navigate" ? await caches.match("./index.html") : null);
+    const controller = new AbortController();
+    // A cached launch should not wait indefinitely on a weak mobile connection.
+    const timer = event.request.mode === "navigate" && cached ? setTimeout(() => controller.abort(), 4000) : null;
+    try {
+      const response = await fetch(event.request, { signal: controller.signal });
+      if (response.ok) {
+        const copy = response.clone();
+        event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)));
+      }
+      return response;
+    } catch { return cached || Response.error(); }
+    finally { if (timer) clearTimeout(timer); }
+  })());
 });
