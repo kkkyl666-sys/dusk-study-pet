@@ -193,21 +193,57 @@
   english.querySelector('.english-head').append(englishTools);
   document.querySelector('#exportWordsBtn').innerHTML=icon('download');document.querySelector('#exportWordsBtn').title='导出今日单词';document.querySelector('#exportWordsBtn').setAttribute('aria-label','导出今日单词');
   document.querySelector('#englishRewindBtn').innerHTML=icon('history');document.querySelector('#englishRewindBtn').title='补学 / 回档';document.querySelector('#englishRewindBtn').setAttribute('aria-label','补学或回档');
-  english.querySelector('.review-guide').insertAdjacentHTML('afterend',`<div class="focus-pager"><div class="focus-group"><button type="button" data-focus-group="new">新词</button><button type="button" data-focus-group="review">复习</button></div><span id="focusPosition"></span><div>${tool('focusPrev','chevron-left','上一个单词')}${tool('focusNext','chevron-right','下一个单词')}</div></div>`);
+  english.querySelector('.review-guide').insertAdjacentHTML('afterend',`<div class="word-layout-toolbar"><span>显示</span><div class="word-layout-switch" role="group" aria-label="单词显示方式"><button type="button" data-word-layout="focus" title="一屏一词" aria-pressed="false">${icon('rectangle-vertical')}一词</button><button type="button" data-word-layout="list" title="多词列表" aria-pressed="false">${icon('layout-list')}列表</button></div></div><div class="focus-pager"><div class="focus-group"><button type="button" data-focus-group="new">新词</button><button type="button" data-focus-group="review">复习</button></div><span id="focusPosition"></span><div>${tool('focusPrev','chevron-left','上一个单词')}${tool('focusNext','chevron-right','下一个单词')}</div></div>`);
+  function wordLayout() {
+    const stored=ui.wordLayouts?.[mobile.matches?'mobile':'desktop'];
+    return ['focus','list'].includes(stored)?stored:mobile.matches?'focus':'list';
+  }
+  function focusOnCard(card) {
+    if(!card)return;
+    focusGroup=card.closest('#reviewWords')?'review':'new';
+    focusIndex=[...card.parentElement.querySelectorAll('.word-card')].indexOf(card);
+  }
   function applyFocus() {
     if(!days.length)return;
+    const single=wordLayout()==='focus';
+    english.dataset.wordLayout=single?'focus':'list';
+    english.querySelector('.focus-pager').hidden=!single;
+    english.querySelectorAll(':scope > h3').forEach(heading=>heading.hidden=single);
+    english.querySelectorAll('[data-word-layout]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.wordLayout===wordLayout())));
     const cards=[...document.querySelectorAll(focusGroup==='new'?'#newWords .word-card':'#reviewWords .word-card')];
     focusIndex=Math.max(0,Math.min(focusIndex,cards.length-1));
-    document.querySelector('#newWords').classList.toggle('focus-hidden',focusGroup!=='new'&&mobile.matches);
-    document.querySelector('#reviewWords').classList.toggle('focus-hidden',focusGroup!=='review'&&mobile.matches);
-    document.querySelectorAll('.word-card').forEach(c=>c.classList.toggle('focus-hidden',mobile.matches));
-    cards[focusIndex]?.classList.remove('focus-hidden');
+    document.querySelector('#newWords').classList.toggle('focus-hidden',focusGroup!=='new'&&single);
+    document.querySelector('#reviewWords').classList.toggle('focus-hidden',focusGroup!=='review'&&single);
+    document.querySelectorAll('.word-card').forEach(c=>c.classList.toggle('focus-hidden',single));
+    if(single)cards[focusIndex]?.classList.remove('focus-hidden');
     document.querySelector('#focusPosition').textContent=cards.length?`${focusIndex+1} / ${cards.length}`:'暂无复习';
     english.querySelectorAll('[data-focus-group]').forEach(b=>b.classList.toggle('active',b.dataset.focusGroup===focusGroup));
     document.querySelector('#focusPrev').disabled=focusIndex===0;document.querySelector('#focusNext').disabled=focusIndex>=cards.length-1;
     document.querySelectorAll('.word-detail-button').forEach(b=>b.closest('.word-card').classList.toggle('long-word',b.textContent.length>=16));
-    const card=cards[focusIndex];if(mobile.matches&&currentViewId()==='englishView'&&card)saveResumePoint(card.dataset.wordCard);
+    const card=cards[focusIndex];if(single&&currentViewId()==='englishView'&&card)saveResumePoint(card.dataset.wordCard);
   }
+  english.querySelectorAll('[data-word-layout]').forEach(button=>button.onclick=()=>{
+    const next=button.dataset.wordLayout;if(next===wordLayout())return;
+    if(next==='focus'){
+      const top=Math.max(english.querySelector('.word-layout-toolbar').getBoundingClientRect().bottom,mobile.matches?document.querySelector('.atelier-bar').getBoundingClientRect().bottom:mainContent.getBoundingClientRect().top);
+      const bottom=mobile.matches?document.querySelector('.atelier-nav').getBoundingClientRect().top:mainContent.getBoundingClientRect().bottom;
+      const card=[...english.querySelectorAll('.word-card')].find(card=>{const r=card.getBoundingClientRect();return r.height>0&&r.bottom>top+30&&r.top<bottom;});
+      focusOnCard(card);
+    }
+    const previous=ui.wordLayouts;ui.wordLayouts={...ui.wordLayouts,[mobile.matches?'mobile':'desktop']:next};
+    try{localStorage.setItem(UI_KEY,JSON.stringify(ui));}
+    catch{ui.wordLayouts=previous;showActionToast('显示方式未保存，本机空间不足');return;}
+    applyFocus();
+    mainContent.scrollTop=0;window.scrollTo(0,0);
+    if(next==='list'&&focusIndex>0){
+      const card=english.querySelectorAll(focusGroup==='new'?'#newWords .word-card':'#reviewWords .word-card')[focusIndex];
+      card?.scrollIntoView({block:'start',behavior:'instant'});
+    }
+  });
+  english.addEventListener('click',event=>{
+    const card=event.target.closest('[data-word-card]');if(!card)return;
+    focusOnCard(card);saveResumePoint(card.dataset.wordCard);
+  },true);
   english.querySelectorAll('[data-focus-group]').forEach(b=>b.onclick=()=>{focusGroup=b.dataset.focusGroup;focusIndex=0;applyFocus();});
   document.querySelector('#focusPrev').onclick=()=>{focusIndex--;applyFocus();};
   document.querySelector('#focusNext').onclick=()=>{focusIndex++;applyFocus();};
