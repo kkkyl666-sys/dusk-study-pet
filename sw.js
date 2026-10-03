@@ -1,5 +1,5 @@
-const CACHE_NAME = "dusk-study-pet-v22-word-layouts";
-const APP_SHELL = ["./", "./index.html", "./dusk-pet.png", "./manifest.webmanifest", "./sync-config.js", "./cet6-35.js", "./experience.js?v=21", "./lucide.min.js", "./atelier.js?v=22", "./atelier.css?v=22", "./assets/motion.js", "./assets/fonts/smiley.woff2", "./assets/fonts/wenkai.woff2", "./assets/fonts/lora.woff2", "./assets/wallpapers/dusk-studio-concept.png", "./assets/wallpapers/dusk-realm-concept.png"];
+const CACHE_NAME = "dusk-study-pet-v24-share-demo";
+const APP_SHELL = ["./", "./index.html", "./share.html", "./demo-config.js?v=24", "./demo.js?v=24", "./demo.css?v=24", "./manifest-demo.webmanifest", "./dusk-pet.png", "./manifest.webmanifest", "./sync-config.js", "./cet6-35.js", "./experience.js?v=24", "./lucide.min.js", "./atelier.js?v=24", "./atelier.css?v=22", "./assets/motion.js", "./assets/fonts/smiley.woff2", "./assets/fonts/wenkai.woff2", "./assets/fonts/lora.woff2", "./assets/wallpapers/dusk-studio-concept.png", "./assets/wallpapers/dusk-realm-concept.png"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
@@ -19,7 +19,8 @@ self.addEventListener("fetch", event => {
     return;
   }
   event.respondWith((async () => {
-    const cached = await caches.match(event.request) || (event.request.mode === "navigate" ? await caches.match("./index.html") : null);
+    const entry = requestUrl.pathname.endsWith("/share.html") ? "./share.html" : "./index.html";
+    const cached = await caches.match(event.request) || (event.request.mode === "navigate" ? await caches.match(entry) : null);
     const controller = new AbortController();
     // A cached launch should not wait indefinitely on a weak mobile connection.
     const timer = event.request.mode === "navigate" && cached ? setTimeout(() => controller.abort(), 4000) : null;

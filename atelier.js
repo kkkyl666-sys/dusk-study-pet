@@ -1,6 +1,6 @@
 // Presentation-only preferences never enter the shared study snapshot.
 (() => {
-  const UI_KEY = 'dusk-atelier-ui-v1';
+  const UI_KEY = appStorageKey('dusk-atelier-ui-v1');
   const mobile = matchMedia('(max-width: 760px)');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const ui = readStored(UI_KEY) || {};
@@ -59,6 +59,10 @@
     <nav class="atelier-nav" aria-label="主导航"><button type="button" data-atelier-view="homeView">${icon('sun')}<span>今天</span></button><button type="button" data-atelier-view="englishView">${icon('book-open')}<span>单词</span></button><button type="button" data-atelier-view="scheduleView">${icon('calendar-days')}<span>课表</span></button><button type="button" data-atelier-view="tasksView" class="desktop-only">${icon('list-checks')}<span>计划</span></button><button type="button" id="atelierPetRestore" class="desktop-only">${icon('sparkles')}<span>夕</span></button><button type="button" data-atelier-view="editView">${icon('pencil')}<span>编辑</span></button></nav>
     <dialog class="quick-dialog" id="atelierSettingsDialog"><header><h2>画室设置</h2><button type="button" class="atelier-icon" id="atelierSettingsClose" aria-label="关闭设置">${icon('x')}</button></header><div class="atelier-settings"><label>场景<select id="atelierSceneSelect"><option value="studio">案台画室</option><option value="realm">画中天地</option><option value="rain">案台 · 雨天</option><option value="custom">自己的壁纸</option></select></label><label>字体<select id="atelierFontSelect"><option value="mixed">清晰正文 · 文楷便笺</option><option value="wenkai">文楷正文</option><option value="clear">清晰字体</option></select></label><label class="setting-toggle"><input type="checkbox" id="atelierQuietInput">夕的无声轻动作</label><label class="setting-toggle"><input type="checkbox" id="atelierMotionInput">背景慢动</label><label>自己的图片 / 静音视频<input type="file" id="atelierWallpaperFile" accept="image/*,video/*"></label><button type="button" class="mode utility-button" id="atelierCloudSettings">${icon('cloud')}云同步</button><button type="button" class="mode utility-button desktop-only" id="atelierLayoutReset">${icon('layout-dashboard')}恢复窗口位置</button><small>场景为依据夕的设定制作的二创概念图，非官方原图。桌面与手机共用学习记录。</small></div></dialog>`);
   const settings = document.querySelector('#atelierSettingsDialog');
+  if(!isDemo){
+    settings.querySelector('.atelier-settings').insertAdjacentHTML('beforeend',`<button type="button" class="mode utility-button" id="atelierDemoLink">${icon('share-2')}分享演示版</button>`);
+    document.querySelector('#atelierDemoLink').onclick=()=>window.open('share.html','_blank','noopener');
+  }
   const sceneSelect = document.querySelector('#atelierSceneSelect');
   function saveUI() {try{localStorage.setItem(UI_KEY,JSON.stringify(ui));}catch{showActionToast('外观设置未保存，本机空间不足');}}
   function focusPanel(panel) {Object.values(panels).forEach(p=>p.classList.toggle('focused',p===panel));}
@@ -118,7 +122,7 @@
   document.querySelector('#atelierMotion').onclick=()=>{ui.motion=ui.motion===false;saveUI();applyUI();};
   async function wallpaperStore() {
     if(wallpaperDB)return wallpaperDB;
-    wallpaperDB=await new Promise((resolve,reject)=>{const request=indexedDB.open('dusk-atelier-media-v1',1);request.onupgradeneeded=()=>request.result.createObjectStore('wallpaper');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});return wallpaperDB;
+    wallpaperDB=await new Promise((resolve,reject)=>{const request=indexedDB.open(appStorageKey('dusk-atelier-media-v1'),1);request.onupgradeneeded=()=>request.result.createObjectStore('wallpaper');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});return wallpaperDB;
   }
   function showWallpaper(blob) {
     if(mediaURL)URL.revokeObjectURL(mediaURL);mediaURL=URL.createObjectURL(blob);

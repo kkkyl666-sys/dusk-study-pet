@@ -7,10 +7,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="夕式桌宠">
-  <title>夕的案台画室</title>
+  <title>夕的案台画室 · 分享演示</title>
   <link rel="icon" type="image/png" href="dusk-pet.png">
   <link rel="apple-touch-icon" href="dusk-pet.png">
-  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="manifest" href="manifest-demo.webmanifest">
   <style>
     :root {
       color-scheme: dark;
@@ -328,6 +328,7 @@
     @media(max-width:600px) { .utility-actions { gap:6px; } .quick-dialog { margin:auto; } }
   </style>
   <link rel="stylesheet" href="atelier.css?v=22">
+  <link rel="stylesheet" href="demo.css?v=24">
 </head>
 <body>
   <section class="private-gate" id="privateGate" aria-labelledby="privateGateTitle">
@@ -344,7 +345,7 @@
           <img class="pet-img" src="dusk-pet.png" alt="夕式桌宠立绘">
         </div>
         <div>
-          <h1>光电学习桌宠</h1>
+          <h1>夕的画室 · 演示</h1>
           <p class="subtitle">你的个人课程表、学习计划与轻量陪伴。</p>
         </div>
       </div>
@@ -456,7 +457,7 @@
       </div>
     </form>
   </dialog>
-  <script src="sync-config.js"></script>
+  <script src="demo-config.js?v=24"></script>
   <script src="cet6-35.js"></script>
   <script>
     const isDemo = window.PET_DEMO === true;
@@ -1117,6 +1118,7 @@
   <script src="experience.js?v=24"></script>
   <script src="assets/motion.js"></script>
   <script src="atelier.js?v=24"></script>
+  <script src="demo.js?v=24"></script>
 </body>
 </html>
 

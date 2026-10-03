@@ -1,7 +1,7 @@
 // Local recovery and focused editing share the existing course/English model.
-const localSnapshotKey = "dusk-study-pet-full-state-v1";
-const resumeKey = "dusk-study-pet-resume-v1";
-const editorDraftKey = "dusk-study-pet-draft-v1";
+const localSnapshotKey = appStorageKey("dusk-study-pet-full-state-v1");
+const resumeKey = appStorageKey("dusk-study-pet-resume-v1");
+const editorDraftKey = appStorageKey("dusk-study-pet-draft-v1");
 let appointments = [];
 let englishAdjustments = [];
 let committedState = null;
@@ -15,7 +15,7 @@ let resumeRestored = false;
 const readStored = key => { try { return JSON.parse(localStorage.getItem(key) || "null"); } catch { return null; } };
 function dateISO(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`; }
 function selectedDateISO(dayIndex = activeDay) { return dateISO(new Date(2026,8,7 + (activeWeek()-1)*7 + dayIndex)); }
-function validSnapshot(data) { return !!data && Array.isArray(data.selectedCourses) && data.selectedCourses.length > 0 && data.selectedCourses.every(c => c && typeof c.name === "string" && Array.isArray(c.weeks) && Array.isArray(c.periods)) && Array.isArray(data.days) && data.days.length === 7 && data.days.every(d => d && Array.isArray(d.tasks)); }
+function validSnapshot(data) { return !!data && Array.isArray(data.selectedCourses) && (isDemo || data.selectedCourses.length > 0) && data.selectedCourses.every(c => c && typeof c.name === "string" && Array.isArray(c.weeks) && Array.isArray(c.periods)) && Array.isArray(data.days) && data.days.length === 7 && data.days.every(d => d && Array.isArray(d.tasks)); }
 const originalSnapshot = snapshot;
 snapshot = function() { return { ...originalSnapshot(), appointments, englishAdjustments }; };
 function ensureTaskIds() {
@@ -284,7 +284,7 @@ window.addEventListener("online",()=>{if(accessCode)pullOrPushCloudState().catch
 window.addEventListener("offline",()=>updateSyncStatus("离线使用，联网后补传"));
 
 const cached=readStored(localSnapshotKey),draft=readStored(editorDraftKey);
-if(accessCode&&validSnapshot(cached)){applySnapshot(cached);cacheCommittedState();restoreResumePoint();restoringResume=false;updateSyncStatus("本机存档已打开，正在核对云端");}
+if((isDemo||accessCode)&&validSnapshot(cached)){applySnapshot(cached);cacheCommittedState();restoreResumePoint();restoringResume=false;updateSyncStatus(isDemo?"分享演示 · 仅存本机":"本机存档已打开，正在核对云端");}
 if(validSnapshot(draft)&&committedState){selectedCourses=draft.selectedCourses;days=draft.days;editorDirty=true;document.querySelector("#discardDraftBtn").hidden=false;startApp(readStored(resumeKey)?.view);editorState.textContent="已恢复编辑草稿 · 待保存到云端";}
 if(accessCode)document.querySelector("#retryCloudBtn").hidden=false;
 refreshIcons();

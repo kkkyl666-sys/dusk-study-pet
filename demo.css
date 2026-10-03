@@ -1,0 +1,6 @@
+.share-demo #syncBtn,.share-demo #syncStatus,.share-demo [data-home-sync],.share-demo #homeSyncNote,.share-demo #atelierCloudSettings{display:none!important}
+.share-demo .atelier-brand{font-size:20px}
+.share-demo #demoDialog{max-width:520px}
+.share-demo #demoURL{font-family:system-ui,sans-serif;font-size:14px;width:100%;min-width:0}
+.share-demo #demoError:empty{display:none}
+@media(max-width:760px){.share-demo .atelier-brand{font-size:18px}.share-demo .atelier-tools{gap:2px}.share-demo #demoDialog{width:calc(100% - 24px)}}

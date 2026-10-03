@@ -1,0 +1,10 @@
+{
+  "name": "夕的案台画室 · 分享演示",
+  "short_name": "夕的画室演示",
+  "start_url": "./share.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8faf3",
+  "theme_color": "#e4ebe3",
+  "icons": [{"src":"dusk-pet.png","sizes":"192x192","type":"image/png"},{"src":"dusk-pet.png","sizes":"512x512","type":"image/png"}]
+}
