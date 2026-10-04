@@ -41,7 +41,7 @@ const privateFixture={selectedCourses:[{code:'TEST',name:'仅自用课程',teach
     try{res.setHeader('Content-Type',mime[path.extname(file)]||'application/json');res.end(fs.readFileSync(file));}catch{res.writeHead(404).end();}
   });
   await new Promise(r=>server.listen(0,'127.0.0.1',r));
-  const base=`http://127.0.0.1:${server.address().port}`;
+  const base=process.argv[2]?.replace(/\/$/,'') || `http://127.0.0.1:${server.address().port}`;
   const browser=await chromium.launch({channel:'msedge',headless:true});
   const errors=[],requests=[];let failNetwork=false;
   try{
