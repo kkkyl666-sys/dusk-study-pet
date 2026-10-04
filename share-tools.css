@@ -1,0 +1,21 @@
+.share-workbench { padding: 12px 0 22px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+.share-command-row { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
+.share-command-row button { min-height:42px; }
+.share-calendar-row { display:flex; gap:12px; align-items:end; margin:18px 0; flex-wrap:wrap; }
+.share-calendar-row label { display:grid; gap:6px; font-size:14px; }
+.share-calendar-row input { width:190px; min-height:42px; }
+.share-course-row { display:flex; align-items:center; justify-content:space-between; text-align:left; width:100%; gap:12px; background:transparent; border:0; border-bottom:1px solid #d8d8ce; padding:12px 4px; color:#303d39; }
+.share-course-row span { min-width:0; display:grid; gap:4px; overflow-wrap:anywhere; }
+.share-course-row small { color:#586961; font-size:13px; }
+.share-course-row svg { flex:0 0 20px; }
+.share-check { display:flex !important; align-items:center; gap:9px; font-size:14px; }
+.share-check input { width:18px; min-height:18px; accent-color:#346549; }
+.share-edit #courseEditor { display:none; }
+.share-edit #addCourseBtn { display:none; }
+.share-edit .editor-toolbar { display:none; }
+.share-edit[data-share-draft="true"] .editor-toolbar { display:flex; }
+.share-edit .save-state { color:#346549; }
+#feedbackForm textarea { width:100%; box-sizing:border-box; min-height:120px; padding:10px; border:1px solid #aebbab; border-radius:5px; background:#fafbf7; color:#303d39; font:inherit; resize:vertical; }
+#feedbackResult[data-success="true"] { color:#346549; }
+.share-edit .editor-toolbar p { max-width:100%; }
+@media(max-width:760px) { .share-demo #demoOptions,.share-demo #feedbackOpen { display:none; } .share-command-row button { flex:1 1 calc(50% - 8px); } .share-calendar-row { align-items:stretch; } .share-calendar-row label { flex:1; } .share-calendar-row input { width:100%; } }

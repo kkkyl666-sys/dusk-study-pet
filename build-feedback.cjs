@@ -1,0 +1,14 @@
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),crypto=require('node:crypto');
+const context={window:{}};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'sync-config.js'),'utf8'),context);
+const config=context.window.PET_SYNC_CONFIG;
+if(!config?.supabaseUrl || !config?.supabaseAnonKey)throw Error('Missing public endpoint configuration');
+fs.writeFileSync(path.join(__dirname,'feedback-config.js'),'window.PET_FEEDBACK_CONFIG = '+JSON.stringify({url:config.supabaseUrl,key:config.supabaseAnonKey})+';\n');
+const privateDir=path.resolve(__dirname,'..','数据','反馈后台安装');fs.mkdirSync(privateDir,{recursive:true});
+const keyFile=path.join(privateDir,'收件箱管理凭证.txt');
+const key=fs.existsSync(keyFile)?fs.readFileSync(keyFile,'utf8').trim():crypto.randomBytes(32).toString('base64url');
+if(!/^[A-Za-z0-9_-]{43}$/.test(key))throw Error('Unexpected owner key format');
+if(!fs.existsSync(keyFile))fs.writeFileSync(keyFile,key+'\n');
+const hash=crypto.createHash('sha256').update(key).digest('hex');
+const sql=fs.readFileSync(path.join(__dirname,'feedback-schema.sql'),'utf8').replace('-- ADMIN_SETUP',`insert into public.dusk_feedback_settings(id,owner_hash) values(1,'${hash}') on conflict(id) do nothing;`);
+fs.writeFileSync(path.join(privateDir,'一次性启用反馈.sql'),sql);
+process.stdout.write('Public feedback config and private installation files generated. Owner key not printed.\n');

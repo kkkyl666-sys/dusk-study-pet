@@ -62,8 +62,9 @@
   settings.querySelector('.atelier-settings').insertAdjacentHTML('beforeend',`<button type="button" class="mode utility-button" id="atelierDevelopmentLink">${icon('milestone')}开发关卡册</button>`);
   document.querySelector('#atelierDevelopmentLink').onclick=()=>window.open('development.html'+(isDemo?'?from=demo':''),'_blank','noopener');
   if(!isDemo){
-    settings.querySelector('.atelier-settings').insertAdjacentHTML('beforeend',`<button type="button" class="mode utility-button" id="atelierDemoLink">${icon('share-2')}分享演示版</button>`);
+    settings.querySelector('.atelier-settings').insertAdjacentHTML('beforeend',`<button type="button" class="mode utility-button" id="atelierDemoLink">${icon('share-2')}分享给朋友</button><button type="button" class="mode utility-button" id="atelierInboxLink">${icon('inbox')}反馈收件箱</button>`);
     document.querySelector('#atelierDemoLink').onclick=()=>window.open('share.html','_blank','noopener');
+    document.querySelector('#atelierInboxLink').onclick=()=>window.open('feedback-admin.html','_blank','noopener');
   }
   const sceneSelect = document.querySelector('#atelierSceneSelect');
   function saveUI() {try{localStorage.setItem(UI_KEY,JSON.stringify(ui));}catch{showActionToast('外观设置未保存，本机空间不足');}}

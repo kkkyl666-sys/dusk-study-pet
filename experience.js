@@ -14,10 +14,10 @@ let restoringResume = true;
 let resumeRestored = false;
 const readStored = key => { try { return JSON.parse(localStorage.getItem(key) || "null"); } catch { return null; } };
 function dateISO(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`; }
-function selectedDateISO(dayIndex = activeDay) { return dateISO(new Date(2026,8,7 + (activeWeek()-1)*7 + dayIndex)); }
+function selectedDateISO(dayIndex = activeDay) { const date = new Date(semesterStart); date.setDate(date.getDate() + (activeWeek()-1)*7 + dayIndex); return dateISO(date); }
 function validSnapshot(data) { return !!data && Array.isArray(data.selectedCourses) && (isDemo || data.selectedCourses.length > 0) && data.selectedCourses.every(c => c && typeof c.name === "string" && Array.isArray(c.weeks) && Array.isArray(c.periods)) && Array.isArray(data.days) && data.days.length === 7 && data.days.every(d => d && Array.isArray(d.tasks)); }
 const originalSnapshot = snapshot;
-snapshot = function() { return { ...originalSnapshot(), appointments, englishAdjustments }; };
+snapshot = function() { return { ...originalSnapshot(), appointments, englishAdjustments, ...(isDemo ? {shareCalendar:dateISO(semesterStart)} : {}) }; };
 function ensureTaskIds() {
   days.forEach((day, dayIndex) => day.tasks.forEach((task,index) => {
     if (task[4]) return;
@@ -28,6 +28,7 @@ function ensureTaskIds() {
 }
 function persistLocalState() {
   if (!validSnapshot(snapshot())) return;
+  if (isDemo && Number(readStored(localSnapshotKey)?.changedAt) > stateUpdatedAt) return;
   const data = snapshot();
   if (editorDirty && committedState) { data.selectedCourses = committedState.selectedCourses; data.days = committedState.days; }
   try { localStorage.setItem(localSnapshotKey,JSON.stringify(data)); }
@@ -89,6 +90,10 @@ applySnapshot = function(data) {
   }
   appointments = Array.isArray(data.appointments) ? data.appointments : [];
   englishAdjustments = Array.isArray(data.englishAdjustments) ? data.englishAdjustments : [];
+  if (isDemo && /^\d{4}-\d{2}-\d{2}$/.test(data.shareCalendar || "")) {
+    const start = new Date(data.shareCalendar + "T00:00:00");
+    if (!isNaN(start) && start.getDay() === 1 && dateISO(start) === data.shareCalendar) semesterStart.setTime(start.getTime());
+  }
   const scroll = window.scrollY;
   oldApplySnapshot(data);
   ensureTaskIds();

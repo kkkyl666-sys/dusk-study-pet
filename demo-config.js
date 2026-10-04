@@ -1,5 +1,10 @@
 // This entry has no sync configuration and never reads the personal storage keys.
 window.PET_DEMO = true;
+try {
+  const saved = JSON.parse(localStorage.getItem("dusk-demo-v1:dusk-study-pet-full-state-v1") || "null");
+  const date = new Date(saved?.shareCalendar + "T00:00:00");
+  if (saved?.shareCalendar && !isNaN(date) && date.getDay() === 1) window.PET_SHARE_CALENDAR = saved.shareCalendar;
+} catch { /* Existing stores remain untouched if recovery is needed. */ }
 window.createDemoData = function(mode) {
   const names = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"];
   const courseNames = ["学术英语", "高等数学", "程序设计", "设计与表达", "自然科学导论", "体育活动", "文学与生活"];

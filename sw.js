@@ -1,5 +1,5 @@
-const CACHE_NAME = "dusk-study-pet-v25-development-log";
-const APP_SHELL = ["./", "./index.html", "./share.html", "./development.html", "./development-log.json", "./development.js?v=25", "./development.css?v=25", "./DEVELOPMENT.md", "./demo-config.js?v=24", "./demo.js?v=24", "./demo.css?v=24", "./manifest-demo.webmanifest", "./dusk-pet.png", "./manifest.webmanifest", "./sync-config.js", "./cet6-35.js", "./experience.js?v=24", "./lucide.min.js", "./atelier.js?v=25", "./atelier.css?v=22", "./assets/motion.js", "./assets/fonts/smiley.woff2", "./assets/fonts/wenkai.woff2", "./assets/fonts/lora.woff2", "./assets/wallpapers/dusk-studio-concept.png", "./assets/wallpapers/dusk-realm-concept.png"];
+const CACHE_NAME = "dusk-study-pet-v26-share-f2";
+const APP_SHELL = ["./", "./index.html", "./share.html", "./feedback-admin.html", "./feedback-admin.css?v=1", "./feedback-admin.js?v=1", "./feedback-config.js?v=1", "./feedback.js?v=1", "./share-tools.js?v=1", "./share-tools.css?v=1", "./papaparse.min.js", "./development.html", "./development-log.json", "./development.js?v=25", "./development.css?v=25", "./DEVELOPMENT.md", "./demo-config.js?v=26", "./demo.js?v=26", "./demo.css?v=26", "./manifest-demo.webmanifest", "./dusk-pet.png", "./manifest.webmanifest", "./sync-config.js", "./cet6-35.js", "./experience.js?v=25", "./lucide.min.js", "./atelier.js?v=26", "./atelier.css?v=23", "./assets/motion.js", "./assets/fonts/smiley.woff2", "./assets/fonts/wenkai.woff2", "./assets/fonts/lora.woff2", "./assets/wallpapers/dusk-studio-concept.png", "./assets/wallpapers/dusk-realm-concept.png"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
@@ -19,7 +19,7 @@ self.addEventListener("fetch", event => {
     return;
   }
   event.respondWith((async () => {
-    const entry = requestUrl.pathname.endsWith("/development.html") ? "./development.html" : requestUrl.pathname.endsWith("/share.html") ? "./share.html" : "./index.html";
+    const entry = requestUrl.pathname.endsWith("/feedback-admin.html") ? "./feedback-admin.html" : requestUrl.pathname.endsWith("/development.html") ? "./development.html" : requestUrl.pathname.endsWith("/share.html") ? "./share.html" : "./index.html";
     const cached = await caches.match(event.request) || (event.request.mode === "navigate" ? await caches.match(entry) : null);
     const controller = new AbortController();
     // A cached launch should not wait indefinitely on a weak mobile connection.
