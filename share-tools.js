@@ -129,10 +129,10 @@
   $('#shareBackup').onclick = async () => {
     if (!readyToEdit()) return;
     const data = {format:'dusk-share-backup',schema:1,exportedAt:new Date().toISOString(),data:snapshot()};
-    const text=JSON.stringify(data,null,2),name=`夕的画室-完整备份-${dateISO(new Date())}.json`;
+    const text=JSON.stringify(data,null,2),name=`夕的手账-完整备份-${dateISO(new Date())}.json`;
     const file=new File([text],name,{type:'application/json'});
     if(matchMedia('(max-width:760px)').matches && navigator.canShare?.({files:[file]})){
-      try{await navigator.share({files:[file],title:'夕的画室完整备份'});}
+      try{await navigator.share({files:[file],title:'夕的手账完整备份'});}
       catch(err){if(err.name==='AbortError'){$('#shareSaveState').textContent='已取消备份，存档未改变';return;}download(text,name);}
     }else download(text,name);
     try {localStorage.setItem(backupDateKey, data.exportedAt);} catch {}

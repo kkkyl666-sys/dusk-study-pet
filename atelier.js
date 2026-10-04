@@ -18,7 +18,7 @@
   const tool = (id, name, label, extra = '') => `<button type="button" class="atelier-icon${extra.includes('desktop-only')?' desktop-only':''}" id="${id}" title="${label}" aria-label="${label}">${icon(name)}</button>`;
   document.body.insertAdjacentHTML('afterbegin', `
     <div class="atelier-wallpaper" aria-hidden="true"><img id="atelierScene" src="assets/wallpapers/dusk-studio-concept.png" alt=""><video id="atelierVideo" muted loop playsinline hidden></video><div class="rain" id="atelierRain" hidden>${Array.from({length:20},(_,i)=>`<i style="left:${i*5}%;animation-delay:-${i*.14}s"></i>`).join('')}</div></div>
-    <header class="atelier-bar"><span class="atelier-brand">夕的案台画室</span><div class="atelier-tools"><span class="atelier-date" id="atelierDate"></span>${tool('atelierSceneMode','image','看画室','class="desktop-only"')}${tool('atelierMotion','pause','暂停背景')}${tool('atelierSettings','sliders-horizontal','画室设置')}</div></header>`);
+    <header class="atelier-bar"><span class="atelier-brand">夕的手账</span><div class="atelier-tools"><span class="atelier-date" id="atelierDate"></span>${tool('atelierSceneMode','image','看画室','class="desktop-only"')}${tool('atelierMotion','pause','暂停背景')}${tool('atelierSettings','sliders-horizontal','画室设置')}</div></header>`);
   const planner = document.createElement('section'); planner.className = 'atelier-window atelier-planner desktop-only';
   planner.innerHTML = '<div class="planner-body" id="atelierPlannerBody"></div>'; document.body.append(planner);
   const panels = {study:main,pet,planner};

@@ -1,6 +1,6 @@
 {
-  "name": "夕的案台画室 · 分享版",
-  "short_name": "夕的画室分享版",
+  "name": "夕的手账 · 分享版",
+  "short_name": "夕的手账分享版",
   "start_url": "./share.html",
   "scope": "./",
   "display": "standalone",

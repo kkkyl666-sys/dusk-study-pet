@@ -62,6 +62,13 @@ const privateFixture={selectedCourses:[{code:'TEST',name:'仅自用课程',teach
     const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));
     page.on('dialog',d=>d.accept());
     await page.goto(base+'/share.html');await page.waitForFunction(()=>window.shareTools&&!restoringResume);
+    assert.equal(await page.title(),'夕的手账 · 分享版');
+    assert.equal(await page.locator('.atelier-brand').innerText(),'夕的手账 · 分享版');
+    assert.equal(await page.locator('meta[name="apple-mobile-web-app-title"]').getAttribute('content'),'夕的手账分享版');
+    for(const [file,start,name] of [['manifest.webmanifest','./','夕的手账'],['manifest-demo.webmanifest','./share.html','夕的手账 · 分享版']]){
+      const manifest=JSON.parse(fs.readFileSync(path.join(root,file),'utf8'));
+      assert.equal(manifest.name,name);assert.equal(manifest.start_url,start);assert.equal(manifest.scope,'./');
+    }
     assert.equal(await page.evaluate(()=>selectedCourses.length),0);assert.equal(await page.evaluate(()=>syncReady),false);
     assert.equal(await page.evaluate(()=>document.body.classList.contains('private-wait')),false);
     await page.locator('.atelier-nav [data-atelier-view=editView]').click();

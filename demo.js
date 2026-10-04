@@ -2,7 +2,7 @@
   const shareURL = location.protocol === "file:" ? "https://kkkyl666-sys.github.io/dusk-study-pet/share.html" : new URL("share.html",location.href).href;
   const icon = name => `<i data-lucide="${name}"></i>`;
   document.body.classList.add("share-demo");
-  document.querySelector(".atelier-brand").textContent = "夕的画室 · 分享版";
+  document.querySelector(".atelier-brand").textContent = "夕的手账 · 分享版";
   document.querySelector("#saveCloudBtn").textContent = "保存到本机";
   document.querySelector("#atelierSettingsDialog small").textContent = "分享版 · 记录只存这台设备的当前浏览器，请定期下载备份。场景为二创概念图，非官方原图。";
   document.querySelector(".atelier-tools").insertAdjacentHTML("afterbegin",`<button type="button" class="atelier-icon" id="demoOptions" title="演示与分享" aria-label="演示与分享">${icon("share-2")}</button>`);
@@ -29,7 +29,7 @@
   document.querySelector("#demoCopy").onclick=copyLink;
   document.querySelector("#demoShare").onclick=async()=>{
     if(!navigator.share){await copyLink();return;}
-    try {await navigator.share({title:"夕的案台画室 · 分享演示",text:"课表、计划和每日英语，打开即可体验。",url:shareURL});error.textContent="";}
+    try {await navigator.share({title:"夕的手账 · 分享版",text:"课表、计划和每日英语，打开即可体验。",url:shareURL});error.textContent="";}
     catch(errorValue){if(errorValue.name!=="AbortError")await copyLink();}
   };
   updateSyncStatus("分享版 · 已存本机");refreshIcons();
