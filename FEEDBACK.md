@@ -12,6 +12,8 @@ Generic `feedback-schema.sql` intentionally does not configure an owner key. It 
 
 ## Boundaries
 
+Live installation verified on 2026-10-04: a clearly labelled test message was sent through the published share form to actual Supabase, displayed once in the published owner inbox, and marked done. Status and internal note survived a full reload and fresh unlock. An invalid owner credential was rejected. The test receipt is `26e28a53-dc48-4bb8-b751-2e12f3d41435`; the message remains as a handled verification record. No personal study state was changed. This was a real browser/backend test, separate from the PGlite regression suite.
+
 Tables have RLS and no direct anonymous/authenticated grants. Public RPCs only accept bounded, whitelisted feedback fields. Owner list/update validates an independent random 256-bit key server-side. SHA-256 stores a verifier, not the key; this is suitable only for the generated high-entropy key, not a short human password. Function search paths are empty. Updates are explicit and retry IDs deduplicate submissions under a transaction lock.
 
 Abuse controls are global 30/hour, 200/24 hours, capacity 5,000, and 3/10 minutes per device UUID. A device UUID is **not a verified identity** and can be spoofed; the global cap limits storage abuse but cannot prevent deliberate denial of service. This first release is for small-scale sharing. Before broad public promotion, add a verified CAPTCHA/Edge gateway with network-level rate limiting. No attachments; contact and device environment are optional. Service-side request logs may still contain network metadata. Owner can manage retention through the database; no automatic deletion is enabled in this release.
