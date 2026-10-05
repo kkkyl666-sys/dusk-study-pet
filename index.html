@@ -1,0 +1,1454 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#e4ebe3">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="夕的手账">
+  <title>夕的手账</title>
+  <link rel="icon" type="image/png" href="dusk-pet.png">
+  <link rel="apple-touch-icon" href="dusk-pet.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101214;
+      --panel: #1b1d20;
+      --panel-2: #24272b;
+      --panel-3: #17191c;
+      --line: #3a3f46;
+      --text: #f4f0e8;
+      --muted: #a9afb8;
+      --green: #5bc88e;
+      --amber: #f1b952;
+      --cyan: #57c9c2;
+      --red: #ee7676;
+      --blue: #7aa7ff;
+      --violet: #b59cff;
+      --ink: #111315;
+      font-family: "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(87, 201, 194, 0.14), transparent 28%),
+        radial-gradient(circle at 88% 22%, rgba(238, 118, 118, 0.1), transparent 30%),
+        linear-gradient(135deg, #0e1213 0%, #181916 52%, #0b1012 100%);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      position: relative;
+      isolation: isolate;
+    }
+    .private-gate { display: none; width: min(420px, calc(100vw - 32px)); padding: 28px; border: 1px solid var(--line); background: var(--panel); text-align: center; box-shadow: 0 24px 70px rgba(0,0,0,0.42); }
+    .private-gate img { width: 126px; height: 126px; object-fit: cover; margin-bottom: 16px; border: 1px solid rgba(87, 201, 194, 0.35); }
+    .private-gate h1 { margin: 0 0 10px; }
+    .private-gate p { margin: 0 0 18px; color: var(--muted); line-height: 1.65; font-size: 14px; }
+    .private-gate button { width: 100%; }
+    body.private-wait .app { display: none; }
+    body.private-wait .private-gate { display: block; }
+    body::before, body::after {
+      content: "";
+      position: fixed;
+      width: 260px;
+      height: 260px;
+      border-radius: 48% 52% 46% 54%;
+      background: rgba(87, 201, 194, 0.09);
+      filter: blur(28px);
+      opacity: 0.72;
+      z-index: -1;
+      animation: ink-drift 9s ease-in-out infinite;
+    }
+    body::before { left: -80px; bottom: 12%; }
+    body::after { right: -70px; top: 9%; width: 220px; height: 220px; background: rgba(238,118,118,0.08); animation-delay: -4s; }
+    @keyframes ink-drift { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(18px,-14px,0) scale(1.08); } }
+    h1, h2, h3, p { margin: 0; }
+    button, input, select { font: inherit; }
+    .app {
+      width: min(1500px, calc(100vw - 32px));
+      min-height: min(760px, calc(100vh - 44px));
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      background: rgba(27, 29, 32, 0.94);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.36);
+      overflow: hidden;
+    }
+    aside {
+      background: rgba(16, 18, 20, 0.76);
+      border-right: 1px solid var(--line);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    aside::before {
+      content: "夕";
+      position: absolute;
+      right: -30px;
+      top: 14px;
+      font-size: 148px;
+      line-height: 1;
+      color: rgba(255,255,255,0.035);
+      font-family: SimSun, serif;
+      pointer-events: none;
+    }
+    main { padding: 24px; display: grid; grid-template-rows: auto auto 1fr; gap: 16px; min-width: 0; }
+    .pet-wrap { display: grid; place-items: center; gap: 14px; padding-top: 8px; }
+    .pet-frame {
+      width: 176px;
+      height: 176px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(87, 201, 194, 0.28);
+      background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)), radial-gradient(circle at 50% 45%, rgba(87,201,194,0.16), transparent 70%);
+      box-shadow: 0 18px 38px rgba(0,0,0,0.32);
+      animation: breathe 3.4s ease-in-out infinite;
+      overflow: hidden;
+    }
+    .pet-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    @keyframes breathe { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-5px) scale(1.02); } }
+    h1 { font-size: 26px; line-height: 1.2; }
+    h2 { font-size: 18px; margin-bottom: 12px; }
+    h3 { font-size: 15px; line-height: 1.35; }
+    .subtitle { color: var(--muted); line-height: 1.65; font-size: 14px; text-align: center; }
+    .card, .quote, .task, .day-button, .course-block, .select-card, .summary-pill, .tab-button {
+      border: 1px solid rgba(255,255,255,0.08);
+      background: var(--panel-2);
+    }
+    .card, .quote { padding: 16px; }
+    .quote { color: #d8d7ce; line-height: 1.7; font-size: 14px; }
+    .voice-row { display: grid; grid-template-columns: 1fr 42px; gap: 8px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .today-title { display: grid; gap: 6px; min-width: 0; }
+    .today-title span { color: var(--muted); font-size: 14px; line-height: 1.5; }
+    .progress { min-width: 210px; display: grid; gap: 8px; }
+    .progress-label { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; }
+    .bar { height: 10px; background: #141517; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; }
+    .bar span { display: block; width: 0%; height: 100%; background: linear-gradient(90deg, var(--green), var(--cyan)); transition: width 220ms ease; }
+    .tabs { width: 100%; min-width: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+    .tab-button { min-height: 42px; color: var(--text); cursor: pointer; background: rgba(255,255,255,0.04); }
+    .tab-button.active { border-color: rgba(87, 201, 194, 0.78); background: rgba(87, 201, 194, 0.15); }
+    .view { display: none; min-height: 0; min-width: 0; }
+    .view.active { display: block; }
+    .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 16px; }
+    .day-button { min-height: 58px; color: var(--text); cursor: pointer; display: grid; place-items: center; gap: 2px; padding: 8px 6px; }
+    .day-button strong { font-size: 15px; }
+    .day-button small { color: var(--muted); }
+    .day-button.active { border-color: rgba(122, 167, 255, 0.84); background: rgba(122, 167, 255, 0.15); }
+    .content { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 18px; min-height: 0; }
+    .tasks { display: grid; gap: 10px; align-content: start; }
+    .task { display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; align-items: center; padding: 14px; min-height: 70px; }
+    .task input { width: 20px; height: 20px; accent-color: var(--green); }
+    .task-title { display: grid; gap: 5px; min-width: 0; }
+    .task-title strong { font-size: 15px; line-height: 1.35; }
+    .task-title span { color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .tag { white-space: nowrap; padding: 6px 9px; font-size: 12px; color: #141517; background: var(--amber); }
+    .tag.hardware { background: #f2b84b; } .tag.software { background: #62c7d9; } .tag.prompt { background: #98d46d; } .tag.video { background: #f08bb4; } .tag.drive { background: #91a8ff; }
+    .task.done strong, .task.done span { text-decoration: line-through; color: #777d86; }
+    .task.current { border-color: rgba(91, 200, 142, 0.82); background: rgba(91, 200, 142, 0.13); }
+    .task.upcoming { border-color: rgba(122, 167, 255, 0.32); }
+    .time-state { color: var(--green); font-weight: 700; }
+    .sidebar-list { display: grid; gap: 10px; }
+    .focus-item { display: grid; grid-template-columns: 10px 1fr; gap: 10px; align-items: start; color: #d9dce2; font-size: 14px; line-height: 1.55; }
+    .dot { width: 10px; height: 10px; margin-top: 6px; background: var(--green); }
+    .dot.amber { background: var(--amber); } .dot.cyan { background: var(--cyan); } .dot.red { background: var(--red); } .dot.blue { background: var(--blue); } .dot.violet { background: var(--violet); }
+    .pet-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 0; }
+    .mode, .speak, .reset {
+      height: 42px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .speak { border-color: rgba(87, 201, 194, 0.35); background: rgba(87, 201, 194, 0.1); }
+    .reset { color: var(--muted); }
+    .sync-note { margin: -4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; text-align: center; }
+    dialog { width: min(440px, calc(100vw - 32px)); color: var(--text); background: var(--panel); border: 1px solid var(--line); padding: 0; box-shadow: 0 24px 70px rgba(0,0,0,0.58); }
+    dialog::backdrop { background: rgba(0,0,0,0.7); }
+    .sync-dialog { padding: 20px; display: grid; gap: 14px; }
+    .sync-dialog h2 { margin: 0; }
+    .sync-dialog p { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 0; }
+    .sync-dialog label { display: grid; gap: 7px; color: var(--muted); font-size: 13px; }
+    .sync-dialog input { height: 42px; color: var(--text); background: var(--panel-3); border: 1px solid var(--line); padding: 0 10px; font: inherit; }
+    .sync-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+    .schedule-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .schedule-toolbar label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+    .schedule-toolbar input { width: 72px; height: 36px; color: var(--text); background: var(--panel-3); border: 1px solid var(--line); padding: 0 10px; }
+    .summary { display: flex; gap: 8px; flex-wrap: wrap; }
+    .summary-pill { padding: 8px 10px; color: #dce2e8; font-size: 13px; }
+    .schedule-scroll { width: 100%; max-width: 100%; min-width: 0; overflow: auto; border: 1px solid rgba(255,255,255,0.08); background: rgba(16,18,20,0.46); }
+    .schedule-grid { min-width: 1040px; display: grid; grid-template-columns: 84px repeat(7, minmax(128px, 1fr)); }
+    .cell { min-height: 58px; border-right: 1px solid rgba(255,255,255,0.07); border-bottom: 1px solid rgba(255,255,255,0.07); padding: 6px; }
+    .head-cell, .time-cell { background: rgba(255,255,255,0.055); color: #dfe4ea; font-weight: 700; text-align: center; }
+    .time-cell { display: grid; place-items: center; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .course-block { padding: 6px; display: grid; gap: 3px; font-size: 11px; line-height: 1.28; background: rgba(122,167,255,0.15); border-color: rgba(122,167,255,0.24); }
+    .course-block strong { font-size: 12px; color: #f6f1e9; line-height: 1.22; }
+    .course-block small { color: var(--muted); font-size: 10px; line-height: 1.25; }
+    .course-block.public { background: rgba(87,201,194,0.14); border-color: rgba(87,201,194,0.26); }
+    .course-block.placeholder { background: rgba(241,185,82,0.14); border-color: rgba(241,185,82,0.32); }
+    .course-block.major { background: rgba(122,167,255,0.15); border-color: rgba(122,167,255,0.25); }
+    .course-block.lab { background: rgba(181,156,255,0.14); border-color: rgba(181,156,255,0.26); }
+    .select-list { display: grid; gap: 10px; }
+    .select-card { padding: 14px; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; }
+    .select-meta { display: grid; gap: 6px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .status { padding: 6px 10px; font-size: 12px; color: #101214; background: var(--green); white-space: nowrap; }
+    .status.bad { background: var(--red); color: #fff; }
+    .status.group { background: var(--amber); }
+    .conflict { color: #ffc3c3; }
+    .tip { color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 12px; }
+    .editor-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+    .editor-toolbar p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .editor-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .editor-list { display: grid; gap: 10px; }
+    .editor-card { border: 1px solid rgba(255,255,255,0.1); background: var(--panel-2); }
+    .editor-card summary { cursor: pointer; padding: 13px 14px; font-weight: 700; }
+    .editor-card[open] summary { border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .editor-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 14px; }
+    .editor-fields label { display: grid; gap: 6px; color: var(--muted); font-size: 12px; }
+    .editor-fields label.wide { grid-column: 1 / -1; }
+    .editor-fields input, .editor-fields select { width: 100%; height: 38px; color: var(--text); background: var(--panel-3); border: 1px solid var(--line); padding: 0 9px; font: inherit; }
+    .task-edit { display: grid; grid-template-columns: minmax(130px, 1fr) 100px minmax(160px, 1.4fr) 96px auto; gap: 8px; align-items: end; }
+    .task-edit input, .task-edit select { width: 100%; height: 36px; color: var(--text); background: var(--panel-3); border: 1px solid var(--line); padding: 0 8px; font: inherit; }
+    .delete-button { height: 36px; padding: 0 10px; border: 1px solid rgba(238,118,118,0.42); color: #ffc3c3; background: rgba(238,118,118,0.08); cursor: pointer; }
+    .save-state { color: var(--amber); font-size: 12px; }
+    .english-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; margin-bottom: 14px; flex-wrap: wrap; }
+    .english-head p { color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .review-guide { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .review-guide span { border: 1px solid rgba(87,201,194,.28); color: #caeee9; padding: 6px 9px; font-size: 12px; background: rgba(87,201,194,.08); }
+    .word-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .word-card { border: 1px solid rgba(255,255,255,.09); background: var(--panel-2); padding: 13px; display: grid; gap: 6px; }
+    .word-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .word-card strong { font-size: 18px; color: #f7e7b6; }
+    .word-lookup { min-width: 0; }
+    .word-lookup summary { color: #f7e7b6; cursor: pointer; font-size: 18px; font-weight: 800; list-style: none; width: fit-content; }
+    .word-lookup summary::-webkit-details-marker { display: none; }
+    .word-lookup summary::after { content: "查"; display: inline-grid; place-items: center; width: 22px; height: 22px; margin-left: 7px; vertical-align: 2px; border: 1px solid rgba(247,231,182,.35); color: #f7e7b6; font-size: 11px; font-weight: 700; }
+    .word-lookup summary:hover, .word-lookup[open] summary { color: #fff3cc; }
+    .lookup-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; padding: 8px; border: 1px solid rgba(87,201,194,.22); background: rgba(87,201,194,.06); }
+    .lookup-actions a, .lookup-actions button { min-height: 30px; padding: 0 8px; border: 1px solid rgba(87,201,194,.34); background: var(--panel-3); color: #d8fffb; font: inherit; font-size: 12px; line-height: 28px; text-decoration: none; cursor: pointer; }
+    .lookup-actions button.copied { border-color: rgba(98,214,147,.65); color: #d3ffe4; }
+    .word-card span { color: var(--muted); font-size: 13px; }
+    .word-card .phonetic { color: #caeee9; font-size: 13px; }
+    .word-card .example { color: #d9dce2; font-size: 13px; line-height: 1.5; padding-top: 3px; border-top: 1px solid rgba(255,255,255,.07); }
+    .sound-button { min-width: 36px; height: 32px; padding: 0 8px; border: 1px solid rgba(87,201,194,.38); background: rgba(87,201,194,.1); color: #d8fffb; cursor: pointer; font-weight: 700; }
+    .sound-button[disabled] { opacity: .62; cursor: wait; }
+    .word-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .word-actions button { min-height: 32px; padding: 0 9px; border: 1px solid rgba(255,255,255,.14); background: var(--panel-3); color: var(--text); cursor: pointer; }
+    .word-actions .forgot { border-color: rgba(238,118,118,.5); color: #ffc5c5; }
+    .word-status { color: #caeee9; border: 1px solid rgba(87,201,194,.28); background: rgba(87,201,194,.08); padding: 8px 9px; font-size: 13px; width: fit-content; }
+    .word-status.forgot { color: #ffc5c5; border-color: rgba(238,118,118,.45); background: rgba(238,118,118,.08); }
+    .completion-quote { margin-top: 14px; padding: 14px; border: 1px solid rgba(247,231,182,.22); background: rgba(247,231,182,.06); display: grid; gap: 7px; }
+    .completion-quote strong { color: #f7e7b6; font-size: 15px; line-height: 1.5; }
+    .completion-quote span { color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .quiz { margin-top: 16px; padding: 16px; border: 1px solid rgba(255,255,255,.08); background: var(--panel-2); display: grid; gap: 12px; }
+    .quiz-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .quiz-options button { min-height: 42px; color: var(--text); background: var(--panel-3); border: 1px solid var(--line); cursor: pointer; text-align: left; padding: 9px; }
+    .quiz-result { min-height: 20px; color: var(--muted); font-size: 13px; }
+    @media (max-width: 900px) {
+      body { padding: 12px; }
+      .app { grid-template-columns: 1fr; }
+      aside { border-right: 0; border-bottom: 1px solid var(--line); }
+      .content { grid-template-columns: 1fr; }
+      .week { grid-template-columns: repeat(4, 1fr); }
+      .editor-fields { grid-template-columns: 1fr; }
+      .editor-fields label.wide { grid-column: auto; }
+      .task-edit { grid-template-columns: 1fr 90px; }
+      .task-edit input:nth-child(3), .task-edit input:nth-child(4) { grid-column: 1 / -1; }
+      .topbar { align-items: stretch; flex-direction: column; }
+      .progress { min-width: 0; }
+      .word-list, .quiz-options { grid-template-columns: 1fr; }
+    }
+    body.pet-mode { min-height: 100vh; place-items: start end; padding: 16px; overflow: hidden; }
+    body.pet-mode .app { width: min(455px, calc(100vw - 32px)); min-height: 0; max-height: calc(100vh - 32px); grid-template-columns: 1fr; border-radius: 18px; overflow: auto; scrollbar-width: thin; }
+    body.pet-mode aside { border-right: 0; border-bottom: 1px solid var(--line); padding: 14px; gap: 12px; }
+    body.pet-mode .pet-wrap { grid-template-columns: 96px 1fr; place-items: center stretch; text-align: left; padding-top: 0; }
+    body.pet-mode .pet-frame { width: 96px; height: 96px; border-radius: 16px; }
+    body.pet-mode h1 { font-size: 20px; }
+    body.pet-mode .subtitle { text-align: left; font-size: 12px; line-height: 1.5; }
+    body.pet-mode .card.month-goal { display: none; }
+    body.pet-mode .voice-row { grid-template-columns: 1fr 40px; }
+    body.pet-mode .quote { padding: 12px; font-size: 13px; }
+    body.pet-mode main { padding: 14px; gap: 12px; }
+    body.pet-mode .topbar { align-items: stretch; flex-direction: column; gap: 10px; }
+    body.pet-mode .today-title h1 { font-size: 18px; }
+    body.pet-mode .today-title span { font-size: 12px; }
+    body.pet-mode .tabs { grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    body.pet-mode .tab-button { min-height: 36px; font-size: 12px; }
+    body.pet-mode .progress { min-width: 0; }
+    body.pet-mode .week { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    body.pet-mode .day-button { min-height: 42px; padding: 6px 4px; }
+    body.pet-mode .day-button strong { font-size: 12px; }
+    body.pet-mode .day-button small { font-size: 10px; }
+    body.pet-mode .content { grid-template-columns: 1fr; }
+    body.pet-mode .content h2 { display: none; }
+    body.pet-mode .task { grid-template-columns: 24px 1fr; position: relative; min-height: 68px; padding: 12px 12px 34px; }
+    body.pet-mode .task input { width: 18px; height: 18px; }
+    body.pet-mode .task-title strong { font-size: 14px; }
+    body.pet-mode .task-title span { font-size: 12px; }
+    body.pet-mode .tag { position: absolute; right: 10px; bottom: 8px; padding: 4px 8px; font-size: 11px; }
+    body.pet-mode .schedule-grid { min-width: 720px; grid-template-columns: 78px repeat(7, 92px); }
+    body.pet-mode .cell { min-height: 70px; padding: 6px; }
+    body.pet-mode .course-block { padding: 6px; font-size: 11px; }
+    body.pet-mode .select-card { grid-template-columns: 1fr; }
+    body.pet-mode .mode, body.pet-mode .speak, body.pet-mode .reset { height: 36px; font-size: 12px; }
+    .utility-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:12px; }
+    .utility-button { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:42px; }
+    .utility-button svg, .task-edit-button svg { width:18px; height:18px; }
+    .task-edit-button { align-self:center; min-width:40px; min-height:40px; padding:8px; }
+    .task.task-editable { grid-template-columns:24px minmax(0,1fr) auto 40px; gap:8px; }
+    .task-title strong { overflow-wrap:anywhere; }
+    body.pet-mode .task.task-editable { grid-template-columns:24px minmax(0,1fr) 40px; }
+    .quick-dialog { width:min(520px,calc(100vw - 24px)); max-height:90dvh; overflow:auto; padding:0; }
+    .quick-dialog header { display:flex; align-items:center; justify-content:space-between; padding:16px; border-bottom:1px solid var(--line); gap:12px; }
+    .quick-dialog header h2 { font-size:20px; }
+    .quick-form { display:grid; gap:14px; padding:16px; }
+    .quick-form label { display:grid; gap:6px; font-size:13px; color:var(--muted); min-width:0; }
+    .quick-form input, .quick-form select { background:var(--panel-3); color:var(--text); border:1px solid var(--line); min-width:0; width:100%; min-height:44px; padding:9px; font-size:16px; }
+    .quick-form .field-pair { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .quick-form .form-error { color:var(--red); min-height:18px; font-size:13px; }
+    .quick-form .form-footer { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; }
+    .quick-form p { line-height:1.6; overflow-wrap:anywhere; }
+    .quick-form .dictionary-term { font-size:26px; font-weight:700; color:var(--amber); }
+    .dictionary-links { display:flex; flex-wrap:wrap; gap:8px; }
+    .dictionary-links a { padding:10px; border:1px solid var(--line); color:var(--cyan); }
+    .word-detail-button { font-size:20px; font-weight:700; background:none; border:0; color:var(--amber); text-align:left; padding:0; }
+    .action-toast { position:fixed; bottom:max(20px,env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); z-index:30; display:flex; align-items:center; gap:12px; padding:12px 16px; border:1px solid var(--line); background:var(--panel-2); max-width:calc(100vw - 24px); box-shadow:0 8px 24px #0006; font-size:13px; }
+    .action-toast[hidden] { display:none; }
+    .action-toast button { color:var(--cyan); white-space:nowrap; }
+    .course-block[data-course-edit] { cursor:pointer; }
+    button:active { transform:translateY(1px); }
+    @media(max-width:600px) { .utility-actions { gap:6px; } .quick-dialog { margin:auto; } }
+  </style>
+  <link rel="stylesheet" href="atelier.css?v=23">
+
+</head>
+<body>
+  <section class="private-gate" id="privateGate" aria-labelledby="privateGateTitle">
+    <img src="dusk-pet.png" alt="夕式桌宠">
+    <h1 id="privateGateTitle">夕的手账</h1>
+    <p id="privateGateText">这是你的个人课表和计划。输入个人解锁码后才能查看。</p>
+    <button class="speak" id="privateGateLogin" type="button">输入解锁码</button>
+    <button class="mode" id="retryCloudBtn" type="button" hidden>重新连接</button>
+  </section>
+  <div class="app">
+    <aside>
+      <div class="pet-wrap">
+        <div class="pet-frame" aria-label="夕式学习桌宠">
+          <img class="pet-img" src="dusk-pet.png" alt="夕式桌宠立绘">
+        </div>
+        <div>
+          <h1>夕的手账</h1>
+          <p class="subtitle">你的个人课程表、学习计划与轻量陪伴。</p>
+        </div>
+      </div>
+      <div class="card month-goal">
+        <h2>近期重点</h2>
+        <div class="sidebar-list">
+          <div class="focus-item"><span class="dot amber"></span><span>先打开一项最重要的学习任务，再开始今天的节奏。</span></div>
+          <div class="focus-item"><span class="dot cyan"></span><span>课后当天轻复盘，把不会的地方留下可处理的线索。</span></div>
+          <div class="focus-item"><span class="dot"></span><span>安排学习、休息与生活，不把桌宠变成压力来源。</span></div>
+        </div>
+      </div>
+      <div class="voice-row">
+        <p class="quote" id="petLine">登录后，夕会带你回到自己的课表和计划。</p>
+        <button class="speak" id="speakBtn" type="button" title="朗读桌宠台词">声</button>
+      </div>
+      <div class="pet-actions">
+        <button class="mode" id="modeBtn" type="button">切到小窗</button>
+        <button class="reset" id="resetBtn" type="button">清空</button>
+        <button class="mode" id="syncBtn" type="button">云同步</button>
+      </div>
+      <p class="sync-note" id="syncStatus">云同步：尚未连接</p>
+    </aside>
+    <main>
+      <section class="topbar">
+        <div class="today-title">
+          <h1 id="mainHeading">光电学习课表</h1>
+          <span id="mainSub">按周查看上课安排，并在计划页执行每个时间段的学习计划。</span>
+        </div>
+        <div class="progress" id="taskProgress" style="display:none">
+          <div class="progress-label"><span>今日完成度</span><span id="progressText">0/0</span></div>
+          <div class="bar"><span id="progressBar"></span></div>
+        </div>
+      </section>
+      <nav class="tabs" aria-label="桌宠面板">
+        <button class="tab-button" type="button" data-view="homeView">今天</button>
+        <button class="tab-button" type="button" data-view="tasksView">计划</button>
+        <button class="tab-button active" type="button" data-view="scheduleView">课表</button>
+        <button class="tab-button" type="button" data-view="selectView">策略</button>
+        <button class="tab-button" type="button" data-view="englishView">英语</button>
+        <button class="tab-button" type="button" data-view="editView">编辑</button>
+      </nav>
+      <section class="view" id="homeView"></section>
+      <section class="view" id="tasksView">
+        <nav class="week" id="weekNav" aria-label="一周计划"></nav>
+        <section class="content">
+          <div>
+            <div class="utility-actions"><h2>计划清单</h2><button class="mode utility-button" id="planTodayBtn" type="button"><i data-lucide="calendar-days"></i>回到今天</button><button class="mode utility-button" id="quickAddTask" type="button"><i data-lucide="calendar-plus"></i>加日程</button></div>
+            <div class="tasks" id="tasks"></div>
+          </div>
+          <div class="card">
+            <h2>执行规则</h2>
+            <div class="sidebar-list">
+              <div class="focus-item"><span class="dot amber"></span><span>开计划前先定产出，别只写“学习一下”。</span></div>
+              <div class="focus-item"><span class="dot cyan"></span><span>上课当天必须复盘，超过24小时再补会明显变难。</span></div>
+              <div class="focus-item"><span class="dot"></span><span>13:00固定午睡；周日留给社团和休息，不安排专业课硬任务。</span></div>
+            </div>
+          </div>
+        </section>
+      </section>
+      <section class="view active" id="scheduleView">
+        <div class="schedule-toolbar">
+          <label>查看第 <input id="weekInput" type="number" min="1" max="20" value="1"> 周</label>
+          <button class="mode utility-button" id="scheduleTodayBtn" type="button"><i data-lucide="calendar-days"></i>回到本周</button>
+          <div class="summary" id="scheduleSummary"></div>
+        </div>
+        <div class="schedule-scroll"><div class="schedule-grid" id="scheduleGrid"></div></div>
+      </section>
+      <section class="view" id="selectView">
+        <p class="tip">策略：登录后会从你的个人云端加载当前课表与学习安排。</p>
+        <div class="select-list" id="selectList"></div>
+      </section>
+      <section class="view" id="englishView">
+        <div class="english-head"><div><h2 id="englishTitle">六级词汇</h2><p id="englishTheme"></p></div><button class="mode" id="exportWordsBtn" type="button">导出今日单词</button></div>
+        <div class="utility-actions"><button class="mode utility-button" id="englishRewindBtn" type="button"><i data-lucide="history"></i>补学 / 回档</button></div>
+        <div class="review-guide"><span>每日凌晨4点更新</span><span>第1天复习</span><span>第3天复习</span><span>第7天复习</span><span>第14天复习</span><span>第30天复习</span><span id="reviewCount">今日待复习 0</span></div>
+        <h3>今日 10 个新词</h3><div class="word-list" id="newWords"></div>
+        <h3 style="margin-top:16px">今日复习</h3><div class="word-list" id="reviewWords"></div>
+        <section class="quiz"><h3>快速小测</h3><p id="quizPrompt"></p><div class="quiz-options" id="quizOptions"></div><p class="quiz-result" id="quizResult"></p></section>
+      </section>
+      <section class="view" id="editView">
+        <div class="editor-toolbar">
+          <p>在电脑上修改课程和计划。完成后点击保存，手机会在下次同步时更新。</p>
+          <div class="editor-actions">
+            <span class="save-state" id="editorState">未修改</span>
+            <button class="mode" id="addCourseBtn" type="button">添加课程</button>
+            <button class="mode utility-button" id="editorAddTask" type="button"><i data-lucide="calendar-plus"></i>加日程</button>
+            <button class="mode" id="discardDraftBtn" type="button" hidden>撤销未保存修改</button>
+            <button class="speak" id="saveCloudBtn" type="button">保存到云端</button>
+          </div>
+        </div>
+        <div class="editor-list" id="courseEditor"></div>
+        <h2>一周计划</h2>
+        <div class="editor-list" id="planEditor"></div>
+        <h2>日期日程</h2><div class="editor-list" id="appointmentEditor"></div>
+      </section>
+    </main>
+  </div>
+  <dialog id="syncDialog" aria-labelledby="syncTitle">
+    <form class="sync-dialog" method="dialog">
+      <h2 id="syncTitle">云同步</h2>
+      <small id="appRevision">版本 2026.10.06.1 · 自用版</small>
+      <p id="syncDialogText">在这台设备输入一次个人解锁码。之后课表、计划和完成记录会自动同步。</p>
+      <label id="syncEmailLabel">个人解锁码
+        <input id="syncEmail" type="password" autocomplete="current-password" placeholder="输入解锁码">
+      </label>
+      <div class="sync-dialog-actions">
+        <button class="reset" id="syncCloseBtn" type="button">关闭</button>
+        <button class="mode" id="syncNowBtn" type="button">立即同步</button>
+        <button class="speak" id="syncLoginBtn" type="button">解锁并同步</button>
+      </div>
+    </form>
+  </dialog>
+  <script id="app-target">window.PET_APP={"edition":"personal","version":"2026.10.06.1","shareURL":"https://kkkyl666-sys.github.io/dusk-handbook/"};</script>
+<script src="sync-config.js"></script>
+  <script src="cet6-35.js"></script>
+  <script>
+    const isDemo = window.PET_DEMO === true;
+    function appStorageKey(key) { return isDemo ? `dusk-demo-v1:${key}` : key; }
+    const demoInitialData = isDemo ? window.createDemoData("blank") : null;
+    const dayNames = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"];
+    const periods = [
+      [1, "08:00-08:45"], [2, "08:55-09:40"], [3, "10:10-10:55"], [4, "11:05-11:50"],
+      [5, "14:20-15:05"], [6, "15:15-16:00"], [7, "16:30-17:15"], [8, "17:25-18:10"],
+      [9, "19:00-19:45"], [10, "19:55-20:40"], [11, "20:50-21:35"]
+    ];
+    const periodGroups = [
+      { label: "第1-2节", periods: [1,2], time: "08:00-09:40" },
+      { label: "第3-4节", periods: [3,4], time: "10:10-11:50" },
+      { label: "第5-6节", periods: [5,6], time: "14:20-16:00" },
+      { label: "第7-8节", periods: [7,8], time: "16:30-18:10" },
+      { label: "第9-10节", periods: [9,10], time: "19:00-20:40" },
+      { label: "第11节", periods: [11], time: "20:50-21:35" }
+    ];
+    let selectedCourses = demoInitialData?.selectedCourses || [];
+    const pendingCourses = [];
+    const marxOptions = [];
+    let days = demoInitialData?.days || [];
+    const fallbackEnglishLessons = [
+      ["校园与学习", "在课堂、图书馆和实验室里建立学习节奏。", "allocate|分配,comprehend|理解,concentrate|专注,derive|推导,facilitate|促进,formulate|阐述,illustrate|说明,interpret|解释,perceive|察觉,retain|记住"],
+      ["表达观点", "用英语描述想法、证据与结论。", "advocate|提倡,assert|断言,clarify|澄清,contradict|反驳,emphasize|强调,justify|证明合理,maintain|坚持主张,outline|概述,postulate|假定,refute|驳斥"],
+      ["合作与项目", "把任务推进、协作和反馈说清楚。", "collaborate|协作,coordinate|协调,delegate|委派,implement|实施,integrate|整合,negotiate|协商,participate|参与,prioritize|优先处理,resolve|解决,supervise|监督"],
+      ["变化与结果", "描述事情如何发生、发展和产生影响。", "accelerate|加速,alter|改变,anticipate|预期,consequently|因此,deteriorate|恶化,eliminate|消除,enhance|提升,fluctuate|波动,inevitably|不可避免地,transform|转变"],
+      ["科技与研究", "阅读科技文章和研究报告时常见的词。", "algorithm|算法,compile|编译,conventional|传统的,device|设备,empirical|实证的,innovative|创新的,monitor|监测,precise|精确的,simulate|模拟,validate|验证"],
+      ["社会与环境", "谈论城市、资源与公共议题。", "advocate|倡导,conserve|节约保护,consumption|消耗,contaminate|污染,demographic|人口统计的,distribute|分配,legislation|立法,municipal|市政的,scarce|稀缺的,sustainable|可持续的"],
+      ["沟通与情绪", "在对话中表达态度、关系与感受。", "appreciate|欣赏感激,confront|面对,convince|说服,cooperate|合作,frustrate|使受挫,hesitate|犹豫,indifferent|冷漠的,mutual|相互的,reluctant|不情愿的,sincere|真诚的"]
+    ];
+    const englishLessons = window.CET6_35 || fallbackEnglishLessons;
+    const wordParts = {
+      allocate: "v.", comprehend: "v.", concentrate: "v.", derive: "v.", facilitate: "v.", formulate: "v.", illustrate: "v.", interpret: "v.", perceive: "v.", retain: "v.",
+      advocate: "v.", assert: "v.", clarify: "v.", contradict: "v.", emphasize: "v.", justify: "v.", maintain: "v.", outline: "v.", postulate: "v.", refute: "v.",
+      collaborate: "v.", coordinate: "v.", delegate: "v.", implement: "v.", integrate: "v.", negotiate: "v.", participate: "v.", prioritize: "v.", resolve: "v.", supervise: "v.",
+      accelerate: "v.", alter: "v.", anticipate: "v.", consequently: "adv.", deteriorate: "v.", eliminate: "v.", enhance: "v.", fluctuate: "v.", inevitably: "adv.", transform: "v.",
+      algorithm: "n.", compile: "v.", conventional: "adj.", device: "n.", empirical: "adj.", innovative: "adj.", monitor: "v.", precise: "adj.", simulate: "v.", validate: "v.",
+      conserve: "v.", consumption: "n.", contaminate: "v.", demographic: "adj.", distribute: "v.", legislation: "n.", municipal: "adj.", scarce: "adj.", sustainable: "adj.",
+      appreciate: "v.", confront: "v.", convince: "v.", cooperate: "v.", frustrate: "v.", hesitate: "v.", indifferent: "adj.", mutual: "adj.", reluctant: "adj.", sincere: "adj."
+    };
+    const englishStateKey = appStorageKey("dusk-study-pet-english-v1");
+    const englishStartKey = appStorageKey("dusk-study-pet-english-start-v1");
+    const pronunciationCache = new Map();
+    let englishProgress = JSON.parse(localStorage.getItem(englishStateKey) || "{}") || {};
+    let englishStart = localStorage.getItem(englishStartKey);
+    if (!englishStart) { englishStart = new Date().toISOString().slice(0, 10); localStorage.setItem(englishStartKey, englishStart); }
+    const tagClass = { "上课": "drive", "信号": "hardware", "复变": "software", "数电": "prompt", "量子": "video", "程序": "software", "实验": "hardware", "公共": "drive", "规划": "prompt", "恢复": "video", "社团": "drive", "学习": "software", "英语": "video" };
+    const stateKey = appStorageKey("summer-study-pet-v2");
+    const modeKey = appStorageKey("summer-study-pet-mode-v2");
+    const stateUpdatedAtKey = appStorageKey("summer-study-pet-state-updated-at-v1");
+    let today = new Date();
+    // 第 1 周从 2026 年 9 月 7 日（星期一）开始。
+    const semesterStart = new Date(2026, 8, 7);
+    if (isDemo && window.PET_SHARE_CALENDAR) semesterStart.setTime(new Date(window.PET_SHARE_CALENDAR + "T00:00:00").getTime());
+    function teachingWeek(date) {
+      const elapsedDays = (Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) - Date.UTC(semesterStart.getFullYear(), semesterStart.getMonth(), semesterStart.getDate())) / 86400000;
+      return Math.min(20, Math.max(1, Math.floor(elapsedDays / 7) + 1));
+    }
+    let currentWeek = teachingWeek(today);
+    let todayIndex = (today.getDay() + 6) % 7;
+    let activeDay = Math.max(0, todayIndex);
+    let checked = JSON.parse(localStorage.getItem(stateKey) || "{}");
+    let stateUpdatedAt = Number(localStorage.getItem(stateUpdatedAtKey) || 0);
+    if (localStorage.getItem(modeKey) === "pet") document.body.classList.add("pet-mode");
+    function course(code, name, type, weeks, day, periods, room, teacher) { return { code, name, type, weeks, day, periods, room, teacher }; }
+    function pending(code, name, category, weeks, day, periods, room, teacher, note, extra = []) { return { code, name, category, weeks, day, periods, room, teacher, note, extra }; }
+    function weekText(ranges) { return ranges.map(([a,b]) => a === b ? `第${a}周` : `${a}-${b}周`).join("、"); }
+    function periodText(list) { return list.length === 1 ? `第${list[0]}节` : `第${list[0]}-${list[list.length - 1]}节`; }
+    function rangesOverlap(aRanges, bRanges) { return aRanges.some(([a,b]) => bRanges.some(([c,d]) => Math.max(a,c) <= Math.min(b,d))); }
+    function periodsOverlap(a, b) { return a.some(x => b.includes(x)); }
+    function conflictWithSelected(item) {
+      const allParts = [item, ...item.extra];
+      const hits = [];
+      allParts.forEach(part => selectedCourses.forEach(sel => {
+        if (part.day === sel.day && rangesOverlap(part.weeks, sel.weeks) && periodsOverlap(part.periods, sel.periods)) hits.push(sel);
+      }));
+      return hits;
+    }
+    const weekNav = document.querySelector("#weekNav");
+    const tasksEl = document.querySelector("#tasks");
+    const mainHeading = document.querySelector("#mainHeading");
+    const mainSub = document.querySelector("#mainSub");
+    const petLine = document.querySelector("#petLine");
+    const progressText = document.querySelector("#progressText");
+    const progressBar = document.querySelector("#progressBar");
+    const weekInput = document.querySelector("#weekInput");
+    weekInput.value = currentWeek;
+    function taskId(dayIndex, taskIndex) { return `${dayIndex}-${taskIndex}`; }
+    function localDateStart(isoDate) { const [year, month, day] = isoDate.split("-").map(Number); return new Date(year, month - 1, day); }
+    function englishStudyDate(now = new Date()) {
+      const studyDate = new Date(now);
+      if (studyDate.getHours() < 4) studyDate.setDate(studyDate.getDate() - 1);
+      studyDate.setHours(0, 0, 0, 0);
+      return studyDate;
+    }
+    function englishDayIndex(now = new Date()) { return Math.max(0, Math.floor((englishStudyDate(now) - localDateStart(englishStart)) / 86400000)); }
+    function wordsFromLesson(lesson, day) { if (lesson.words) return lesson.words.map(item => ({ ...item, id: `${day}-${item.word}` })); return lesson[2].split(",").map(pair => { const [word, meaning] = pair.split("|"); return { word, pos: wordParts[word] || "n.", meaning, id: `${day}-${word}` }; }); }
+    function lessonForToday() { const index = Math.min(englishDayIndex(), englishLessons.length - 1); const lesson = englishLessons[index]; return { index, title: lesson.title || lesson[0], scene: lesson.scene || lesson[1], words: wordsFromLesson(lesson, index) }; }
+    function exampleForWord(word) {
+      if (word.example) return word.example;
+      if (word.pos.startsWith("v")) return `Try to use "${word.word}" in your own sentence.`;
+      if (word.pos.startsWith("adj")) return `The word "${word.word}" describes a quality or state.`;
+      if (word.pos.startsWith("adv")) return `The word "${word.word}" shows how something happens.`;
+      return `The word "${word.word}" appears in today's reading.`;
+    }
+    function speakEnglishWord(word) {
+      if (!("speechSynthesis" in window)) return false;
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = "en-GB";
+      utterance.rate = 0.86;
+      utterance.pitch = 1;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+      return true;
+    }
+    function normalizeAudioUrl(audio) { return audio?.startsWith("//") ? `https:${audio}` : audio || ""; }
+    function isBritishAudio(audio = "") { return /[-_]uk|[-_]gb|_gb_|uk\.mp3|gb\.mp3/i.test(audio); }
+    function wrapPhonetic(text) { return text ? (text.startsWith("/") ? text : `/${text}/`) : "英式音标加载中"; }
+    async function findPronunciationInfo(word) {
+      const key = word.toLowerCase();
+      if (pronunciationCache.has(key)) return pronunciationCache.get(key);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6500);
+      try {
+        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`, { signal: controller.signal });
+        if (!response.ok) throw new Error("not found");
+        const entries = await response.json();
+        const phonetics = entries.flatMap(entry => entry.phonetics || []);
+        const british = phonetics.find(item => isBritishAudio(item.audio) && item.text);
+        const withText = british || phonetics.find(item => item.text);
+        const withBritishAudio = phonetics.find(item => isBritishAudio(item.audio));
+        const withAudio = withBritishAudio || phonetics.find(item => item.audio && item.audio.trim());
+        const info = { phonetic: wrapPhonetic(withText?.text || entries[0]?.phonetic || ""), audio: normalizeAudioUrl(withAudio?.audio) };
+        pronunciationCache.set(key, info);
+        return info;
+      } catch {
+        const info = { phonetic: "音标暂缺", audio: "" };
+        pronunciationCache.set(key, info);
+        return info;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+    async function hydratePhonetics() {
+      const targets = [...document.querySelectorAll("[data-phonetic-word]")].filter(target => target.textContent === "英式音标加载中");
+      await Promise.all(targets.map(async target => {
+        const info = await findPronunciationInfo(target.dataset.phoneticWord);
+        target.textContent = info.phonetic;
+      }));
+    }
+    function setSoundButton(button, text, disabled = false) {
+      button.disabled = disabled;
+      button.textContent = text;
+    }
+    async function playWordPronunciation(word, button) {
+      const originalText = button.textContent;
+      const key = word.toLowerCase();
+      const cached = pronunciationCache.get(key);
+      if (cached?.audio) {
+        try {
+          setSoundButton(button, "播", true);
+          await new Audio(cached.audio).play();
+          setSoundButton(button, originalText);
+          return;
+        } catch {
+          // Continue to the direct user-gesture fallback below.
+        }
+      }
+
+      // Mobile browsers often block audio if playback waits for a network request.
+      // Trigger browser TTS immediately from the tap, then warm the online audio cache.
+      const spoke = speakEnglishWord(word);
+      setSoundButton(button, spoke ? "朗" : "...", true);
+      if (!cached) {
+        findPronunciationInfo(word).catch(() => null);
+      }
+      window.setTimeout(() => setSoundButton(button, originalText), 900);
+    }
+    function courseDate(dayIndex, week = activeWeek()) { const date = new Date(semesterStart); date.setDate(date.getDate() + (week - 1) * 7 + dayIndex); return `${date.getMonth() + 1}月${date.getDate()}日`; }
+    function saveEnglish() { localStorage.setItem(englishStateKey, JSON.stringify(englishProgress)); markStateChanged(); }
+    function isReviewDue(wordDay) { const gap = englishDayIndex() - wordDay; return [1, 3, 7, 14, 30].includes(gap); }
+    function reviewWords() {
+      const result = [];
+      for (let day = Math.max(0, englishDayIndex() - 30); day < englishDayIndex(); day++) {
+        const lesson = englishLessons[Math.min(day, englishLessons.length - 1)];
+        wordsFromLesson(lesson, day).forEach(word => { if (isReviewDue(day) || englishProgress.forgotten?.[word.id] === englishDayIndex() - 1) result.push({ ...word, day }); });
+      }
+      return result;
+    }
+    function englishTaskItems() {
+      if (activeDay !== todayIndex || activeWeek() !== currentWeek) return [];
+      const lesson = lessonForToday();
+      return [[`英语单词 · 第${lesson.index + 1}天`, "英语", `${lesson.title} · 10 个新词，另有 ${reviewWords().length} 个待复习`, null, `english-${lesson.index}-words`], ["豆包英语对话 20min", "英语", "围绕今日主题用英语对话，至少说出 3 个今日单词。", null, `english-${lesson.index}-dialogue`]];
+    }
+    function wordActionHtml(word) {
+      if (englishProgress.forgotten?.[word.id] === englishDayIndex()) return `<p class="word-status forgot">已标记：明天加练</p>`;
+      if (englishProgress.remembered?.[word.id] === englishDayIndex()) return `<p class="word-status">已完成</p>`;
+      return `<div class="word-actions"><button type="button" data-remember-word="${word.id}">记住了</button><button class="forgot" type="button" data-forgot-word="${word.id}">忘了，明天加练</button></div>`;
+    }
+    function wordHandled(word) { return englishProgress.remembered?.[word.id] === englishDayIndex() || englishProgress.forgotten?.[word.id] === englishDayIndex(); }
+    const completionQuotes = [
+      ["Small steps every day lead to big changes.", "每天一小步，慢慢就会走出很远。"],
+      ["The secret of getting ahead is getting started.", "前进的秘诀，就是先开始。"],
+      ["What you learn today becomes your strength tomorrow.", "今天学下的东西，会成为明天的底气。"],
+      ["Discipline is choosing what you want most over what you want now.", "自律，是选择最想要的未来，而不是眼前的轻松。"],
+      ["One more word remembered is one more door opened.", "多记住一个词，就多打开一扇门。"],
+      ["A little progress is still progress.", "一点点进步，也是进步。"],
+      ["Learning is a treasure that will follow its owner everywhere.", "学习是会一路跟着你的宝藏。"],
+      ["Do not wait for confidence. Build it by practice.", "不要等自信出现，用练习把它建起来。"],
+      ["The effort you make today quietly changes tomorrow.", "今天的努力，会悄悄改写明天。"],
+      ["Words become power when you use them.", "词汇被用起来，才会变成力量。"],
+      ["Keep going. The page turns only when you move.", "继续走，书页只会在你行动时翻过去。"],
+      ["Every review makes memory less fragile.", "每一次复习，都会让记忆更稳一点。"],
+      ["A calm mind learns deeper.", "心静下来，学得更深。"],
+      ["Practice turns difficulty into familiarity.", "练习会把困难变成熟悉。"],
+      ["Today’s patience is tomorrow’s fluency.", "今天的耐心，是明天的流利。"],
+      ["You do not need to be fast. You need to return.", "不必很快，但要记得回来继续。"],
+      ["A word repeated is a word rescued.", "一个被复习的词，就是一个被救回来的词。"],
+      ["The best time to learn is the moment you begin.", "最好的学习时间，就是你开始的这一刻。"],
+      ["Focus on the next word, not the whole mountain.", "先看下一个词，不必盯着整座山。"],
+      ["Memory grows by meeting the same word again.", "记忆是在一次次重逢里长出来的。"],
+      ["Your future self is listening to what you practise today.", "未来的你，会听见今天练过的声音。"],
+      ["A steady pace beats a perfect plan.", "稳定前进，比完美计划更有用。"],
+      ["Mistakes are not failure; they are directions.", "错误不是失败，是提示方向。"],
+      ["The words you keep will keep you company.", "你留下的词，也会陪你走远。"],
+      ["Review is not going back; it is building higher.", "复习不是后退，是往上加固。"],
+      ["Confidence comes after showing up many times.", "自信通常在很多次出现之后才来。"],
+      ["One focused hour can change the texture of a day.", "专注的一小时，会改变一天的质感。"],
+      ["What feels hard now will become normal later.", "现在觉得难的，后来会变成平常。"],
+      ["Learn slowly enough to remember clearly.", "慢到能记清楚，也是一种快。"],
+      ["The quiet work counts, even when no one sees it.", "没人看见的安静努力，也算数。"],
+      ["A remembered word is a small victory.", "记住一个词，就是一场小胜利。"],
+      ["Use the word once, and it starts to belong to you.", "把词用一次，它就开始属于你。"],
+      ["Consistency is kinder than pressure.", "持续，比逼迫自己更温柔也更有力。"],
+      ["Your attention is the place where learning begins.", "注意力落在哪里，学习就从哪里开始。"],
+      ["Carry today well, and tomorrow becomes lighter.", "把今天走稳，明天就会轻一点。"],
+      ["The habit is small, but the result is not.", "习惯很小，结果不小。"],
+      ["You are building a mind that can return to hard things.", "你正在练出一种能回到难题前的能力。"],
+      ["Finish the small thing. Let it prove you can.", "完成这件小事，让它证明你可以。"]
+    ];
+    function completionQuoteHtml(lesson) {
+      if (!lesson.words.every(wordHandled)) return "";
+      const quote = completionQuotes[lesson.index % completionQuotes.length];
+      return `<div class="completion-quote"><strong>${quote[0]}</strong><span>${quote[1]}</span></div>`;
+    }
+    function checkId(dayIndex, task, taskIndex) { return task[4] || taskId(dayIndex, taskIndex); }
+    function activeWeek() { return Number(weekInput.value || currentWeek); }
+    function inWeekRange(ranges, week = activeWeek()) { return !ranges || ranges.some(([a,b]) => week >= a && week <= b); }
+    function visibleTasks(day) { return day.tasks.filter(task => inWeekRange(task[3])); }
+    function minutesNow() { const now = new Date(); return now.getHours() * 60 + now.getMinutes(); }
+    function parseTaskTime(title) {
+      const range = title.match(/^(\d{2}):(\d{2})-(\d{2}):(\d{2})/);
+      if (range) return { start: Number(range[1]) * 60 + Number(range[2]), end: Number(range[3]) * 60 + Number(range[4]) };
+      const before = title.match(/^(\d{2}):(\d{2})前/);
+      if (before) return { start: 0, end: Number(before[1]) * 60 + Number(before[2]) };
+      const after = title.match(/^(\d{2}):(\d{2})以后/);
+      if (after) return { start: Number(after[1]) * 60 + Number(after[2]), end: 24 * 60 };
+      return null;
+    }
+    function timeState(title) {
+      if (activeDay !== todayIndex || activeWeek() !== currentWeek) return { className: "", label: "" };
+      const time = parseTaskTime(title);
+      if (!time) return { className: "", label: "" };
+      const now = minutesNow();
+      if (now >= time.start && now <= time.end) return { className: "current", label: "现在" };
+      if (now < time.start) return { className: "upcoming", label: "稍后" };
+      return { className: "past", label: "已过" };
+    }
+    function markStateChanged() {
+      stateUpdatedAt = Math.max(Date.now(), stateUpdatedAt + 1);
+      localStorage.setItem(stateUpdatedAtKey, String(stateUpdatedAt));
+      persistLocalState();
+      scheduleCloudSync();
+    }
+    function save() { localStorage.setItem(stateKey, JSON.stringify(checked)); markStateChanged(); }
+    function renderWeek() {
+      weekNav.innerHTML = "";
+      days.forEach((day, index) => {
+        const button = document.createElement("button");
+        button.className = `day-button ${index === activeDay ? "active" : ""}`;
+        button.type = "button";
+        button.innerHTML = `<strong>${courseDate(index)}</strong><small>${day.name}</small>`;
+        button.addEventListener("click", () => { activeDay = index; renderTasks(); renderWeek(); saveResumePoint(); });
+        weekNav.appendChild(button);
+      });
+    }
+    function renderTasks() {
+      const day = days[activeDay];
+      const week = activeWeek();
+      const tasks = [...visibleTasks(day), ...englishTaskItems()];
+      tasksEl.innerHTML = "";
+      mainHeading.textContent = `${courseDate(activeDay)} · ${day.name}`;
+      mainSub.textContent = `第${week}周 · 按当前周次和时间自动调整，完成后勾选。`;
+      petLine.textContent = day.line;
+      tasks.forEach((task, index) => {
+        const [title, subject, note] = task;
+        const id = checkId(activeDay, task, day.tasks.indexOf(task));
+        const state = timeState(title);
+        const item = document.createElement("label");
+        item.className = `task ${checked[id] ? "done" : ""} ${state.className}`;
+        const noteText = state.label ? `<span><b class="time-state">${state.label}</b> · ${escapeHtml(note)}</span>` : `<span>${escapeHtml(note)}</span>`;
+        item.innerHTML = `<input type="checkbox" ${checked[id] ? "checked" : ""}><span class="task-title"><strong>${escapeHtml(title)}</strong>${noteText}</span><span class="tag ${tagClass[subject] || ""}">${escapeHtml(subject)}</span>`;
+        item.querySelector("input").addEventListener("change", event => { checked[id] = event.target.checked; save(); renderTasks(); });
+        tasksEl.appendChild(item);
+      });
+      const done = tasks.filter(task => checked[checkId(activeDay, task, day.tasks.indexOf(task))]).length;
+      const total = tasks.length;
+      progressText.textContent = `${done}/${total}`;
+      progressBar.style.width = total ? `${Math.round(done / total * 100)}%` : "0%";
+    }
+    function renderEnglish() {
+      const lesson = lessonForToday();
+      const reviews = reviewWords();
+      document.querySelector("#englishTitle").textContent = `六级词汇 · 第${lesson.index + 1}天`;
+      document.querySelector("#englishTheme").textContent = `${lesson.title}：${lesson.scene}`;
+      document.querySelector("#reviewCount").textContent = `今日待复习 ${reviews.length}`;
+      const lookupLinks = word => {
+        return `<button class="word-detail-button" type="button" data-word-detail="${escapeHtml(word.id)}" title="查看词汇详情">${escapeHtml(word.word)}</button>`;
+      };
+      const wordCard = word => `<article class="word-card" data-word-card="${escapeHtml(word.id)}" data-word-pos="${escapeHtml(word.pos || '')}"><div class="word-title">${lookupLinks(word)}<button class="sound-button" type="button" data-pronounce-word="${word.word}" title="播放英式发音">声</button></div><span class="phonetic" data-phonetic-word="${word.word}">${word.phonetic || "英式音标加载中"}</span><span>${word.pos} · ${word.meaning}</span><p class="example">${exampleForWord(word)}</p>${wordActionHtml(word)}</article>`;
+      document.querySelector(".completion-quote")?.remove();
+      document.querySelector("#newWords").innerHTML = lesson.words.map(wordCard).join("");
+      document.querySelector("#newWords").insertAdjacentHTML("afterend", completionQuoteHtml(lesson));
+      document.querySelector("#reviewWords").innerHTML = reviews.length ? reviews.map(wordCard).join("") : `<p class="tip">今天没有到期复习词。学完新词后，明天会开始第 1 次复习。</p>`;
+      const quizWord = reviews[0] || lesson.words[0];
+      const choices = [...new Set([quizWord.meaning, ...lesson.words.filter(word => word.meaning !== quizWord.meaning).slice(1, 4).map(word => word.meaning)])].sort(() => Math.random() - .5);
+      document.querySelector("#quizPrompt").textContent = `“${quizWord.word}” 最接近下面哪一个意思？`;
+      document.querySelector("#quizOptions").innerHTML = choices.map(choice => `<button type="button" data-quiz-answer="${choice === quizWord.meaning}">${choice}</button>`).join("");
+      document.querySelector("#quizResult").textContent = "";
+      hydratePhonetics();
+    }
+    document.querySelector("#englishView").addEventListener("click", event => {
+      const pronounceButton = event.target.closest("[data-pronounce-word]");
+      if (pronounceButton) { playWordPronunciation(pronounceButton.dataset.pronounceWord, pronounceButton); return; }
+      const copyButton = event.target.closest("[data-copy-word]");
+      if (copyButton) {
+        const word = copyButton.dataset.copyWord;
+        const copied = () => { copyButton.textContent = "已复制"; copyButton.classList.add("copied"); setTimeout(() => { copyButton.textContent = "复制"; copyButton.classList.remove("copied"); }, 1300); };
+        if (navigator.clipboard?.writeText) navigator.clipboard.writeText(word).then(copied).catch(() => window.prompt("复制这个单词：", word));
+        else window.prompt("复制这个单词：", word);
+        return;
+      }
+      const actionButton = event.target.closest("[data-forgot-word], [data-remember-word]");
+      const id = actionButton?.dataset.forgotWord || actionButton?.dataset.rememberWord;
+      if (id) { const scroll = window.scrollY; englishProgress.forgotten ||= {}; englishProgress.remembered ||= {}; if (actionButton.dataset.forgotWord) { englishProgress.forgotten[id] = englishDayIndex(); delete englishProgress.remembered[id]; } else { englishProgress.remembered[id] = englishDayIndex(); delete englishProgress.forgotten[id]; } saveEnglish(); renderEnglish(); window.scrollTo(0, scroll); saveResumePoint(id); showActionToast(actionButton.dataset.forgotWord ? "已标记：明天加练" : "已完成"); }
+      if (event.target.dataset.quizAnswer !== undefined) { const correct = event.target.dataset.quizAnswer === "true"; document.querySelector("#quizResult").textContent = correct ? "答对了，继续保持。" : "这题先标记为忘记，明天会自动加练。"; if (!correct) { const word = reviewWords()[0] || lessonForToday().words[0]; englishProgress.forgotten ||= {}; englishProgress.forgotten[word.id] = englishDayIndex(); saveEnglish(); } }
+    });
+    document.querySelector("#exportWordsBtn").addEventListener("click", () => {
+      const lesson = lessonForToday(); const text = `# 今日六级单词\n\n第${lesson.index + 1}天：${lesson.title}\n${lesson.scene}\n\n${lesson.words.map((word, index) => `${index + 1}. ${word.word} (${word.pos}) - ${word.meaning}\n   ${exampleForWord(word)}`).join("\n")}\n\n今日任务：豆包英语对话 20 分钟。`;
+      const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([text], { type: "text/markdown;charset=utf-8" })); link.download = `今日英语单词-${new Date().toISOString().slice(0, 10)}.md`; link.click(); URL.revokeObjectURL(link.href);
+    });
+    function renderSchedule() {
+      const week = activeWeek();
+      const grid = document.querySelector("#scheduleGrid");
+      grid.innerHTML = `<div class="cell head-cell">节次</div>${dayNames.map((d, index) => `<div class="cell head-cell">${d}<br><small>${courseDate(index, week)}</small></div>`).join("")}`;
+      periodGroups.forEach(group => {
+        grid.insertAdjacentHTML("beforeend", `<div class="cell time-cell"><strong>${group.label}</strong><span>${group.time}</span></div>`);
+        dayNames.forEach((_, dayIndex) => {
+          const lessons = selectedCourses.filter(c =>
+            c.day === dayIndex &&
+            c.weeks.some(([a,b]) => week >= a && week <= b) &&
+            c.periods.some(period => group.periods.includes(period))
+          );
+          const html = lessons.map(c => `<div class="course-block ${escapeHtml(c.type)}" data-course-index="${selectedCourses.indexOf(c)}"><strong>${escapeHtml(c.name)}</strong><small>${escapeHtml(c.teacher)} · ${escapeHtml(c.room)}</small><small>${weekText(c.weeks)} · ${periodText(c.periods)}</small></div>`).join("");
+          grid.insertAdjacentHTML("beforeend", `<div class="cell">${html}</div>`);
+        });
+      });
+      const weekLessons = selectedCourses.filter(c => c.weeks.some(([a,b]) => week >= a && week <= b));
+      const summary = document.querySelector("#scheduleSummary");
+      summary.innerHTML = [`第${week}周`, `本周${weekLessons.length}段课`, `今日${visibleTasks(days[activeDay]).length}段计划`, `当前日期推算第${currentWeek}周`].map(t => `<span class="summary-pill">${t}</span>`).join("");
+    }    function renderPending() {
+      const list = document.querySelector("#selectList");
+      list.innerHTML = "";
+      if (pendingCourses.length === 0) {
+        list.innerHTML = `<article class="select-card"><div><h3>每周学习时间分配</h3><div class="select-meta"><span>把高质量时间留给最难的课程；安排课后复盘、作业推进和适度休息。</span><span>课表和计划由你的云端数据决定，电脑编辑并保存后会同步到其他设备。</span></div></div><span class="status group">执行中</span></article>`;
+        return;
+      }
+      pendingCourses.forEach(item => {
+        const conflicts = conflictWithSelected(item);
+        const isPe = item.code === "PE201";
+        const isMarx = false;
+        const canPick = conflicts.length === 0;
+        const statusClass = canPick ? (isPe || isMarx ? "group" : "") : "bad";
+        const statusText = canPick ? (isPe ? "可选其一" : isMarx ? "可选班级" : "可选") : "冲突";
+        const conflictText = conflicts.length ? `<span class="conflict">冲突：${[...new Set(conflicts.map(c => `${dayNames[c.day]} ${periodText(c.periods)} ${weekText(c.weeks)} ${c.code} ${c.name}`))].join("；")}</span>` : `<span>未发现与已选课的时间冲突。</span>`;
+        const optionText = isMarx ? `<span>推荐优先看：${marxOptions.join("；")}</span>` : "";
+        const card = document.createElement("article");
+        card.className = "select-card";
+        card.innerHTML = `<div><h3>${item.code} ${item.name}</h3><div class="select-meta"><span>${item.category} · ${dayNames[item.day]} ${periodText(item.periods)} · ${weekText(item.weeks)}</span><span>${item.teacher} · ${item.room}</span><span>${item.note}</span>${conflictText}${optionText}</div></div><span class="status ${statusClass}">${statusText}</span>`;
+        list.appendChild(card);
+      });
+    }
+    const courseEditor = document.querySelector("#courseEditor");
+    const planEditor = document.querySelector("#planEditor");
+    const editorState = document.querySelector("#editorState");
+    let editorDirty = false;
+    function escapeHtml(value) { return String(value ?? "").replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]); }
+    function compactWeeks(ranges) { return ranges.map(([a, b]) => a === b ? a : `${a}-${b}`).join(","); }
+    function compactPeriods(periodList) { return periodList.join(","); }
+    function parseWeeks(value) {
+      const parts = String(value).match(/\d+(?:\s*-\s*\d+)?/g) || [];
+      return parts.map(part => {
+        const [first, last = first] = part.split("-").map(number => Number(number.trim()));
+        return [first, last];
+      }).filter(([first, last]) => first >= 1 && last >= first && last <= 20);
+    }
+    function parsePeriods(value) {
+      const parts = String(value).match(/\d+(?:\s*-\s*\d+)?/g) || [];
+      return [...new Set(parts.flatMap(part => {
+        const [first, last = first] = part.split("-").map(number => Number(number.trim()));
+        return Array.from({ length: Math.max(0, last - first + 1) }, (_, index) => first + index);
+      }).filter(number => number >= 1 && number <= 11))].sort((a, b) => a - b);
+    }
+    function markEditorDirty() { editorDirty = true; editorState.textContent = "草稿已存本机 · 待保存到云端"; persistEditorDraft(); }
+    function renderEditor() {
+      courseEditor.innerHTML = selectedCourses.map((courseItem, index) => `
+        <details class="editor-card"><summary>${escapeHtml(courseItem.name)} · ${dayNames[courseItem.day]} · ${compactWeeks(courseItem.weeks)}</summary><div class="editor-fields">
+          <label>课程名称<input data-course-index="${index}" data-course-key="name" value="${escapeHtml(courseItem.name)}"></label>
+          <label>教师<input data-course-index="${index}" data-course-key="teacher" value="${escapeHtml(courseItem.teacher)}"></label>
+          <label>地点<input data-course-index="${index}" data-course-key="room" value="${escapeHtml(courseItem.room)}"></label>
+          <label>上课日<select data-course-index="${index}" data-course-key="day">${dayNames.map((dayName, dayIndex) => `<option value="${dayIndex}" ${courseItem.day === dayIndex ? "selected" : ""}>${dayName}</option>`).join("")}</select></label>
+          <label>周次<input data-course-index="${index}" data-course-key="weeks" value="${compactWeeks(courseItem.weeks)}" placeholder="如 1-8,10-17"></label>
+          <label>节次<input data-course-index="${index}" data-course-key="periods" value="${compactPeriods(courseItem.periods)}" placeholder="如 1-2 或 5,6"></label>
+          <label>类别<select data-course-index="${index}" data-course-key="type"><option value="major" ${courseItem.type === "major" ? "selected" : ""}>专业课</option><option value="public" ${courseItem.type === "public" ? "selected" : ""}>公共课</option><option value="lab" ${courseItem.type === "lab" ? "selected" : ""}>实验课</option></select></label>
+          <button class="delete-button" type="button" data-delete-course="${index}">删除这段课</button>
+        </div></details>`).join("");
+      planEditor.innerHTML = days.map((day, dayIndex) => `
+        <details class="editor-card"><summary>${escapeHtml(day.date)} · ${escapeHtml(day.name)} · ${day.tasks.length} 项</summary><div class="editor-fields">
+          <label>星期<input data-plan-day="${dayIndex}" data-plan-key="date" value="${escapeHtml(day.date)}"></label>
+          <label>标题<input data-plan-day="${dayIndex}" data-plan-key="name" value="${escapeHtml(day.name)}"></label>
+          <label class="wide">当天说明<input data-plan-day="${dayIndex}" data-plan-key="line" value="${escapeHtml(day.line)}"></label>
+          <div class="wide editor-list">${day.tasks.map((task, taskIndex) => `<div class="task-edit"><input data-task-day="${dayIndex}" data-task-index="${taskIndex}" data-task-key="title" value="${escapeHtml(task[0])}" placeholder="时间与任务"><select data-task-day="${dayIndex}" data-task-index="${taskIndex}" data-task-key="subject">${Object.keys(tagClass).map(subject => `<option value="${subject}" ${task[1] === subject ? "selected" : ""}>${subject}</option>`).join("")}</select><input data-task-day="${dayIndex}" data-task-index="${taskIndex}" data-task-key="note" value="${escapeHtml(task[2])}" placeholder="说明"><input data-task-day="${dayIndex}" data-task-index="${taskIndex}" data-task-key="weeks" value="${task[3] ? compactWeeks(task[3]) : ""}" placeholder="周次，可留空"><button class="delete-button" type="button" data-delete-task="${dayIndex}:${taskIndex}">删除</button></div>`).join("")}</div>
+          <button class="mode" type="button" data-add-task="${dayIndex}">添加任务</button>
+        </div></details>`).join("");
+      editorState.textContent = editorDirty ? "有未保存修改" : "已保存";
+    }
+    document.querySelector("#editView").addEventListener("change", event => {
+      const target = event.target;
+      if (target.dataset.courseIndex !== undefined) {
+        const item = selectedCourses[Number(target.dataset.courseIndex)];
+        const key = target.dataset.courseKey;
+        if (key === "day") item.day = Number(target.value);
+        else if (key === "weeks") item.weeks = parseWeeks(target.value);
+        else if (key === "periods") item.periods = parsePeriods(target.value);
+        else item[key] = target.value.trim();
+        markEditorDirty();
+      }
+      if (target.dataset.planDay !== undefined) {
+        days[Number(target.dataset.planDay)][target.dataset.planKey] = target.value.trim();
+        markEditorDirty();
+      }
+      if (target.dataset.taskDay !== undefined) {
+        const task = days[Number(target.dataset.taskDay)].tasks[Number(target.dataset.taskIndex)];
+        const key = target.dataset.taskKey;
+        if (key === "weeks") {
+          const ranges = parseWeeks(target.value);
+          if (ranges.length) task[3] = ranges;
+          else task.splice(3, 1);
+        } else task[{ title: 0, subject: 1, note: 2 }[key]] = target.value.trim();
+        markEditorDirty();
+      }
+    });
+    document.querySelector("#editView").addEventListener("click", event => {
+      const target = event.target;
+      if (target.dataset.deleteCourse !== undefined) { selectedCourses.splice(Number(target.dataset.deleteCourse), 1); markEditorDirty(); renderEditor(); }
+      if (target.dataset.deleteTask) { const [dayIndex, taskIndex] = target.dataset.deleteTask.split(":").map(Number); days[dayIndex].tasks.splice(taskIndex, 1); markEditorDirty(); renderEditor(); }
+      if (target.dataset.addTask !== undefined) { days[Number(target.dataset.addTask)].tasks.push(["时间 任务", "学习", "写下这项任务要完成什么。"]); markEditorDirty(); renderEditor(); }
+    });
+    function syncModeButton() { document.querySelector("#modeBtn").textContent = document.body.classList.contains("pet-mode") ? "全展开" : "切到小窗"; }
+    document.querySelectorAll(".tab-button").forEach(button => button.addEventListener("click", () => {
+      document.querySelectorAll(".tab-button").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      button.classList.add("active");
+      document.querySelector(`#${button.dataset.view}`).classList.add("active");
+      document.querySelector("#taskProgress").style.display = button.dataset.view === "tasksView" ? "grid" : "none";
+      if (button.dataset.view === "editView") renderEditor();
+      mainHeading.textContent = button.dataset.view === "scheduleView" ? "光电学习课表" : button.dataset.view === "selectView" ? "课表策略" : button.dataset.view === "englishView" ? "六级英语记忆" : button.dataset.view === "editView" ? "编辑课表与计划" : `${courseDate(activeDay)} · ${days[activeDay].name}`;
+      mainSub.textContent = button.dataset.view === "scheduleView" ? "按周查看上课安排，并在计划页执行每个时间段的学习计划。" : button.dataset.view === "selectView" ? "完整课表执行中，暑假计划已下线。" : button.dataset.view === "englishView" ? "新词、艾宾浩斯复习和错词加练都在这里。" : button.dataset.view === "editView" ? "修改后点击保存到云端，手机才会收到新版内容。" : "完成后勾选，桌宠会记住。";
+      if (button.dataset.view === "englishView") renderEnglish();
+    }));
+    function currentViewId() { return document.querySelector(".tab-button.active")?.dataset.view || "scheduleView"; }
+    function activateView(viewId) { (document.querySelector(`[data-view="${viewId}"]`) || document.querySelector('[data-view="scheduleView"]')).click(); }
+    document.querySelector("#resetBtn").addEventListener("click", () => { checked = {}; save(); renderTasks(); });
+    document.querySelector("#addCourseBtn").addEventListener("click", () => {
+      selectedCourses.push(course("自定义", "新课程", "major", [[1, 17]], 0, [1, 2], "待填写", "待填写"));
+      markEditorDirty(); renderEditor();
+    });
+    document.querySelector("#modeBtn").addEventListener("click", () => { document.body.classList.toggle("pet-mode"); localStorage.setItem(modeKey, document.body.classList.contains("pet-mode") ? "pet" : "full"); syncModeButton(); });
+    document.querySelector("#speakBtn").addEventListener("click", () => {
+      if (!("speechSynthesis" in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(petLine.textContent);
+      utterance.lang = "zh-CN"; utterance.rate = 0.82; utterance.pitch = 0.78;
+      window.speechSynthesis.speak(utterance);
+    });
+    weekInput.addEventListener("input", () => { renderSchedule(); renderTasks(); renderWeek(); saveResumePoint(); });
+
+    const syncConfig = window.PET_SYNC_CONFIG || {};
+    const syncReady = !isDemo && Boolean(syncConfig.supabaseUrl && syncConfig.supabaseAnonKey);
+    const syncStatus = document.querySelector("#syncStatus");
+    const syncDialog = document.querySelector("#syncDialog");
+    const syncDialogText = document.querySelector("#syncDialogText");
+    const syncEmailLabel = document.querySelector("#syncEmailLabel");
+    const syncEmail = document.querySelector("#syncEmail");
+    const syncLoginBtn = document.querySelector("#syncLoginBtn");
+    const syncNowBtn = document.querySelector("#syncNowBtn");
+    const accessCodeKey = appStorageKey("dusk-study-pet-access-code-v1");
+    let accessCode = isDemo ? "" : localStorage.getItem(accessCodeKey) || "";
+    let syncTimer = null;
+
+    function updateSyncStatus(message) { syncStatus.textContent = `云同步：${message}`; }
+    async function cloudRpc(functionName, body) {
+      if (isDemo) throw new Error("分享演示版不连接个人云端");
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      try {
+      const response = await fetch(`${syncConfig.supabaseUrl}/rest/v1/rpc/${functionName}`, {
+        method: "POST",
+        headers: {
+          apikey: syncConfig.supabaseAnonKey,
+          Authorization: `Bearer ${syncConfig.supabaseAnonKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body), signal: controller.signal
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.message || data?.hint || "无法连接云端");
+      return data;
+      } catch (error) {
+        if (error.name === "AbortError" || error.name === "TypeError") {
+          const networkError = new Error(error.name === "AbortError" ? "云端连接超时；已有本机记录可以继续使用" : "当前网络无法连接云端；已有本机记录可以继续使用");
+          networkError.name = "NetworkError";
+          throw networkError;
+        }
+        throw error;
+      } finally { clearTimeout(timeout); }
+    }
+    function snapshot() {
+      return {
+        selectedCourses,
+        days,
+        checked,
+        activeDay,
+        activeWeek: activeWeek(),
+        englishProgress,
+        englishStart,
+        mode: document.body.classList.contains("pet-mode") ? "pet" : "full",
+        changedAt: stateUpdatedAt
+      };
+    }
+    function applySnapshot(data) {
+      if (!data || typeof data !== "object") return;
+      if (Array.isArray(data.selectedCourses) && (isDemo || data.selectedCourses.length)) selectedCourses = data.selectedCourses;
+      if (Array.isArray(data.days) && data.days.length) days = data.days;
+      checked = data.checked && typeof data.checked === "object" ? data.checked : {};
+      englishProgress = data.englishProgress && typeof data.englishProgress === "object" ? data.englishProgress : englishProgress;
+      englishStart = typeof data.englishStart === "string" ? data.englishStart : englishStart;
+      localStorage.setItem(englishStateKey, JSON.stringify(englishProgress));
+      localStorage.setItem(englishStartKey, englishStart);
+      stateUpdatedAt = Number(data.changedAt) || Date.now();
+      localStorage.setItem(stateKey, JSON.stringify(checked));
+      localStorage.setItem(stateUpdatedAtKey, String(stateUpdatedAt));
+      startApp();
+    }
+    async function pullOrPushCloudState(forcePush = false) {
+      if (!syncReady || !accessCode) return;
+      if (editorDirty && !forcePush) { updateSyncStatus("本机有编辑草稿，保存后继续同步"); return; }
+      updateSyncStatus("正在同步");
+      const remote = await cloudRpc("pet_unlock", { access_code: accessCode });
+      if (editorDirty && !forcePush) { updateSyncStatus("本机有编辑草稿，保存后继续同步"); return; }
+      if (!validSnapshot(remote)) throw new Error("云端返回的课表暂不可用；本机存档仍保留，请重试");
+      const remoteChangedAt = Number(remote?.changedAt || 0);
+      if (!forcePush && (!selectedCourses.length || !days.length || remoteChangedAt >= stateUpdatedAt)) {
+        applySnapshot(remote); cacheCommittedState();
+      } else if (selectedCourses.length && days.length) {
+        await cloudRpc("pet_save", { access_code: accessCode, new_payload: snapshot() });
+        cacheCommittedState();
+        startApp();
+      } else {
+        document.body.classList.add("private-wait");
+        document.querySelector("#privateGateText").textContent = "课表暂未加载。请重新连接；已有云端数据不会被清空。";
+        updateSyncStatus("等待重新连接");
+        return;
+      }
+      updateSyncStatus("已同步");
+    }
+    function scheduleCloudSync() {
+      if (!syncReady || !accessCode) return;
+      clearTimeout(syncTimer);
+      syncTimer = setTimeout(() => pullOrPushCloudState().catch(handleSyncFailure), 700);
+    }
+    document.querySelector("#saveCloudBtn").addEventListener("click", async () => {
+      if (isDemo) {
+        if (!commitQuickChange("课表与计划已保存")) return;
+        editorDirty = false; clearEditorDraft(); renderEditor(); return;
+      }
+      if (!accessCode) { updateSyncStatus("请先输入解锁码后再保存"); return; }
+      if (!selectedCourses.length || !days.length) { updateSyncStatus("课程或计划不能为空"); return; }
+      const button = document.querySelector("#saveCloudBtn");
+      try {
+        button.disabled = true; button.textContent = "正在保存";
+        stateUpdatedAt = Date.now();
+        localStorage.setItem(stateUpdatedAtKey, String(stateUpdatedAt));
+        persistEditorDraft();
+        await pullOrPushCloudState(true);
+        editorDirty = false;
+        clearEditorDraft();
+        renderEditor(); renderWeek(); renderTasks(); renderSchedule();
+        updateSyncStatus("课表与计划已保存");
+      } catch (error) {
+        persistEditorDraft(); handleSyncFailure(error);
+      } finally { button.disabled = false; button.textContent = "保存到云端"; }
+    });
+    async function setupCloudSync() {
+      if (!syncReady) return;
+      updateSyncStatus(accessCode ? "已解锁，正在同步" : "等待解锁");
+      if (accessCode) await pullOrPushCloudState();
+    }
+    document.querySelector("#syncBtn").addEventListener("click", () => {
+      if (!syncReady) {
+        syncDialogText.textContent = "同步空间还没有连接。请稍后再试。";
+        syncEmailLabel.hidden = true; syncLoginBtn.hidden = true; syncNowBtn.hidden = true;
+      } else if (accessCode) {
+        syncDialogText.textContent = "这台设备已解锁。点击立即同步可马上核对两端状态。";
+        syncEmailLabel.hidden = true; syncLoginBtn.hidden = true; syncNowBtn.hidden = false;
+      } else {
+        syncDialogText.textContent = "输入个人解锁码。这台设备记住后，以后不需要再输入。";
+        syncEmailLabel.hidden = false; syncLoginBtn.hidden = false; syncNowBtn.hidden = true;
+      }
+      syncDialog.showModal();
+    });
+    document.querySelector("#privateGateLogin").addEventListener("click", () => document.querySelector("#syncBtn").click());
+    document.querySelector("#syncCloseBtn").addEventListener("click", () => syncDialog.close());
+    syncNowBtn.addEventListener("click", async () => {
+      try { await pullOrPushCloudState(); syncDialog.close(); }
+      catch (error) { syncDialogText.textContent = `同步失败：${error.message}`; updateSyncStatus("同步失败"); }
+    });
+    syncLoginBtn.addEventListener("click", async () => {
+      const code = syncEmail.value.trim();
+      if (!code) { syncEmail.focus(); return; }
+      try {
+        syncLoginBtn.disabled = true;
+        const remote = await cloudRpc("pet_unlock", { access_code: code });
+        accessCode = code;
+        localStorage.setItem(accessCodeKey, accessCode);
+        if (!validSnapshot(remote)) throw new Error("课表暂未加载，请重试");
+        applySnapshot(remote); cacheCommittedState();
+        updateSyncStatus("已解锁并同步");
+        syncDialog.close();
+      } catch (error) {
+        syncDialogText.textContent = error.name === "NetworkError" ? error.message : "解锁码不正确或云端暂时无法访问，请检查后再试。";
+      } finally { syncLoginBtn.disabled = false; }
+    });
+    function startApp(preferredView = currentViewId()) {
+      if ((!isDemo && !selectedCourses.length) || !days.length) { document.body.classList.add("private-wait"); return; }
+      document.body.classList.remove("private-wait");
+      syncModeButton(); renderWeek(); renderTasks(); renderSchedule(); renderPending(); renderEditor(); renderEnglish(); activateView(preferredView);
+    }
+    if ((!isDemo && !selectedCourses.length) || !days.length) document.body.classList.add("private-wait");
+    if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("./sw.js", {updateViaCache:"none"}).then(registration => registration.update()).catch(() => {});
+    // Complete local restoration before starting any cloud request.
+  </script>
+  <script src="lucide.min.js" defer onload="window.refreshIcons?.()"></script>
+  <script id="experience-runtime" data-runtime="26">
+// Generated from experience.js.
+// Local recovery and focused editing share the existing course/English model.
+const localSnapshotKey = appStorageKey("dusk-study-pet-full-state-v1");
+const resumeKey = appStorageKey("dusk-study-pet-resume-v1");
+const editorDraftKey = appStorageKey("dusk-study-pet-draft-v1");
+let appointments = [];
+let englishAdjustments = [];
+let committedState = null;
+let activeDialog = null;
+let editedItem = null;
+let toastTimer = null;
+let undoAction = null;
+let syncJob = Promise.resolve();
+let restoringResume = true;
+let resumeRestored = false;
+const readStored = key => { try { return JSON.parse(localStorage.getItem(key) || "null"); } catch { return null; } };
+function dateISO(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`; }
+function selectedDateISO(dayIndex = activeDay) { const date = new Date(semesterStart); date.setDate(date.getDate() + (activeWeek()-1)*7 + dayIndex); return dateISO(date); }
+function validSnapshot(data) { return !!data && Array.isArray(data.selectedCourses) && (isDemo || data.selectedCourses.length > 0) && data.selectedCourses.every(c => c && typeof c.name === "string" && Array.isArray(c.weeks) && Array.isArray(c.periods)) && Array.isArray(data.days) && data.days.length === 7 && data.days.every(d => d && Array.isArray(d.tasks)); }
+const originalSnapshot = snapshot;
+snapshot = function() { return { ...originalSnapshot(), appointments, englishAdjustments, ...(isDemo ? {shareCalendar:dateISO(semesterStart)} : {}) }; };
+function ensureTaskIds() {
+  days.forEach((day, dayIndex) => day.tasks.forEach((task,index) => {
+    if (task[4]) return;
+    task[4] = `weekly-${dayIndex}-${index}-${Array.from(String(task[0])).reduce((h,c) => ((h*31+c.charCodeAt(0))>>>0),0)}`;
+    const legacy = taskId(dayIndex,index);
+    if (Object.hasOwn(checked,legacy) && !Object.hasOwn(checked,task[4])) checked[task[4]] = checked[legacy];
+  }));
+}
+function persistLocalState() {
+  if (!validSnapshot(snapshot())) return;
+  if (isDemo && Number(readStored(localSnapshotKey)?.changedAt) > stateUpdatedAt) return;
+  const data = snapshot();
+  if (editorDirty && committedState) { data.selectedCourses = committedState.selectedCourses; data.days = committedState.days; }
+  try { localStorage.setItem(localSnapshotKey,JSON.stringify(data)); }
+  catch { updateSyncStatus("本机空间不足，请联网同步后导出备份"); }
+}
+function cacheCommittedState() { ensureTaskIds(); committedState = structuredClone(snapshot()); persistLocalState(); }
+function persistEditorDraft() {
+  document.querySelector("#discardDraftBtn").hidden = false;
+  try { localStorage.setItem(editorDraftKey,JSON.stringify({selectedCourses,days})); }
+  catch { editorState.textContent = "草稿未保存，请保留页面；本机空间不足"; }
+}
+function clearEditorDraft() { localStorage.removeItem(editorDraftKey); document.querySelector("#discardDraftBtn").hidden = true; }
+function saveResumePoint(wordId) {
+  if (restoringResume) return;
+  const previous = readStored(resumeKey) || {};
+  const data = { view:currentViewId(),scroll:window.scrollY,date:dateISO(new Date()),studyDate:dateISO(englishStudyDate()),wordId:wordId || previous.wordId };
+  try { localStorage.setItem(resumeKey,JSON.stringify(data)); } catch { /* The full snapshot remains the recovery source. */ }
+}
+function restoreResumePoint() {
+  if (resumeRestored) return;
+  resumeRestored = true;
+  if (matchMedia("(max-width: 760px)").matches) { startApp("homeView"); return; }
+  const resume = readStored(resumeKey);
+  if (!resume) return;
+  startApp(resume.view || "scheduleView");
+  requestAnimationFrame(() => {
+    const card = [...document.querySelectorAll("[data-word-card]")].find(c => c.dataset.wordCard === resume.wordId);
+    if (currentViewId() === "englishView" && resume.studyDate === dateISO(englishStudyDate()) && card) card.scrollIntoView({block:"center"});
+    else if (currentViewId() === "englishView" && resume.studyDate === dateISO(englishStudyDate())) window.scrollTo(0,Number(resume.scroll)||0);
+    else window.scrollTo(0,0);
+  });
+}
+let calendarDate = dateISO(today);
+let vocabularyDate = dateISO(englishStudyDate());
+function refreshCalendarNavigation(force = false) {
+  const now = new Date();
+  const nextDate = dateISO(now), nextVocabularyDate = dateISO(englishStudyDate(now));
+  const calendarChanged = nextDate !== calendarDate, vocabularyChanged = nextVocabularyDate !== vocabularyDate;
+  today = now;
+  currentWeek = teachingWeek(now);
+  todayIndex = (now.getDay() + 6) % 7;
+  calendarDate = nextDate;
+  vocabularyDate = nextVocabularyDate;
+  if (force || calendarChanged) { activeDay = todayIndex; weekInput.value = currentWeek; }
+  if (!(force || calendarChanged || vocabularyChanged) || days.length !== 7) return;
+  const view = currentViewId(), heading = mainHeading.textContent, sub = mainSub.textContent, scroll = window.scrollY;
+  renderWeek(); renderTasks(); renderSchedule();
+  if (view !== "tasksView") { mainHeading.textContent = heading; mainSub.textContent = sub; }
+  if (vocabularyChanged) renderEnglish();
+  window.scrollTo(0,scroll);
+  saveResumePoint();
+}
+const oldApplySnapshot = applySnapshot;
+applySnapshot = function(data) {
+  if (!validSnapshot(data)) throw new Error("云端课表格式异常，本机记录保留");
+  if (!selectedCourses.length && stateUpdatedAt > Number(data.changedAt || 0)) {
+    data = { ...data, changedAt:stateUpdatedAt, checked:{...data.checked,...checked}, englishProgress:{...data.englishProgress,...englishProgress,
+      remembered:{...data.englishProgress?.remembered,...englishProgress.remembered}, forgotten:{...data.englishProgress?.forgotten,...englishProgress.forgotten}} };
+  }
+  appointments = Array.isArray(data.appointments) ? data.appointments : [];
+  englishAdjustments = Array.isArray(data.englishAdjustments) ? data.englishAdjustments : [];
+  if (isDemo && /^\d{4}-\d{2}-\d{2}$/.test(data.shareCalendar || "")) {
+    const start = new Date(data.shareCalendar + "T00:00:00");
+    if (!isNaN(start) && start.getDay() === 1 && dateISO(start) === data.shareCalendar) semesterStart.setTime(start.getTime());
+  }
+  const scroll = window.scrollY;
+  oldApplySnapshot(data);
+  ensureTaskIds();
+  window.scrollTo(0,scroll);
+};
+const oldPullOrPush = pullOrPushCloudState;
+pullOrPushCloudState = function(forcePush=false) {
+  const run = () => oldPullOrPush(forcePush);
+  syncJob = syncJob.catch(() => {}).then(run);
+  return syncJob;
+};
+function handleSyncFailure(error) {
+  const message = error.name === "AbortError" ? "连接超时" : error.message;
+  updateSyncStatus(`${selectedCourses.length ? "本机可用，待同步" : "暂未连接"}：${message}`);
+  if (!selectedCourses.length) {
+    document.querySelector("#privateGateText").textContent = "暂时无法连接云端。请重新连接；这不表示课表已被删除。";
+    document.querySelector("#retryCloudBtn").hidden = false;
+  }
+}
+
+document.body.insertAdjacentHTML("beforeend",`
+  <div class="action-toast" id="actionToast" hidden role="status" aria-live="polite"><span id="actionToastText"></span><button type="button" id="actionUndo" hidden>撤销</button></div>
+  <dialog class="quick-dialog" id="wordDetailDialog"><header><h2>词汇详情</h2><button class="utility-button" type="button" data-quick-close aria-label="回到单词"><i data-lucide="x"></i></button></header><div class="quick-form" id="wordDetailBody"></div></dialog>
+  <dialog class="quick-dialog" id="taskQuickDialog"><header><h2 id="taskQuickTitle">添加日程</h2><button class="utility-button" type="button" data-quick-close aria-label="关闭"><i data-lucide="x"></i></button></header><form class="quick-form" id="taskQuickForm"><label>任务<input id="quickTaskTitle" required maxlength="120"></label><div class="field-pair"><label>日期<input id="quickTaskDate" type="date" required></label><label>重复<select id="quickTaskRepeat"><option value="once">仅此日期</option><option value="weekly">每周这一天</option></select></label><label>开始<input id="quickTaskStart" type="time"></label><label>结束<input id="quickTaskEnd" type="time"></label></div><label>说明<input id="quickTaskNote" maxlength="500"></label><p class="form-error" id="quickTaskError"></p><div class="form-footer"><button type="button" id="quickTaskDelete" hidden>删除</button><button type="button" data-quick-close>取消</button><button class="speak utility-button" type="submit"><i data-lucide="check"></i>保存</button></div></form></dialog>
+  <dialog class="quick-dialog" id="rewindQuickDialog"><header><h2>补学 / 回档</h2><button class="utility-button" type="button" data-quick-close aria-label="关闭"><i data-lucide="x"></i></button></header><form class="quick-form" id="rewindQuickForm"><label>今天补学第几天<input id="rewindTarget" type="number" min="1" max="35" required></label><p id="rewindPreview"></p><p class="tip">保留完成记录和词序。仍在凌晨 4 点换日。</p><div class="form-footer"><button type="button" data-quick-close>取消</button><button class="speak" type="submit">确认回档</button></div></form></dialog>
+  <dialog class="quick-dialog" id="courseQuickDialog"><header><h2>修改这段课程</h2><button class="utility-button" type="button" data-quick-close aria-label="关闭"><i data-lucide="x"></i></button></header><form class="quick-form" id="courseQuickForm"><label>课程名称<input id="quickCourseName" required></label><div class="field-pair"><label>教师<input id="quickCourseTeacher"></label><label>教室<input id="quickCourseRoom"></label><label>周次<input id="quickCourseWeeks" required placeholder="1-8,10-17"></label><label>节次<input id="quickCoursePeriods" required placeholder="1-2"></label></div><p class="form-error" id="quickCourseError"></p><div class="form-footer"><button type="button" data-quick-close>取消</button><button class="speak" type="submit">保存这段课程</button></div></form></dialog>`);
+function refreshIcons() { window.lucide?.createIcons(); }
+function showActionToast(text,undo) {
+  document.querySelector("#actionToastText").textContent=text;
+  undoAction=undo;
+  document.querySelector("#actionUndo").hidden=!undo;
+  document.querySelector("#actionToast").hidden=false;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(() => {document.querySelector("#actionToast").hidden=true;},7000);
+}
+document.querySelector("#actionUndo").onclick=() => { undoAction?.(); document.querySelector("#actionToast").hidden=true; };
+function openQuickDialog(id) {
+  if (document.querySelector("dialog[open]")) return;
+  activeDialog=document.querySelector(`#${id}`); activeDialog.showModal();
+  history.pushState({petDialog:id},""); refreshIcons();
+}
+function closeQuickDialog() {
+  if (!activeDialog) return;
+  activeDialog.close(); activeDialog=null;
+  if (history.state?.petDialog) history.back();
+}
+document.querySelectorAll("[data-quick-close]").forEach(b => b.onclick=closeQuickDialog);
+document.querySelectorAll(".quick-dialog").forEach(d => d.addEventListener("cancel",e => {e.preventDefault();closeQuickDialog();}));
+window.addEventListener("popstate",() => { if(activeDialog){activeDialog.close();activeDialog=null;} });
+document.querySelector("#englishView").addEventListener("click",event => {
+  const button=event.target.closest("[data-word-detail]"); if(!button)return;
+  const word=[...lessonForToday().words,...reviewWords()].find(w=>w.id===button.dataset.wordDetail); if(!word)return;
+  saveResumePoint(word.id);
+  const term=encodeURIComponent(word.word);
+  document.querySelector("#wordDetailBody").innerHTML=`<p class="dictionary-term">${escapeHtml(word.word)}</p><p>${escapeHtml(word.phonetic)} · ${escapeHtml(word.pos)}</p><p>${escapeHtml(word.meaning)}</p><p>${escapeHtml(exampleForWord(word))}</p><div class="dictionary-links"><a href="https://youdao.com/result?lang=en&word=${term}" target="_blank" rel="noopener noreferrer">有道详细释义</a><a href="https://dictionary.cambridge.org/dictionary/english-chinese-simplified/${term}" target="_blank" rel="noopener noreferrer">剑桥词典</a><a href="https://www.merriam-webster.com/dictionary/${term}" target="_blank" rel="noopener noreferrer">韦氏词典</a><button type="button" class="utility-button" id="copyDetailWord"><i data-lucide="copy"></i>复制</button></div><button type="button" class="mode utility-button" id="returnToStudy"><i data-lucide="arrow-left"></i>继续背词</button>`;
+  document.querySelector("#returnToStudy").onclick=closeQuickDialog;
+  document.querySelector("#copyDetailWord").onclick=()=>{if(navigator.clipboard?.writeText)navigator.clipboard.writeText(word.word).then(()=>showActionToast("已复制 "+word.word)).catch(()=>window.prompt("复制单词",word.word));else window.prompt("复制单词",word.word);};
+  document.querySelectorAll("#wordDetailBody a").forEach(a=>a.onclick=()=>{saveResumePoint(word.id);persistLocalState();});
+  openQuickDialog("wordDetailDialog");
+});
+
+const oldVisibleTasks=visibleTasks;
+const oldCheckId=checkId;
+checkId=function(dayIndex,task,taskIndex){
+  const id=oldCheckId(dayIndex,task,taskIndex);
+  const entry=appointments.find(t=>t.id===task[4]);
+  // One-off appointments already identify one date; recurring plans need an occurrence key.
+  if(entry?.repeat!=="weekly" && entry)return id;
+  const date=String(id).startsWith("english-")?dateISO(englishStudyDate()):selectedDateISO(dayIndex);
+  // Undated legacy checks remain archived, never guessed to belong to today's occurrence.
+  return `${id}@${date}`;
+};
+visibleTasks=function(day) {
+  const date=selectedDateISO();
+  const added=appointments.filter(t=>t.repeat==="weekly" ? date>=t.date && new Date(t.date+"T12:00:00").getDay()===new Date(date+"T12:00:00").getDay() : t.date===date)
+    .map(t=>[`${t.start ? t.start+(t.end?"-"+t.end:"")+" " : ""}${t.title}`,"规划",t.note||"",null,t.id]);
+  return [...oldVisibleTasks(day),...added];
+};
+const oldRenderTasks=renderTasks;
+renderTasks=function() {
+  ensureTaskIds(); oldRenderTasks();
+  const list=[...visibleTasks(days[activeDay]),...englishTaskItems()];
+  document.querySelectorAll("#tasks .task").forEach((row,index) => {
+    const task=list[index]; if(!task || String(task[4]).startsWith("english-"))return;
+    const button=document.createElement("button");button.type="button";button.className="task-edit-button utility-button";button.title="修改这项任务";button.setAttribute("aria-label","修改这项任务");button.innerHTML='<i data-lucide="pencil"></i>';
+    button.onclick=e=>{e.preventDefault();e.stopPropagation();openTaskEditor(task[4]);};row.classList.add("task-editable");row.append(button);
+  });refreshIcons();
+};
+function renderAppointments() {
+  document.querySelector("#appointmentEditor").innerHTML=appointments.map(t=>`<button type="button" class="mode" data-appointment-edit="${escapeHtml(t.id)}">${escapeHtml(t.date)} · ${escapeHtml(t.title)}${t.repeat==="weekly"?" · 每周重复":""}</button>`).join("")||'<p class="tip">暂无日期日程</p>';
+  document.querySelectorAll("[data-appointment-edit]").forEach(b=>b.onclick=()=>openTaskEditor(b.dataset.appointmentEdit));
+}
+const oldRenderEditor=renderEditor;
+renderEditor=function() {oldRenderEditor();renderAppointments();refreshIcons();};
+function findWeeklyTask(id) {
+  for(let d=0;d<days.length;d++){const i=days[d].tasks.findIndex(t=>t[4]===id);if(i>=0)return {day:d,index:i,task:days[d].tasks[i]};}
+  return null;
+}
+function openTaskEditor(id=null) {
+  if(editorDirty){showActionToast("请先保存或撤销编辑草稿，再修改日程");activateView("editView");return;}
+  editedItem=id;
+  const appointment=appointments.find(t=>t.id===id),weekly=id?findWeeklyTask(id):null;
+  const task=appointment||{title:weekly?.task[0]||"",date:selectedDateISO(),start:"",end:"",repeat:weekly?"weekly":"once",note:weekly?.task[2]||""};
+  const match=task.title.match(/^(\d{2}:\d{2})(?:-(\d{2}:\d{2}))?\s+(.*)$/);
+  document.querySelector("#taskQuickTitle").textContent=id?"修改日程":"添加日程";
+  document.querySelector("#quickTaskTitle").value=match?match[3]:task.title;
+  document.querySelector("#quickTaskDate").value=task.date;
+  document.querySelector("#quickTaskRepeat").value=task.repeat;
+  document.querySelector("#quickTaskDate").disabled=!!weekly;
+  document.querySelector("#quickTaskRepeat").disabled=!!weekly;
+  document.querySelector("#quickTaskStart").value=task.start||(match?.[1]||"");
+  document.querySelector("#quickTaskEnd").value=task.end||(match?.[2]||"");
+  document.querySelector("#quickTaskNote").value=task.note;
+  document.querySelector("#quickTaskError").textContent="";
+  document.querySelector("#quickTaskDelete").hidden=!id;
+  openQuickDialog("taskQuickDialog");
+}
+document.querySelector("#quickAddTask").onclick=()=>openTaskEditor();
+document.querySelector("#editorAddTask").onclick=()=>openTaskEditor();
+function commitQuickChange(message,undo) {
+  ensureTaskIds();
+  const data = snapshot(); data.changedAt = Math.max(Date.now(),stateUpdatedAt+1);
+  try { localStorage.setItem(localSnapshotKey,JSON.stringify(data)); }
+  catch { showActionToast("未保存，本机空间不足；请保留草稿后重试"); return false; }
+  stateUpdatedAt = data.changedAt;
+  try { localStorage.setItem(stateUpdatedAtKey,String(stateUpdatedAt)); } catch { /* changedAt is also in the full snapshot. */ }
+  committedState=structuredClone(data);scheduleCloudSync();renderTasks();renderSchedule();renderEditor();
+  showActionToast(message+" · 已存本机",undo?()=>{undo();commitQuickChange("已撤销");}:null);
+  return true;
+}
+document.querySelector("#taskQuickForm").onsubmit=e=>{
+  e.preventDefault();const title=document.querySelector("#quickTaskTitle").value.trim(),date=document.querySelector("#quickTaskDate").value,start=document.querySelector("#quickTaskStart").value,end=document.querySelector("#quickTaskEnd").value,note=document.querySelector("#quickTaskNote").value.trim();
+  if(!title || (end&&!start) || (end&&end<=start)){document.querySelector("#quickTaskError").textContent="请填写任务；结束时间应晚于开始时间。";return;}
+  const before={appointments:structuredClone(appointments),days:structuredClone(days)},weekly=editedItem?findWeeklyTask(editedItem):null;
+  if(weekly){weekly.task[0]=`${start?start+(end?"-"+end:"")+" ":""}${title}`;weekly.task[2]=note;}
+  else{const task={id:editedItem||crypto.randomUUID(),title,date,start,end,note,repeat:document.querySelector("#quickTaskRepeat").value};const i=appointments.findIndex(t=>t.id===editedItem);if(i>=0)appointments[i]=task;else appointments.push(task);}
+  if (!commitQuickChange("日程已保存"+(date!==selectedDateISO()?" · "+date:""),()=>{appointments=before.appointments;days=before.days;})) {
+    appointments=before.appointments;days=before.days;document.querySelector("#quickTaskError").textContent="未保存，请保留当前草稿，释放本机空间后重试。";return;
+  }
+  closeQuickDialog();
+};
+document.querySelector("#quickTaskDelete").onclick=()=>{
+  const before={appointments:structuredClone(appointments),days:structuredClone(days)},weekly=findWeeklyTask(editedItem);
+  if(weekly)days[weekly.day].tasks.splice(weekly.index,1);else appointments=appointments.filter(t=>t.id!==editedItem);
+  if (!commitQuickChange("已删除日程",()=>{appointments=before.appointments;days=before.days;})) { appointments=before.appointments;days=before.days;return; }
+  closeQuickDialog();
+};
+
+function rewindPreview() {
+  const input=document.querySelector("#rewindTarget"),target=Number(input.value);
+  document.querySelector("#rewindPreview").textContent=`现在第 ${lessonForToday().index+1} 天 → 今天第 ${target} 天；下个学习日接续第 ${Math.min(35,target+1)} 天。`;
+}
+document.querySelector("#englishRewindBtn").onclick=()=>{
+  if(editorDirty){showActionToast("请先保存或撤销编辑草稿");return;}
+  const target=document.querySelector("#rewindTarget");target.max=lessonForToday().index+1;target.value=Math.max(1,lessonForToday().index);rewindPreview();openQuickDialog("rewindQuickDialog");
+};
+document.querySelector("#rewindTarget").oninput=rewindPreview;
+document.querySelector("#rewindQuickForm").onsubmit=e=>{
+  e.preventDefault();const target=Number(document.querySelector("#rewindTarget").value),oldIndex=englishDayIndex();if(target<1||target>lessonForToday().index+1)return;
+  const previous=englishStart,log=structuredClone(englishAdjustments),date=englishStudyDate();date.setDate(date.getDate()-(target-1));englishStart=dateISO(date);
+  englishAdjustments.push({date:dateISO(new Date()),from:oldIndex+1,to:target,previousStart:previous});localStorage.setItem(englishStartKey,englishStart);
+  closeQuickDialog();markStateChanged();renderEnglish();renderTasks();showActionToast(`已回到第 ${target} 天 · 已存本机`,()=>{englishStart=previous;englishAdjustments=log;localStorage.setItem(englishStartKey,englishStart);markStateChanged();renderEnglish();renderTasks();});
+};
+const oldRenderSchedule=renderSchedule;
+renderSchedule=function(){oldRenderSchedule();document.querySelectorAll(".course-block").forEach(block=>{
+  block.dataset.courseEdit="true";block.tabIndex=0;block.setAttribute("role","button");block.title="修改这段课程";
+  const open=()=>{if(editorDirty){showActionToast("请先保存或撤销编辑草稿");return;}
+    const index=Number(block.dataset.courseIndex);
+    if(index<0)return;editedItem=index;const c=selectedCourses[index];document.querySelector("#quickCourseName").value=c.name;document.querySelector("#quickCourseTeacher").value=c.teacher;document.querySelector("#quickCourseRoom").value=c.room;document.querySelector("#quickCourseWeeks").value=compactWeeks(c.weeks);document.querySelector("#quickCoursePeriods").value=compactPeriods(c.periods);document.querySelector("#quickCourseError").textContent="";openQuickDialog("courseQuickDialog");};
+  block.onclick=open;block.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open();}};
+});};
+document.querySelector("#courseQuickForm").onsubmit=e=>{
+  e.preventDefault();const weeks=parseWeeks(document.querySelector("#quickCourseWeeks").value),periods=parsePeriods(document.querySelector("#quickCoursePeriods").value),name=document.querySelector("#quickCourseName").value.trim();
+  if(!weeks.length||!periods.length||!name){document.querySelector("#quickCourseError").textContent="课程名称、周次和节次不能为空。";return;}
+  const index=editedItem,c=selectedCourses[index],previous=structuredClone(c);Object.assign(c,{name,weeks,periods,teacher:document.querySelector("#quickCourseTeacher").value.trim(),room:document.querySelector("#quickCourseRoom").value.trim()});
+  if (!commitQuickChange("课程已保存",()=>{selectedCourses[index]=structuredClone(previous);})) { selectedCourses[index]=previous;document.querySelector("#quickCourseError").textContent="未保存，请保留草稿后重试。";return; }
+  closeQuickDialog();
+};
+document.querySelector("#discardDraftBtn").onclick=()=>{
+  if(!committedState)return;selectedCourses=structuredClone(committedState.selectedCourses);days=structuredClone(committedState.days);editorDirty=false;clearEditorDraft();renderEditor();renderTasks();renderSchedule();persistLocalState();scheduleCloudSync();showActionToast("已撤销未保存修改");
+};
+document.querySelector("#editView").addEventListener("input",event=>{
+  if(event.target.matches("input,select"))event.target.dispatchEvent(new Event("change",{bubbles:true}));
+});
+document.querySelectorAll(".tab-button").forEach(b=>b.addEventListener("click",()=>{saveResumePoint();refreshIcons();}));
+document.querySelector("#retryCloudBtn").onclick=()=>setupCloudSync().then(restoreResumePoint).catch(handleSyncFailure);
+document.querySelectorAll("#planTodayBtn,#scheduleTodayBtn").forEach(button => button.onclick=()=>refreshCalendarNavigation(true));
+window.addEventListener("pagehide",()=>{saveResumePoint();persistLocalState();if(editorDirty)persistEditorDraft();});
+document.addEventListener("visibilitychange",()=>{if(document.hidden){saveResumePoint();persistLocalState();}else{refreshCalendarNavigation(true);if(accessCode)pullOrPushCloudState().catch(handleSyncFailure);}});
+window.addEventListener("pageshow",event=>{if(event.persisted)refreshCalendarNavigation(true);});
+window.setInterval(()=>{if(!document.hidden)refreshCalendarNavigation();},30000);
+window.addEventListener("online",()=>{if(accessCode)pullOrPushCloudState().catch(handleSyncFailure);});
+window.addEventListener("offline",()=>updateSyncStatus("离线使用，联网后补传"));
+
+const cached=readStored(localSnapshotKey),draft=readStored(editorDraftKey);
+if((isDemo||accessCode)&&validSnapshot(cached)){applySnapshot(cached);cacheCommittedState();restoreResumePoint();restoringResume=false;updateSyncStatus(isDemo?"分享演示 · 仅存本机":"本机存档已打开，正在核对云端");}
+if(validSnapshot(draft)&&committedState){selectedCourses=draft.selectedCourses;days=draft.days;editorDirty=true;document.querySelector("#discardDraftBtn").hidden=false;startApp(readStored(resumeKey)?.view);editorState.textContent="已恢复编辑草稿 · 待保存到云端";}
+if(accessCode)document.querySelector("#retryCloudBtn").hidden=false;
+refreshIcons();
+setupCloudSync().then(()=>{if(validSnapshot(snapshot())){if(!committedState)cacheCommittedState();restoreResumePoint();}}).catch(handleSyncFailure).finally(()=>{restoringResume=false;});
+</script>
+  <script src="assets/motion.js" defer></script>
+  <script src="atelier.js?v=29"></script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="only light">
+  <meta name="theme-color" content="#f4f7f2">
+  <title>夕的开发关卡册</title>
+  <link rel="icon" href="dusk-pet.png">
+  <link rel="stylesheet" href="development.css?v=25">
+  <script src="lucide.min.js" defer></script>
+  <script src="development.js?v=25" defer></script>
+</head>
+<body>
+  <header class="book-header">
+    <a id="backToApp" class="icon-button" href="./" title="回到画室" aria-label="回到画室"><i data-lucide="arrow-left"></i></a>
+    <img src="dusk-pet.png" alt="夕" width="48" height="48">
+    <div><p class="book-brand">夕的手账</p><h1>开发关卡册</h1></div>
+    <a class="icon-button" href="DEVELOPMENT.md" download title="下载记录文档" aria-label="下载记录文档"><i data-lucide="download"></i></a>
+  </header>
+  <main>
+    <section class="book-summary" aria-label="记录概览"><p id="bookCount">读取关卡记录…</p><p id="bookDate"></p></section>
+    <nav class="chapters" id="chapters" aria-label="章节"></nav>
+    <div class="book-tools">
+      <label class="search"><i data-lucide="search"></i><input id="bookSearch" type="search" placeholder="搜索问题、改进或知识点" aria-label="搜索关卡"></label>
+      <div class="book-order" role="group" aria-label="阅读顺序"><button type="button" data-order="latest" aria-pressed="true">最新</button><button type="button" data-order="start" aria-pressed="false">从起点</button></div>
+      <button type="button" class="icon-button" id="expandEntries" title="展开全部关卡" aria-label="展开全部关卡" aria-pressed="false"><i data-lucide="list-tree"></i></button>
+    </div>
+    <p id="bookError" role="status" hidden></p><button type="button" id="bookRetry" hidden>重新读取</button>
+    <p id="bookResults" class="results" aria-live="polite"></p>
+    <section id="levels" class="level-path" aria-label="版本关卡"></section>
+    <section class="branches" aria-labelledby="branchHeading"><h2 id="branchHeading">还没走完的支线</h2><div id="branches"></div></section>
+  </main>
+  <footer>关卡编号是改进顺序，不是学习积分。历史回顾与正式发布分别标注。</footer>
+</body>
+</html>

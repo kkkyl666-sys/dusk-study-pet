@@ -1,0 +1,19 @@
+{
+  "name": "夕的手账",
+  "short_name": "夕的手账",
+  "description": "个人课程表、计划与学习陪伴",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8faf3",
+  "theme_color": "#e4ebe3",
+  "icons": [
+    {
+      "src": "dusk-pet.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
