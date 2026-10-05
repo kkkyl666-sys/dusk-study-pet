@@ -36,7 +36,7 @@ const mime = {'.html':'text/html', '.js':'text/javascript', '.css':'text/css', '
     await context.addInitScript(() => localStorage.setItem('dusk-study-pet-access-code-v1','test-only'));
     const page = await context.newPage(), errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto(url);
+    await page.goto(url, {waitUntil:'domcontentloaded'});
     if (reproduce) {
       await page.locator('#privateGateLogin').click();
       await page.locator('#syncNowBtn').click();
@@ -74,7 +74,7 @@ const mime = {'.html':'text/html', '.js':'text/javascript', '.css':'text/css', '
       if(route.request().url().endsWith('/pet_save')) {writes++; return route.fulfill({json:null});}
       return route.fulfill({json:fixture});
     });
-    const login = await fresh.newPage(); await login.goto(url);
+    const login = await fresh.newPage(); await login.goto(url, {waitUntil:'domcontentloaded'});
     await login.locator('#privateGateLogin').click(); await login.locator('#syncEmail').fill('test-only'); await login.locator('#syncLoginBtn').click();
     await login.waitForFunction(() => !document.body.classList.contains('private-wait') && !document.querySelector('#syncDialog').open);
     assert.equal(await login.evaluate(() => selectedCourses[0].name),fixture.selectedCourses[0].name);
