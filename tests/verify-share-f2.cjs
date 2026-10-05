@@ -60,6 +60,7 @@ const privateFixture={selectedCourses:[{code:'TEST',name:'仅自用课程',teach
       try{await route.fulfill({json:await rpc(name,route.request().postDataJSON())});}catch(err){await route.fulfill({status:400,json:{message:err.message}});}
     });
     const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));
+    await page.clock.setFixedTime(new Date('2026-10-04T12:00:00+08:00'));
     page.on('dialog',d=>d.accept());
     await page.goto(base+'/share.html');await page.waitForFunction(()=>window.shareTools&&!restoringResume);
     assert.equal(await page.title(),'夕的手账 · 分享版');
@@ -131,7 +132,7 @@ const privateFixture={selectedCourses:[{code:'TEST',name:'仅自用课程',teach
     assert.deepEqual(privateAfter,privateBefore);
     assert.ok(requests.every(r=>r.name.startsWith('dusk_feedback_')));
     // Preserve old share records, including intentionally empty timetables.
-    await page.evaluate(()=>{const d=snapshot();d.selectedCourses=[];d.changedAt=Date.now()+1;localStorage.setItem(localSnapshotKey,JSON.stringify(d));});
+    await page.evaluate(()=>{const d=snapshot();d.selectedCourses=[];d.changedAt=Math.max(Date.now(),stateUpdatedAt)+1;localStorage.setItem(localSnapshotKey,JSON.stringify(d));});
     await page.reload();await page.waitForFunction(()=>window.shareTools&&!restoringResume);assert.equal(await page.evaluate(()=>selectedCourses.length),0);
     for(const width of [320,390,760,1440]){
       await page.setViewportSize({width,height:900});await page.locator('.atelier-nav [data-atelier-view=englishView]').click();

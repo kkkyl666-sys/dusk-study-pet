@@ -1,6 +1,7 @@
 // Compile a separate entry from the same UI; never include private sync config.
 const fs = require('node:fs');
 const path = require('node:path');
+require('./build-experience.cjs')();
 let html = fs.readFileSync(path.join(__dirname,'index.html'),'utf8');
 function replaceOnce(from,to) {
   if(html.split(from).length!==2)throw new Error(`Share template marker changed: ${from}`);
