@@ -3,13 +3,21 @@ const CACHE_NAME = /*APP_CACHE_NAME*/;
 const APP_SHELL = CONFIG.required.concat(CONFIG.optional);
 const baseURL = new URL('./', self.location.href);
 
-function acceptable(response, url) {
+async function acceptable(response, url) {
   if (!response.ok) return false;
   const type = response.headers.get('content-type') || '';
   const pathname = new URL(url).pathname;
   if (/\.js$/.test(pathname)) return /javascript/.test(type);
   if (/\.css$/.test(pathname)) return /text\/css/.test(type);
-  if (/\.html$/.test(pathname) || pathname.endsWith('/')) return /text\/html/.test(type);
+  if (/\.html$/.test(pathname) || pathname.endsWith('/')) {
+    if (!/text\/html/.test(type)) return false;
+    const relative=pathname.slice(baseURL.pathname.length);
+    if (['','index.html','share.html'].includes(relative)) {
+      const body=await response.clone().text();
+      return body.includes('id="experience-runtime"') && body.includes('id="app-target"') ||
+        relative === 'share.html' && body.includes('id="backup"');
+    }
+  }
   return true;
 }
 async function precache(cache, entry, timeout) {
@@ -18,7 +26,7 @@ async function precache(cache, entry, timeout) {
   try {
     const request = new Request(new URL(entry, baseURL), {cache:'reload', signal:controller.signal});
     const response = await fetch(request);
-    if (!acceptable(response, request.url)) throw new Error('Cache resource unavailable: '+entry);
+    if (!await acceptable(response, request.url)) throw new Error('Cache resource unavailable: '+entry);
     await cache.put(request, response);
   } finally {clearTimeout(timer);}
 }
@@ -53,7 +61,7 @@ self.addEventListener('fetch', event => {
     const timer = cached ? setTimeout(() => controller.abort(), 4000) : null;
     try {
       const response = await fetch(request, {signal:controller.signal});
-      if (!acceptable(response, url)) return cached || response;
+      if (!await acceptable(response, url)) return cached || response;
       const copy = response.clone();
       event.waitUntil(cache.put(request, copy));
       return response;

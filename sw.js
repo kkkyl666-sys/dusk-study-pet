@@ -1,15 +1,23 @@
 const CONFIG = {"cachePrefix":"dusk-personal-","legacyCachePrefix":"dusk-study-pet-","required":["./index.html","./cet6-35.js","./atelier.js?v=29","./atelier.css?v=23","./sync-config.js"],"optional":["./dusk-pet.png","./lucide.min.js","./lucide-LICENSE.txt","./development.html","./development-log.json","./development.js?v=25","./development.css?v=25","./DEVELOPMENT.md","./ASSETS.md","./feedback-admin.html","./feedback-admin.css?v=1","./feedback-admin.js?v=1","./feedback-config.js?v=1","./feedback.js?v=2","./assets/fonts/Lora-LICENSE.txt","./assets/fonts/lora.woff2","./assets/fonts/Smiley-LICENSE.txt","./assets/fonts/smiley.woff2","./assets/fonts/WenKai-LICENSE.txt","./assets/fonts/wenkai.woff2","./assets/Motion-LICENSE.txt","./assets/motion.js","./assets/wallpapers/dusk-realm-concept.png","./assets/wallpapers/dusk-studio-concept.png","./share.html","./manifest.webmanifest"],"entries":["","index.html","share.html","development.html","feedback-admin.html"]};
-const CACHE_NAME = "dusk-personal-2026.10.06.1-5b229fcf25b1";
+const CACHE_NAME = "dusk-personal-2026.10.06.1-ac5399e393db";
 const APP_SHELL = CONFIG.required.concat(CONFIG.optional);
 const baseURL = new URL('./', self.location.href);
 
-function acceptable(response, url) {
+async function acceptable(response, url) {
   if (!response.ok) return false;
   const type = response.headers.get('content-type') || '';
   const pathname = new URL(url).pathname;
   if (/\.js$/.test(pathname)) return /javascript/.test(type);
   if (/\.css$/.test(pathname)) return /text\/css/.test(type);
-  if (/\.html$/.test(pathname) || pathname.endsWith('/')) return /text\/html/.test(type);
+  if (/\.html$/.test(pathname) || pathname.endsWith('/')) {
+    if (!/text\/html/.test(type)) return false;
+    const relative=pathname.slice(baseURL.pathname.length);
+    if (['','index.html','share.html'].includes(relative)) {
+      const body=await response.clone().text();
+      return body.includes('id="experience-runtime"') && body.includes('id="app-target"') ||
+        relative === 'share.html' && body.includes('id="backup"');
+    }
+  }
   return true;
 }
 async function precache(cache, entry, timeout) {
@@ -18,7 +26,7 @@ async function precache(cache, entry, timeout) {
   try {
     const request = new Request(new URL(entry, baseURL), {cache:'reload', signal:controller.signal});
     const response = await fetch(request);
-    if (!acceptable(response, request.url)) throw new Error('Cache resource unavailable: '+entry);
+    if (!await acceptable(response, request.url)) throw new Error('Cache resource unavailable: '+entry);
     await cache.put(request, response);
   } finally {clearTimeout(timer);}
 }
@@ -53,7 +61,7 @@ self.addEventListener('fetch', event => {
     const timer = cached ? setTimeout(() => controller.abort(), 4000) : null;
     try {
       const response = await fetch(request, {signal:controller.signal});
-      if (!acceptable(response, url)) return cached || response;
+      if (!await acceptable(response, url)) return cached || response;
       const copy = response.clone();
       event.waitUntil(cache.put(request, copy));
       return response;

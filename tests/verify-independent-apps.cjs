@@ -14,13 +14,14 @@ const fixture={selectedCourses:[{name:'独立缓存测试',teacher:'测试',room
   const workerName=files=>files['sw.js'].toString().match(/const CACHE_NAME = "([^"]+)"/)[1];
   const personalName=workerName(personal),shareName=workerName(share);
   assert.notEqual(personalName,shareName);
-  let broken='share',denyHTML=false,denyWords=false;const requests=[];
+  let broken='share',denyHTML=false,denyWords=false,portal=false;const requests=[];
   const server=http.createServer((req,res)=>{
     const u=new URL(req.url,'http://localhost'),isPersonal=u.pathname.startsWith('/dusk-study-pet/'),isShare=u.pathname.startsWith('/dusk-handbook/');
     if(!isPersonal&&!isShare)return res.writeHead(404).end();
     const edition=isPersonal?'personal':'share';requests.push({edition,path:u.pathname});
     if(edition===broken)return res.writeHead(503).end('unavailable edition');
     const name=u.pathname.slice((isPersonal?'/dusk-study-pet/':'/dusk-handbook/').length)||'index.html';
+    if(portal&&name==='index.html'){res.setHeader('Content-Type','text/html');return res.end('<!doctype html><h1>Network intercept page</h1>');}
     if(denyHTML&&name==='index.html')return res.writeHead(403).end('blocked navigation');
     if(denyWords&&name==='cet6-35.js')return res.writeHead(503).end('unavailable words');
     const data=(isPersonal?personal:share)[name];
@@ -29,6 +30,7 @@ const fixture={selectedCourses:[{name:'独立缓存测试',teacher:'测试',room
   });
   await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
   const browser=await chromium.launch({channel:'msedge',headless:true});const errors=[];
+  const watchdog=setTimeout(()=>{console.error('Test watchdog',requests.slice(-15));browser.close();},45000);
   try{
     const ctx=await browser.newContext({viewport:{width:390,height:844},timezoneId:'Asia/Shanghai'});
     await ctx.route('https://**',route=>route.abort());
@@ -47,7 +49,10 @@ const fixture={selectedCourses:[{name:'独立缓存测试',teacher:'测试',room
     denyHTML=true;denyWords=true;await p.reload();await p.waitForFunction(()=>selectedCourses.length&&!restoringResume);
     assert.equal(await p.evaluate(()=>checked.isolation),true);
     assert.equal(await p.evaluate(()=>wordsFromLesson(englishLessons[34],34).length),10);
-    denyHTML=false;denyWords=false;broken='personal';
+    denyHTML=false;denyWords=false;portal=true;
+    await p.reload();await p.waitForFunction(()=>selectedCourses.length&&!restoringResume);
+    assert.equal(await p.evaluate(()=>checked.isolation),true);
+    portal=false;broken='personal';
     const s=await ctx.newPage();s.on('pageerror',e=>errors.push(e.message));
     const marker=requests.length;
     await s.goto(base+'/dusk-handbook/');await s.waitForFunction(()=>window.shareTools&&!restoringResume);
@@ -87,12 +92,15 @@ const fixture={selectedCourses:[{name:'独立缓存测试',teacher:'测试',room
     assert.equal(await s.evaluate(()=>localStorage.getItem('dusk-demo-v1:dusk-study-pet-full-state-v1')),shareState);
     const registrations=await s.evaluate(async()=> (await navigator.serviceWorker.getRegistrations()).map(r=>r.scope));
     assert.equal(registrations.length,2);
-    await ctx.setOffline(false);await p.goto(base+'/dusk-study-pet/share.html');
+    await ctx.setOffline(false);
+    try {await p.goto(base+'/dusk-study-pet/share.html',{waitUntil:'domcontentloaded'});}
+    catch(error) {console.error({url:p.url(),requests:requests.slice(-12)});throw error;}
+    await p.waitForFunction(()=>document.querySelector('img')?.naturalWidth>0);
     await p.locator('#backup').click();
     assert((await p.locator('#status').innerText()).includes('原记录未改变'));
     assert.equal(await p.locator('a').getAttribute('href'),target.share.url);
     assert.deepEqual(errors,[]);
     await ctx.close();
     console.log('PASS: independent release bundles, separate worker scopes/cache cleanup, cross-edition outages and updates, HTTP error fallback, legacy share records, word progress, backup bridge, 320/390/760/1440 layout and offline restart. No real cloud reads or writes.');
-  }finally{await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));}
+  }finally{clearTimeout(watchdog);await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});
