@@ -65,7 +65,7 @@
   if(!isDemo){
     settings.querySelector('.atelier-settings').insertAdjacentHTML('beforeend',`<button type="button" class="mode utility-button" id="atelierDemoLink">${icon('share-2')}分享给朋友</button><button type="button" class="mode utility-button" id="atelierInboxLink">${icon('inbox')}反馈收件箱</button>`);
     document.querySelector('#atelierDemoLink').onclick=async()=>{
-      const url='https://kkkyl666-sys.github.io/dusk-study-pet/share.html';
+      const url=window.PET_APP.shareURL;
       try {
         if(navigator.share) await navigator.share({title:'夕的手账 · 分享版',url});
         else {await navigator.clipboard.writeText(url);showActionToast('分享网址已复制');}

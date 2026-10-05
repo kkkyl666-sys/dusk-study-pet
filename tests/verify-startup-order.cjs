@@ -31,7 +31,7 @@ const fixture={selectedCourses:[{name:'启动测试课程',teacher:'测试',room
    await page.locator('#atelierSettings').click();
    await page.evaluate(()=>Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{window.testSharedURL=data.url;}}));
    await page.locator('#atelierDemoLink').click();
-   assert.equal(await page.evaluate(()=>window.testSharedURL),'https://kkkyl666-sys.github.io/dusk-study-pet/share.html');
+   assert.equal(await page.evaluate(()=>window.testSharedURL),require('../app-targets.cjs').share.url);
    await page.screenshot({path:path.resolve(__dirname,'../../方案预览/启动修复-手机版本.png')});
   }
   await ctx.close();
@@ -45,7 +45,7 @@ const fixture={selectedCourses:[{name:'启动测试课程',teacher:'测试',room
    await p.waitForFunction(()=>window.shareTools&&!restoringResume);assert.equal(await p.evaluate(()=>isDemo),true);assert.equal(await p.evaluate(()=>syncReady),false);
    assert.equal(await p.evaluate(()=>document.body.classList.contains('private-wait')),false);
    assert.equal(await p.evaluate(()=>localStorage.getItem('dusk-study-pet-full-state-v1')),'personal-sentinel');
-   assert.equal(await p.locator('#privateGate').isVisible(),false);assert.equal(await p.locator('#demoURL').inputValue(),'https://kkkyl666-sys.github.io/dusk-study-pet/share.html');
+   assert.equal(await p.locator('#privateGate').isVisible(),false);assert.equal(await p.locator('#demoURL').inputValue(),require('../app-targets.cjs').share.url);
    console.log('PASS: share bootstrap has no separate request; no personal gate, cloud or storage access; share output is canonical HTTPS URL.');
   }
   await share.close();

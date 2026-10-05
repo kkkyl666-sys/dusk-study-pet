@@ -1,5 +1,5 @@
-const CONFIG = {"cachePrefix":"dusk-personal-","legacyCachePrefix":"dusk-study-pet-","required":["./index.html","./cet6-35.js","./atelier.js?v=29","./atelier.css?v=23","./sync-config.js"],"optional":["./dusk-pet.png","./lucide.min.js","./lucide-LICENSE.txt","./development.html","./development-log.json","./development.js?v=25","./development.css?v=25","./DEVELOPMENT.md","./ASSETS.md","./feedback-admin.html","./feedback-admin.css?v=1","./feedback-admin.js?v=1","./feedback-config.js?v=1","./feedback.js?v=2","./assets/fonts/Lora-LICENSE.txt","./assets/fonts/lora.woff2","./assets/fonts/Smiley-LICENSE.txt","./assets/fonts/smiley.woff2","./assets/fonts/WenKai-LICENSE.txt","./assets/fonts/wenkai.woff2","./assets/Motion-LICENSE.txt","./assets/motion.js","./assets/wallpapers/dusk-realm-concept.png","./assets/wallpapers/dusk-studio-concept.png","./share.html","./manifest.webmanifest"],"entries":["","index.html","share.html","development.html","feedback-admin.html"]};
-const CACHE_NAME = "dusk-personal-2026.10.06.1-5b229fcf25b1";
+const CONFIG = /*APP_WORKER_CONFIG*/;
+const CACHE_NAME = /*APP_CACHE_NAME*/;
 const APP_SHELL = CONFIG.required.concat(CONFIG.optional);
 const baseURL = new URL('./', self.location.href);
 

@@ -1,5 +1,5 @@
 (() => {
-  const shareURL = "https://kkkyl666-sys.github.io/dusk-study-pet/share.html";
+  const shareURL = window.PET_APP.shareURL;
   const icon = name => `<i data-lucide="${name}"></i>`;
   document.body.classList.add("share-demo");
   document.querySelector(".atelier-brand").textContent = "夕的手账 · 分享版";

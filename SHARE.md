@@ -1,6 +1,6 @@
 # 分享版：自己的安排与反馈
 
-入口：https://kkkyl666-sys.github.io/dusk-study-pet/share.html
+入口：https://kkkyl666-sys.github.io/dusk-handbook/
 
 正式版的画室设置里有“分享给朋友”入口。电脑顶部分享图标、手机设置的“分享与示例”可复制网址、系统分享或生成示例。
 
@@ -17,13 +17,14 @@
 - 内置反馈仅发送主动填写的文字，联系与设备信息可选，不自动附带学习数据。后台安装方法见 FEEDBACK.md；尚未启用时明确失败并保留草稿，不假装送达。自用端设置可进入独立凭证保护的收件箱。
 - 演示清空/重新生成只处理演示课表、计划，不更改词库和背词进度。分享链接不包含快照、解锁码或浏览器路径。
 
-`share.html` 从 `index.html` 生成，保留相同外观、B词性分色和业务实现，改用 `demo-config.js` 与独立清单，并加载 `demo.js/css`、`share-tools.js/css` 和反馈表单。修改正式HTML后运行：
+分享版是用户体验与反馈的迭代主线。`share.html` 从 `shared/app.html` 共用源码直接生成，不读取自用版 HTML，保留相同外观、B词性分色和业务实现，改用分享配置与独立清单。修改维护源后构建分享版：
 
 ```powershell
 node build-share.cjs
+node build-release.cjs share
 ```
 
-提交生成的 `share.html` 与其他修改，一并发布至现有 GitHub Pages。模板标记改变时构建会报错，不会静默生成带个人同步配置的入口。
+分享包独立发布到 dusk-handbook；自用包独立发布到 dusk-study-pet 的 personal-release 分支。不再把源码 main 推送当作自用发布。完整职责、更新和迁移规则见 ARCHITECTURE.md。
 
 离线缓存为演示页保留独立的HTML回退，不能回退成个人解锁页。浏览器支持Web Share API时通过用户点击调起系统分享，否则复制或手动选择网址。浏览器之间、主屏App与浏览器之间的本地记录未必共享；不要承诺演示版跨设备同步。
 

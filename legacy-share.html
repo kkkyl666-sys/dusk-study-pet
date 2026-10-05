@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>夕的手账 · 分享版新入口</title><link rel="icon" href="dusk-pet.png"><style>
+body{margin:0;background:#e4ebe3;color:#273d35;font:16px/1.7 system-ui,sans-serif}main{max-width:480px;margin:10vh auto;padding:28px}img{width:88px;height:88px;border-radius:8px}h1{font-size:24px}a,button{display:block;box-sizing:border-box;width:100%;padding:12px;margin:16px 0;border:1px solid #819580;border-radius:8px;background:#f8faf3;color:#273d35;text-align:center;text-decoration:none;font:inherit;box-shadow:0 3px #adbca8}small{color:#506154}#status{min-height:1.7em}
+</style></head><body><main><img src="dusk-pet.png" alt="夕"><h1>分享版有自己的家了</h1><p>自用与分享现在独立更新。原来的记录没有删除；建议先下载备份，再打开新版。</p><button id="backup" type="button">下载原分享记录</button><a href="https://kkkyl666-sys.github.io/dusk-handbook/">打开分享版</a><p id="status" role="status"></p><small>使用原浏览器打开。若新入口没有显示记录，可在“编辑 → 恢复备份”导入刚下载的文件。无需个人解锁码。</small></main><script>
+document.querySelector('#backup').onclick=()=>{
+  const status=document.querySelector('#status');
+  try {
+    const data=JSON.parse(localStorage.getItem('dusk-demo-v1:dusk-study-pet-full-state-v1'));
+    if(!data||!Array.isArray(data.days)||data.days.length!==7||!Array.isArray(data.selectedCourses))throw Error('当前浏览器没有可导出的旧分享存档。');
+    const file={format:'dusk-share-backup',schema:1,exportedAt:new Date().toISOString(),data};
+    const url=URL.createObjectURL(new Blob([JSON.stringify(file,null,2)],{type:'application/json'}));
+    const a=document.createElement('a');a.href=url;a.download='夕的手账-迁移备份.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
+    status.textContent='已请求下载，请确认备份文件已保存。原记录未改变。';
+  }catch(error){status.textContent=error.message;}
+};
+</script></body></html>
