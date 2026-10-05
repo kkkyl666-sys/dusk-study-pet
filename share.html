@@ -447,6 +447,7 @@
   <dialog id="syncDialog" aria-labelledby="syncTitle">
     <form class="sync-dialog" method="dialog">
       <h2 id="syncTitle">云同步</h2>
+      <small id="appRevision">版本 2026.10.05.2 · 分享版</small>
       <p id="syncDialogText">在这台设备输入一次个人解锁码。之后课表、计划和完成记录会自动同步。</p>
       <label id="syncEmailLabel">个人解锁码
         <input id="syncEmail" type="password" autocomplete="current-password" placeholder="输入解锁码">
@@ -458,7 +459,29 @@
       </div>
     </form>
   </dialog>
-  <script src="demo-config.js?v=26"></script>
+  <script id="share-bootstrap">
+// This entry has no sync configuration and never reads the personal storage keys.
+window.PET_DEMO = true;
+try {
+  const saved = JSON.parse(localStorage.getItem("dusk-demo-v1:dusk-study-pet-full-state-v1") || "null");
+  const date = new Date(saved?.shareCalendar + "T00:00:00");
+  if (saved?.shareCalendar && !isNaN(date) && date.getDay() === 1) window.PET_SHARE_CALENDAR = saved.shareCalendar;
+} catch { /* Existing stores remain untouched if recovery is needed. */ }
+window.createDemoData = function(mode) {
+  const names = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"];
+  const courseNames = ["学术英语", "高等数学", "程序设计", "设计与表达", "自然科学导论", "体育活动", "文学与生活"];
+  const tasks = [["09:00 阅读与笔记", "学习", "整理一页读书笔记。"], ["16:30 散步", "恢复", "出去走走，给眼睛放个假。"], ["19:30 项目练习", "规划", "完成一个小步骤。"]];
+  const selectedCourses = [];
+  const days = names.map((name, day) => {
+    if (mode !== "blank") {
+      const start = [1, 3, 5, 7][Math.floor(Math.random() * 4)];
+      selectedCourses.push({code:"示例",name:courseNames[day],type:day % 2 ? "major" : "public",weeks:[[1,20]],day,periods:[start,start+1],room:`示例教室 ${day+1}01`,teacher:"示例教师"});
+    }
+    return {date:name,name,line:"今天，也慢慢来。",tasks:mode === "blank" ? [] : [structuredClone(tasks[Math.floor(Math.random()*tasks.length)])]};
+  });
+  return {selectedCourses,days};
+};
+</script>
   <script src="cet6-35.js"></script>
   <script>
     const isDemo = window.PET_DEMO === true;
@@ -989,6 +1012,13 @@
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(data?.message || data?.hint || "无法连接云端");
       return data;
+      } catch (error) {
+        if (error.name === "AbortError" || error.name === "TypeError") {
+          const networkError = new Error(error.name === "AbortError" ? "云端连接超时；已有本机记录可以继续使用" : "当前网络无法连接云端；已有本机记录可以继续使用");
+          networkError.name = "NetworkError";
+          throw networkError;
+        }
+        throw error;
       } finally { clearTimeout(timeout); }
     }
     function snapshot() {
@@ -1104,7 +1134,7 @@
         updateSyncStatus("已解锁并同步");
         syncDialog.close();
       } catch (error) {
-        syncDialogText.textContent = "解锁码不正确或云端暂时无法访问，请检查后再试。";
+        syncDialogText.textContent = error.name === "NetworkError" ? error.message : "解锁码不正确或云端暂时无法访问，请检查后再试。";
       } finally { syncLoginBtn.disabled = false; }
     });
     function startApp(preferredView = currentViewId()) {
@@ -1116,7 +1146,7 @@
     if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("./sw.js", {updateViaCache:"none"}).then(registration => registration.update()).catch(() => {});
     // Complete local restoration before starting any cloud request.
   </script>
-  <script src="lucide.min.js"></script>
+  <script src="lucide.min.js" defer onload="window.refreshIcons?.()"></script>
   <script id="experience-runtime" data-runtime="26">
 // Generated from experience.js by build-experience.cjs.
 // Local recovery and focused editing share the existing course/English model.
@@ -1417,8 +1447,8 @@ refreshIcons();
 setupCloudSync().then(()=>{if(validSnapshot(snapshot())){if(!committedState)cacheCommittedState();restoreResumePoint();}}).catch(handleSyncFailure).finally(()=>{restoringResume=false;});
   </script>
   <script src="assets/motion.js"></script>
-  <script src="atelier.js?v=27"></script>
-  <script src="demo.js?v=27"></script>
+  <script src="atelier.js?v=28"></script>
+  <script src="demo.js?v=28"></script>
   <script src="papaparse.min.js"></script>
   <script src="feedback-config.js?v=1"></script>
   <script src="feedback.js?v=2"></script>

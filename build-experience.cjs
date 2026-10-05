@@ -12,6 +12,10 @@ function buildExperience() {
   const runtime = '<script id="experience-runtime" data-runtime="26">\n' +
     '// Generated from experience.js by build-experience.cjs.\n' + source.trimEnd() + '\n  </script>';
   const next = html.replace(marker, () => runtime);
+  const beforeRuntime = next.slice(0, next.indexOf('<script id="experience-runtime"'));
+  if (/<script src="lucide\.min\.js"(?![^>]*\bdefer\b)/.test(beforeRuntime)) {
+    throw new Error('Optional icons must not block the recovery runtime');
+  }
   if (next !== html) fs.writeFileSync(entry, next);
 }
 

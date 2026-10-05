@@ -445,6 +445,7 @@
   <dialog id="syncDialog" aria-labelledby="syncTitle">
     <form class="sync-dialog" method="dialog">
       <h2 id="syncTitle">云同步</h2>
+      <small id="appRevision">版本 2026.10.05.2 · 自用版</small>
       <p id="syncDialogText">在这台设备输入一次个人解锁码。之后课表、计划和完成记录会自动同步。</p>
       <label id="syncEmailLabel">个人解锁码
         <input id="syncEmail" type="password" autocomplete="current-password" placeholder="输入解锁码">
@@ -987,6 +988,13 @@
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(data?.message || data?.hint || "无法连接云端");
       return data;
+      } catch (error) {
+        if (error.name === "AbortError" || error.name === "TypeError") {
+          const networkError = new Error(error.name === "AbortError" ? "云端连接超时；已有本机记录可以继续使用" : "当前网络无法连接云端；已有本机记录可以继续使用");
+          networkError.name = "NetworkError";
+          throw networkError;
+        }
+        throw error;
       } finally { clearTimeout(timeout); }
     }
     function snapshot() {
@@ -1102,7 +1110,7 @@
         updateSyncStatus("已解锁并同步");
         syncDialog.close();
       } catch (error) {
-        syncDialogText.textContent = "解锁码不正确或云端暂时无法访问，请检查后再试。";
+        syncDialogText.textContent = error.name === "NetworkError" ? error.message : "解锁码不正确或云端暂时无法访问，请检查后再试。";
       } finally { syncLoginBtn.disabled = false; }
     });
     function startApp(preferredView = currentViewId()) {
@@ -1114,7 +1122,7 @@
     if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("./sw.js", {updateViaCache:"none"}).then(registration => registration.update()).catch(() => {});
     // Complete local restoration before starting any cloud request.
   </script>
-  <script src="lucide.min.js"></script>
+  <script src="lucide.min.js" defer onload="window.refreshIcons?.()"></script>
   <script id="experience-runtime" data-runtime="26">
 // Generated from experience.js by build-experience.cjs.
 // Local recovery and focused editing share the existing course/English model.
@@ -1415,7 +1423,7 @@ refreshIcons();
 setupCloudSync().then(()=>{if(validSnapshot(snapshot())){if(!committedState)cacheCommittedState();restoreResumePoint();}}).catch(handleSyncFailure).finally(()=>{restoringResume=false;});
   </script>
   <script src="assets/motion.js"></script>
-  <script src="atelier.js?v=27"></script>
+  <script src="atelier.js?v=28"></script>
 </body>
 </html>
 
