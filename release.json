@@ -1,19 +1,19 @@
 {
   "edition": "personal",
-  "version": "2026.10.06.2",
+  "version": "2026.10.06.3",
   "repository": "kkkyl666-sys/dusk-study-pet",
   "files": {
-    "atelier.js": "358862ba8fb5632c758b3190e3bda9139d3ea30c6061d386308b4cbf1bf3fcf9",
+    "atelier.js": "76b3cdd282bf6f55aa61eed969e00d768f48e36795f534811a09b8a76c8221fb",
     "atelier.css": "cf4b1f799e19f60250713f5b4510889336ebcc3a688bb21e7d6ae302538d4f0d",
     "cet6-35.js": "9b87668514baf9e6801be33184210aa757e66a1d351b3fc377a425dc8c92f793",
     "dusk-pet.png": "9aadf875aa5c2f060729aec4670330031267e3afe3fdcfe0039b2ac5efb12e74",
     "lucide.min.js": "b26eac159a876454404f10be2f7e471bccb9d6f2398b5cfdf1045425ac94abf0",
     "lucide-LICENSE.txt": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
     "development.html": "e86c0893a741934de49638f3b005b6571d1705cb1ab36d63c2068caca7f302e5",
-    "development-log.json": "e6975f1d9efc92f45711db32b164f95477629dca20c0513e8fee7cbe7db4760a",
+    "development-log.json": "63db1de296387479a98bb4a95037d342c58ebe27e52f859b5653d365910bb238",
     "development.js": "463f23d1856bce929b7e962af4fe33dc3b7e3f648c85d4341e562b4c64be3164",
     "development.css": "d6226fe108c30573c4a11d77c4e552065aa5ac23ec41f5a73260ddd23d8d1c5b",
-    "DEVELOPMENT.md": "aa65de66e6c5faac0d688d452619a8fb3c7e163a41895475a5c64a5a3272cde5",
+    "DEVELOPMENT.md": "3065cd7baab5893d745e6fa15c205a39e4e876ea71ceb93282c460212626b5e9",
     "ASSETS.md": "ff32d5d490666cd144b0c885afab8c4b087d7843e251fc65bc79587f5940fb82",
     "sync-config.js": "d65cb2641022345f5862d827bf95e356a7be99ea115ae8f88e3188c33fad02be",
     "feedback-admin.html": "51d049dda55a08c7990e8650f89f0e83a1ecd8891e9c9935ff2d84212fb1f4f8",
@@ -34,11 +34,11 @@
     "assets/wallpapers/dusk-realm-concept.webp": "90b97f5424b8217d330caab44f7a0a5704c892edfdeb6f2582389f397f40d5ae",
     "assets/wallpapers/dusk-studio-concept-preview.webp": "a3ea1f6d3193e3c09be6a738e8134a1ac6a02e5765ea6f4dec65a01abdae531a",
     "assets/wallpapers/dusk-studio-concept.webp": "40c9df9301075b39afa9c983f783ab367caf9513bed9e77c7b546bb14a75d892",
-    "index.html": "0b93b9ad0b1ee0048c69e423d39fe1f1ef4a5498a6ed90a535210eff87faf4f2",
+    "index.html": "3c0378d07d08e67e3019d3131534e6b29f2d49487b8aec88ece1ef71d8b9742e",
     "share.html": "5b7c8b4f8d9dcb985a6561bf9a6d4e834146b89822fbe3bdd46685ebb35fa648",
     "manifest.webmanifest": "079434083d4d2cb5d909c824e966adcd5fe540a5236550acb57da8ac1d461fb0",
     ".nojekyll": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "sw.js": "0f8e06a100eb6d07c4260333b9b565d92e2e6a80d20d3a400fbed88e72437b49"
+    "sw.js": "7f8f2e1ce5ab082dfb30ce3241fdfbf4a5f7d74d238f7b5e43b98a54a9c2fa17"
   },
-  "sourceCommit": "2079b31d863e51d41d6c16dbdc87d3ef2d0a4ba6"
+  "sourceCommit": "3d4b930eb2d25d64fc6e3e1c8c32926a604e545b"
 }

@@ -447,7 +447,7 @@
   <dialog id="syncDialog" aria-labelledby="syncTitle">
     <form class="sync-dialog" method="dialog">
       <h2 id="syncTitle">云同步</h2>
-      <small id="appRevision">版本 2026.10.06.2 · 自用版</small>
+      <small id="appRevision">版本 2026.10.06.3 · 自用版</small>
       <p id="syncDialogText">在这台设备输入一次个人解锁码。之后课表、计划和完成记录会自动同步。</p>
       <label id="syncEmailLabel">个人解锁码
         <input id="syncEmail" type="password" autocomplete="current-password" placeholder="输入解锁码">
@@ -459,7 +459,7 @@
       </div>
     </form>
   </dialog>
-  <script id="app-target">window.PET_APP={"edition":"personal","version":"2026.10.06.2","shareURL":"https://kkkyl666-sys.github.io/dusk-handbook/"};</script>
+  <script id="app-target">window.PET_APP={"edition":"personal","version":"2026.10.06.3","shareURL":"https://kkkyl666-sys.github.io/dusk-handbook/"};</script>
 <script src="sync-config.js"></script>
   <script src="cet6-35.js"></script>
   <script>
@@ -648,14 +648,16 @@
       const result = [];
       for (let day = Math.max(0, englishDayIndex() - 30); day < englishDayIndex(); day++) {
         const lesson = englishLessons[Math.min(day, englishLessons.length - 1)];
-        wordsFromLesson(lesson, day).forEach(word => { if (isReviewDue(day) || englishProgress.forgotten?.[word.id] === englishDayIndex() - 1) result.push({ ...word, day }); });
+        // Keep handled extra-practice words in today's list for feedback and undo.
+        wordsFromLesson(lesson, day).forEach(word => { if (isReviewDue(day) || englishProgress.forgotten?.[word.id] === englishDayIndex() - 1 || wordHandled(word)) result.push({ ...word, day }); });
       }
       return result;
     }
+    function pendingReviewWords(words = reviewWords()) { return words.filter(word => !wordHandled(word)); }
     function englishTaskItems() {
       if (activeDay !== todayIndex || activeWeek() !== currentWeek) return [];
       const lesson = lessonForToday();
-      return [[`英语单词 · 第${lesson.index + 1}天`, "英语", `${lesson.title} · 10 个新词，另有 ${reviewWords().length} 个待复习`, null, `english-${lesson.index}-words`], ["豆包英语对话 20min", "英语", "围绕今日主题用英语对话，至少说出 3 个今日单词。", null, `english-${lesson.index}-dialogue`]];
+      return [[`英语单词 · 第${lesson.index + 1}天`, "英语", `${lesson.title} · 10 个新词，另有 ${pendingReviewWords().length} 个待复习`, null, `english-${lesson.index}-words`], ["豆包英语对话 20min", "英语", "围绕今日主题用英语对话，至少说出 3 个今日单词。", null, `english-${lesson.index}-dialogue`]];
     }
     function wordActionHtml(word) {
       if (englishProgress.forgotten?.[word.id] === englishDayIndex()) return `<p class="word-status forgot">已标记：明天加练</p>`;
@@ -778,7 +780,7 @@
       const reviews = reviewWords();
       document.querySelector("#englishTitle").textContent = `六级词汇 · 第${lesson.index + 1}天`;
       document.querySelector("#englishTheme").textContent = `${lesson.title}：${lesson.scene}`;
-      document.querySelector("#reviewCount").textContent = `今日待复习 ${reviews.length}`;
+      document.querySelector("#reviewCount").textContent = `今日待复习 ${pendingReviewWords(reviews).length}`;
       const lookupLinks = word => {
         return `<button class="word-detail-button" type="button" data-word-detail="${escapeHtml(word.id)}" title="查看词汇详情">${escapeHtml(word.word)}</button>`;
       };
@@ -807,8 +809,22 @@
       }
       const actionButton = event.target.closest("[data-forgot-word], [data-remember-word]");
       const id = actionButton?.dataset.forgotWord || actionButton?.dataset.rememberWord;
-      if (id) { const scroll = window.scrollY; englishProgress.forgotten ||= {}; englishProgress.remembered ||= {}; if (actionButton.dataset.forgotWord) { englishProgress.forgotten[id] = englishDayIndex(); delete englishProgress.remembered[id]; } else { englishProgress.remembered[id] = englishDayIndex(); delete englishProgress.forgotten[id]; } saveEnglish(); renderEnglish(); window.scrollTo(0, scroll); saveResumePoint(id); showActionToast(actionButton.dataset.forgotWord ? "已标记：明天加练" : "已完成"); }
-      if (event.target.dataset.quizAnswer !== undefined) { const correct = event.target.dataset.quizAnswer === "true"; document.querySelector("#quizResult").textContent = correct ? "答对了，继续保持。" : "这题先标记为忘记，明天会自动加练。"; if (!correct) { const word = reviewWords()[0] || lessonForToday().words[0]; englishProgress.forgotten ||= {}; englishProgress.forgotten[word.id] = englishDayIndex(); saveEnglish(); } }
+      if (id) { const scroll = window.scrollY; englishProgress.forgotten ||= {}; englishProgress.remembered ||= {}; if (actionButton.dataset.forgotWord) { englishProgress.forgotten[id] = englishDayIndex(); delete englishProgress.remembered[id]; } else { englishProgress.remembered[id] = englishDayIndex(); delete englishProgress.forgotten[id]; } saveEnglish(); renderEnglish(); renderTasks(); window.scrollTo(0, scroll); saveResumePoint(id); showActionToast(actionButton.dataset.forgotWord ? "已标记：明天加练" : "已完成"); }
+      if (event.target.dataset.quizAnswer !== undefined) {
+        const correct = event.target.dataset.quizAnswer === "true";
+        document.querySelector("#quizResult").textContent = correct ? "答对了，继续保持。" : "这题先标记为忘记，明天会自动加练。";
+        if (!correct) {
+          const word = reviewWords()[0] || lessonForToday().words[0];
+          englishProgress.forgotten ||= {}; englishProgress.forgotten[word.id] = englishDayIndex(); delete englishProgress.remembered?.[word.id]; saveEnglish();
+          document.querySelector("#reviewCount").textContent = `今日待复习 ${pendingReviewWords().length}`;
+          document.querySelectorAll('[data-word-card]').forEach(card => {
+            if (card.dataset.wordCard !== word.id) return;
+            const actions = card.querySelector('.word-actions, .word-status');
+            if (actions) actions.outerHTML = wordActionHtml(word);
+          });
+          renderTasks();
+        }
+      }
     });
     document.querySelector("#exportWordsBtn").addEventListener("click", () => {
       const lesson = lessonForToday(); const text = `# 今日六级单词\n\n第${lesson.index + 1}天：${lesson.title}\n${lesson.scene}\n\n${lesson.words.map((word, index) => `${index + 1}. ${word.word} (${word.pos}) - ${word.meaning}\n   ${exampleForWord(word)}`).join("\n")}\n\n今日任务：豆包英语对话 20 分钟。`;
@@ -1426,7 +1442,7 @@ refreshIcons();
 setupCloudSync().then(()=>{if(validSnapshot(snapshot())){if(!committedState)cacheCommittedState();restoreResumePoint();}}).catch(handleSyncFailure).finally(()=>{restoringResume=false;});
 </script>
   <script src="assets/motion.js" defer></script>
-  <script src="atelier.js?v=30"></script>
+  <script src="atelier.js?v=31"></script>
 
 </body>
 </html>
