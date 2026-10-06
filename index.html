@@ -327,12 +327,13 @@
     button:active { transform:translateY(1px); }
     @media(max-width:600px) { .utility-actions { gap:6px; } .quick-dialog { margin:auto; } }
   </style>
-  <link rel="stylesheet" href="atelier.css?v=23">
+  <link rel="preload" as="image" href="assets/dusk-pet.webp" fetchpriority="high">
+  <link rel="stylesheet" href="atelier.css?v=24">
 
 </head>
 <body>
   <section class="private-gate" id="privateGate" aria-labelledby="privateGateTitle">
-    <img src="dusk-pet.png" alt="夕式桌宠">
+    <img src="assets/dusk-pet.webp" fetchpriority="high" width="658" height="658" alt="夕式桌宠">
     <h1 id="privateGateTitle">夕的手账</h1>
     <p id="privateGateText">这是你的个人课表和计划。输入个人解锁码后才能查看。</p>
     <button class="speak" id="privateGateLogin" type="button">输入解锁码</button>
@@ -342,7 +343,7 @@
     <aside>
       <div class="pet-wrap">
         <div class="pet-frame" aria-label="夕式学习桌宠">
-          <img class="pet-img" src="dusk-pet.png" alt="夕式桌宠立绘">
+          <img class="pet-img" src="assets/dusk-pet.webp" width="658" height="658" alt="夕式桌宠立绘">
         </div>
         <div>
           <h1>夕的手账</h1>
@@ -446,7 +447,7 @@
   <dialog id="syncDialog" aria-labelledby="syncTitle">
     <form class="sync-dialog" method="dialog">
       <h2 id="syncTitle">云同步</h2>
-      <small id="appRevision">版本 2026.10.06.1 · 自用版</small>
+      <small id="appRevision">版本 2026.10.06.2 · 自用版</small>
       <p id="syncDialogText">在这台设备输入一次个人解锁码。之后课表、计划和完成记录会自动同步。</p>
       <label id="syncEmailLabel">个人解锁码
         <input id="syncEmail" type="password" autocomplete="current-password" placeholder="输入解锁码">
@@ -458,7 +459,7 @@
       </div>
     </form>
   </dialog>
-  <script id="app-target">window.PET_APP={"edition":"personal","version":"2026.10.06.1","shareURL":"https://kkkyl666-sys.github.io/dusk-handbook/"};</script>
+  <script id="app-target">window.PET_APP={"edition":"personal","version":"2026.10.06.2","shareURL":"https://kkkyl666-sys.github.io/dusk-handbook/"};</script>
 <script src="sync-config.js"></script>
   <script src="cet6-35.js"></script>
   <script>
@@ -1425,7 +1426,7 @@ refreshIcons();
 setupCloudSync().then(()=>{if(validSnapshot(snapshot())){if(!committedState)cacheCommittedState();restoreResumePoint();}}).catch(handleSyncFailure).finally(()=>{restoringResume=false;});
 </script>
   <script src="assets/motion.js" defer></script>
-  <script src="atelier.js?v=29"></script>
+  <script src="atelier.js?v=30"></script>
 
 </body>
 </html>

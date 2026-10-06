@@ -53,3 +53,57 @@ body[data-atelier-view=englishView] .topbar{display:none}#englishView>.utility-a
 #englishView .word-card[data-word-pos="adj."] { --word-ink: #725089; }
 #englishView .word-card[data-word-pos="adv."] { --word-ink: #89552f; }
 #englishView .word-card .word-detail-button { color: var(--word-ink); }
+
+/* Window chrome stays fixed; each window owns its scrolling content. */
+@media(min-width:761px){
+  .atelier-window{resize:none;overflow:hidden;max-width:calc(100vw - 16px);max-height:calc(100dvh - 135px)}
+  main.atelier-window,body.pet-mode main.atelier-window{min-width:380px;container-type:inline-size;container-name:study}
+  aside.atelier-window,body.pet-mode aside.atelier-window{min-width:210px;flex-direction:column;container-type:inline-size;container-name:portrait}
+  .atelier-planner{min-width:230px;min-height:180px;max-height:calc(100dvh - 135px)}
+  .atelier-titlebar{flex-shrink:0;min-width:0;gap:5px}
+  .atelier-titlebar>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .atelier-titlebar>div{flex-shrink:0}
+  .atelier-main-content,.planner-body,.atelier-pet-content{min-width:0;min-height:0;overscroll-behavior:contain}
+  .atelier-pet-content{overflow:auto;flex:1;padding:5px 2px 8px;scrollbar-width:thin}
+  aside .pet-frame,body.pet-mode aside .pet-frame{position:relative;height:auto;aspect-ratio:4/3;max-height:250px}
+  aside .atelier-portrait-label{top:auto;right:8px;bottom:-10px;z-index:2}
+  .window-resize{position:absolute;z-index:9;touch-action:none;outline-offset:-3px}
+  .window-resize-n,.window-resize-s{left:12px;right:12px;height:9px;cursor:ns-resize}
+  .window-resize-n{top:0}.window-resize-s{bottom:0}
+  .window-resize-e,.window-resize-w{top:12px;bottom:12px;width:9px;cursor:ew-resize}
+  .window-resize-e{right:0}.window-resize-w{left:0}
+  .window-resize-nw,.window-resize-ne,.window-resize-sw,.window-resize-se{width:13px;height:13px}
+  .window-resize-nw{top:0;left:0;cursor:nwse-resize}.window-resize-ne{top:0;right:0;cursor:nesw-resize}
+  .window-resize-sw{bottom:0;left:0;cursor:nesw-resize}.window-resize-se{bottom:0;right:0;cursor:nwse-resize}
+  .window-resize-se::after{content:'';position:absolute;right:3px;bottom:3px;width:5px;height:5px;border-right:2px solid #718574;border-bottom:2px solid #718574}
+  .atelier-window.maximized .window-resize{display:none}
+  .atelier-window.resizing{transition:none;box-shadow:inset 2px 2px #fff,5px 7px #41554480,0 0 0 2px #9aafa0}
+  body.window-resizing{user-select:none}
+  .atelier-main-content :is(.topbar,.english-head,.schedule-toolbar,.editor-toolbar,.week-controls,.utility-actions,.home-summary,.home-extra){flex-wrap:wrap;min-width:0}
+  .atelier-main-content :is(.task-title,.today-title,.editor-fields label,.task-edit){min-width:0;overflow-wrap:anywhere}
+  .atelier-main-content :is(input,select){min-width:0;max-width:100%}
+  .word-title{flex-wrap:wrap}.word-title .word-detail-button{max-width:100%}
+  .schedule-scroll{max-width:100%;overflow:auto}
+  .home-start>span{min-width:0;overflow-wrap:anywhere}.home-start svg{flex-shrink:0}
+}
+@container study (max-width:900px){
+  .task-edit{grid-template-columns:minmax(0,1fr) 90px}
+  .task-edit input:nth-child(3),.task-edit input:nth-child(4){grid-column:1/-1}
+}
+@container study (max-width:650px){
+  .word-list,.quiz-options,.editor-fields{grid-template-columns:minmax(0,1fr)}
+  .atelier-main-content{padding:14px 12px 22px}
+  .week{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .schedule-mode{display:flex;gap:6px;margin-top:8px}
+  #scheduleView:not(.scheduleView-week) .schedule-scroll{display:none}
+  #scheduleView:not(.scheduleView-week) .daily-schedule{display:block}
+  .editor-actions{flex-wrap:wrap}
+  .word-detail-button{font-size:25px}
+  .word-card .word-actions{flex-wrap:wrap}
+}
+@media(max-width:760px){
+  .window-resize{display:none}.atelier-pet-content{display:contents}
+  aside.atelier-window,body.pet-mode aside.atelier-window{background:#dee6dd}
+  aside .pet-frame{position:relative}
+  aside .atelier-portrait-label{left:auto;right:-12px;bottom:-12px;top:auto}
+}
