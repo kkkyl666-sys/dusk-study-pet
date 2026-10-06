@@ -3,7 +3,8 @@ const http = require('node:http');
 const path = require('node:path');
 const {chromium} = require(path.resolve(__dirname, '../../方案预览/.tools/node_modules/playwright'));
 const {buildRelease} = require('../build-release.cjs');
-const files = buildRelease('personal');
+const edition = process.argv[2] || 'personal';
+const files = buildRelease(edition);
 const fixture = {
   selectedCourses: [{name:'Test course', teacher:'Test', room:'C102', day:1, periods:[1,2], weeks:[[1,17]], type:'major'}],
   days: Array.from({length:7}, (_,i) => ({name:'Day '+i, date:'', line:'Test', tasks:[['Test task','英语','Test',null,'test-'+i]]})),
@@ -23,12 +24,12 @@ const mime = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.we
   try {
     const context = await browser.newContext({viewport:{width:390,height:844},timezoneId:'Asia/Shanghai',serviceWorkers:'block'});
     await context.route('https://**',route => route.abort());
-    await context.addInitScript(data => {
+    await context.addInitScript(({data,edition}) => {
       if (localStorage.getItem('review-seeded')) return;
       localStorage.setItem('review-seeded','yes');
-      localStorage.setItem('dusk-study-pet-full-state-v1',JSON.stringify(data));
-      localStorage.setItem('dusk-study-pet-access-code-v1','test-only');
-    },fixture);
+      localStorage.setItem((edition==='share'?'dusk-demo-v1:':'')+'dusk-study-pet-full-state-v1',JSON.stringify(data));
+      if(edition==='personal')localStorage.setItem('dusk-study-pet-access-code-v1','test-only');
+    },{data:fixture,edition});
     const p = await context.newPage(); p.on('pageerror',e => errors.push(e.message));
     await p.clock.install({time:new Date('2026-10-06T12:00:00+08:00')});
     const ready = () => p.waitForFunction(() => days.length===7 && !restoringResume && document.querySelector('[data-word-layout="list"]'));
@@ -56,7 +57,7 @@ const mime = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.we
     await p.locator('[data-focus-group="review"]').click();
     assert.equal(await p.locator('#focusPosition').textContent(),'1 / 40');
     await count(21);
-    await p.screenshot({path:path.resolve(__dirname,'../../方案预览/复习计数-剩余21.png')});
+    await p.screenshot({path:path.resolve(__dirname,'../../方案预览/复习计数-剩余21-'+edition+'.png')});
     await p.reload({waitUntil:'domcontentloaded'}); await ready(); await count(21);
     await p.locator('[data-atelier-view="englishView"]').click();
     await p.locator('button[data-word-layout="list"]').click();
@@ -103,9 +104,9 @@ const mime = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.we
     assert.equal(await p.locator('#newWords .word-card').count(),10);
     await p.setViewportSize({width:1440,height:1000});
     await p.locator('button[data-word-layout="list"]').click(); await count(41);
-    await p.screenshot({path:path.resolve(__dirname,'../../方案预览/复习计数-电脑次日加练.png')});
+    await p.screenshot({path:path.resolve(__dirname,'../../方案预览/复习计数-电脑次日加练-'+edition+'.png')});
     assert.deepEqual(errors,[]);
-    console.log('PASS: 40 -> 21, both marks, undo, stable order, new quota, reload, snapshot, quiz, 04:00, extra practice, mobile and desktop; synthetic data only');
+    console.log('PASS '+edition+': 40 -> 21, both marks, undo, stable order, new quota, reload, snapshot, quiz, 04:00, extra practice, mobile and desktop; synthetic data only');
   } finally {
     clearTimeout(watchdog); await browser.close(); await new Promise(r => server.close(r));
   }

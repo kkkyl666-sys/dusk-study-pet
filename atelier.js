@@ -66,7 +66,7 @@
     const bar = document.createElement('header'); bar.className = 'atelier-titlebar';
     bar.innerHTML = `<span>${title}</span><div><button type="button" class="atelier-icon" title="收起" aria-label="收起${title}" data-window-min="${id}">${icon('minus')}</button>${id === 'study' ? `<button type="button" class="atelier-icon" title="放大 / 还原" aria-label="放大或还原学习画夹" data-window-max>${icon('maximize-2')}</button>` : ''}</div>`;
     panel.prepend(bar);
-    bar.querySelector('[data-window-min]').onclick = () => panel.classList.add('minimized');
+    bar.querySelector('[data-window-min]').onclick = () => setWindowMinimized(id,true);
     bar.querySelector('[data-window-max]')?.addEventListener('click', () => panel.classList.toggle('maximized'));
     let drag;
     bar.addEventListener('pointerdown', event => {
@@ -96,8 +96,8 @@
   pet.append(petContent);pet.querySelector('.pet-frame').append(pet.querySelector('.atelier-portrait-label'));
   pet.querySelector('#modeBtn').addEventListener('click',()=>{
     if(mobile.matches || resizeSession) return;
-    main.classList.toggle('minimized',document.body.classList.contains('pet-mode'));
-    planner.classList.toggle('minimized',document.body.classList.contains('pet-mode'));
+    setWindowMinimized('study',document.body.classList.contains('pet-mode'));
+    setWindowMinimized('planner',document.body.classList.contains('pet-mode'));
   });
   document.body.insertAdjacentHTML('beforeend', `
     <nav class="atelier-nav" aria-label="主导航"><button type="button" data-atelier-view="homeView">${icon('sun')}<span>今天</span></button><button type="button" data-atelier-view="englishView">${icon('book-open')}<span>单词</span></button><button type="button" data-atelier-view="scheduleView">${icon('calendar-days')}<span>课表</span></button><button type="button" data-atelier-view="tasksView" class="desktop-only">${icon('list-checks')}<span>计划</span></button><button type="button" id="atelierPetRestore" class="desktop-only">${icon('sparkles')}<span>夕</span></button><button type="button" data-atelier-view="editView">${icon('pencil')}<span>编辑</span></button></nav>
@@ -130,9 +130,10 @@
       const r=panel.getBoundingClientRect(); ui.windows[id]={left:r.left,top:r.top,width:r.width,height:r.height};
     });saveUI();
   }
-  function restoreWindows() {
+  function restoreWindows(onlyId=null) {
     if(mobile.matches) return;
     Object.entries(panels).forEach(([id,panel])=>{
+      if(onlyId && id!==onlyId)return;
       const saved=ui.windows?.[id];
       if(!saved)panel.removeAttribute('style');
       const rect=saved||panel.getBoundingClientRect();
@@ -142,10 +143,23 @@
       Object.assign(panel.style,{width:width+'px',height:height+'px',left:Math.max(8,Math.min(innerWidth-width-8,Number(rect.left)||8))+'px',top:Math.max(55,Math.min(innerHeight-height-80,Number(rect.top)||55))+'px'});
     });
   }
+  function setWindowMinimized(id,minimized) {
+    const panel=panels[id];
+    if(panel.classList.contains('minimized')===minimized)return;
+    panel.classList.remove('minimized','maximized');
+    if(!mobile.matches) {
+      // Read the responsive default size without discarding the dragged position.
+      panel.style.removeProperty('width');panel.style.removeProperty('height');
+      const r=panel.getBoundingClientRect();
+      ui.windows ||= {};ui.windows[id]={left:r.left,top:r.top,width:r.width,height:r.height};
+      restoreWindows(id);saveUI();
+    }
+    panel.classList.toggle('minimized',minimized);
+  }
   function sceneInspect(on) {sceneOnly=on;document.body.classList.toggle('scene-only',on);main.inert=on;pet.inert=on;planner.inert=on;}
   document.querySelector('#atelierSceneMode').onclick=()=>sceneInspect(!sceneOnly);
   document.addEventListener('keydown',event=>{if(event.key==='Escape')sceneInspect(false);});
-  document.querySelector('#atelierPetRestore').onclick=()=>{sceneInspect(false);pet.classList.remove('minimized');planner.classList.remove('minimized');focusPanel(pet);};
+  document.querySelector('#atelierPetRestore').onclick=()=>{sceneInspect(false);setWindowMinimized('pet',false);setWindowMinimized('planner',false);focusPanel(pet);};
   document.querySelector('#atelierLayoutReset').onclick=()=>{ui.windows={};Object.values(panels).forEach(p=>{p.removeAttribute('style');p.classList.remove('maximized','minimized');});restoreWindows();saveUI();};
   document.querySelector('#atelierSettings').onclick=()=>openQuickDialog('atelierSettingsDialog');
   document.querySelector('#atelierSettingsClose').onclick=closeQuickDialog;
@@ -400,7 +414,7 @@
   }
   document.querySelectorAll('.tab-button').forEach(b=>b.addEventListener('click',decorateView));
   document.querySelectorAll('[data-atelier-view]').forEach(b=>b.onclick=()=>{
-    sceneInspect(false);main.classList.remove('minimized');focusPanel(main);
+    sceneInspect(false);setWindowMinimized('study',false);focusPanel(main);
     if(b.dataset.atelierView==='homeView')refreshCalendarNavigation(true);
     if(b.dataset.atelierView==='englishView'&&currentViewId()!=='englishView')focusInitialized=false;
     const changed=currentViewId()!==b.dataset.atelierView;activateView(b.dataset.atelierView);
