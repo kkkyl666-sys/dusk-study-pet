@@ -9,6 +9,8 @@ async function acceptable(response, url) {
   const pathname = new URL(url).pathname;
   if (/\.js$/.test(pathname)) return /javascript/.test(type);
   if (/\.css$/.test(pathname)) return /text\/css/.test(type);
+  if (/\.(webp|png)$/.test(pathname)) return /image\//.test(type);
+  if (/\.woff2$/.test(pathname)) return /font\/|application\/(font|octet-stream)/.test(type);
   if (/\.html$/.test(pathname) || pathname.endsWith('/')) {
     if (!/text\/html/.test(type)) return false;
     const relative=pathname.slice(baseURL.pathname.length);
@@ -20,7 +22,20 @@ async function acceptable(response, url) {
   }
   return true;
 }
-async function precache(cache, entry, timeout) {
+async function reuseAsset(cache, entry, oldCaches) {
+  const expected=CONFIG.assets?.[entry];
+  if (!expected) return false;
+  for (const old of oldCaches) {
+    const response=await old.match(new URL(entry,baseURL));
+    if (!response || !await acceptable(response,new URL(entry,baseURL))) continue;
+    const digest=await crypto.subtle.digest('SHA-256',await response.clone().arrayBuffer());
+    const hash=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
+    if (hash===expected) {await cache.put(new URL(entry,baseURL),response);return true;}
+  }
+  return false;
+}
+async function precache(cache, entry, timeout, oldCaches=[]) {
+  if (await reuseAsset(cache,entry,oldCaches)) return;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
@@ -35,7 +50,17 @@ self.addEventListener('install', event => {
     const cache = await caches.open(CACHE_NAME);
     // Only this edition's launch resources are required. Other pages are independent.
     await Promise.all(CONFIG.required.map(entry => precache(cache, entry, 10000)));
-    await Promise.allSettled(CONFIG.optional.map(entry => precache(cache, entry, 5000)));
+    const oldKeys=(await caches.keys()).filter(key=>key!==CACHE_NAME &&
+      (key.startsWith(CONFIG.cachePrefix) || CONFIG.legacyCachePrefix && key.startsWith(CONFIG.legacyCachePrefix)));
+    const oldCaches=await Promise.all(oldKeys.map(key=>caches.open(key)));
+    // Limit speculative downloads so wallpaper and visible text do not compete with every asset.
+    const queue=CONFIG.optional.slice(), deadline=Date.now()+8000;
+    await Promise.all(Array.from({length:4},async()=>{
+      while(queue.length && Date.now()<deadline) {
+        const entry=queue.shift();
+        try {await precache(cache,entry,Math.min(5000,deadline-Date.now()),oldCaches);} catch {}
+      }
+    }));
     await self.skipWaiting();
   })());
 });
@@ -57,8 +82,10 @@ self.addEventListener('fetch', event => {
     const relative = clean.pathname.slice(baseURL.pathname.length);
     const alias = CONFIG.entries.includes(relative) ? './'+(relative || 'index.html') : null;
     const cached = await cache.match(request) || (request.mode === 'navigate' && alias ? await cache.match(alias) : null);
+    // Images/fonts are immutable within this content-hashed release. No network wait on reopen.
+    if (cached && CONFIG.assets?.['./'+relative]) return cached;
     const controller = new AbortController();
-    const timer = cached ? setTimeout(() => controller.abort(), 4000) : null;
+    const timer = setTimeout(() => controller.abort(), cached ? 4000 : 12000);
     try {
       const response = await fetch(request, {signal:controller.signal});
       if (!await acceptable(response, url)) return cached || response;

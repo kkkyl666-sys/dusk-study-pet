@@ -12,7 +12,7 @@ const fixture = {
   checked: {'test-completion': true}, englishProgress: {remembered: {'test-word': '2026-10-04'}, forgotten: {}},
   englishStart: '2026-09-18', appointments: [], englishAdjustments: [], changedAt: Date.now()
 };
-const mime = {'.html':'text/html', '.js':'text/javascript', '.css':'text/css', '.png':'image/png', '.woff2':'font/woff2'};
+const mime = {'.html':'text/html', '.js':'text/javascript', '.css':'text/css', '.webp':'image/webp', '.png':'image/png', '.woff2':'font/woff2'};
 (async () => {
   const server = baseURL ? null : http.createServer((req, res) => {
     const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);

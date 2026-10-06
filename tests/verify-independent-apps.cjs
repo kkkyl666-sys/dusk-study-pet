@@ -3,7 +3,7 @@ const {chromium}=require(path.resolve(__dirname,'../../方案预览/.tools/node_
 const {buildRelease}=require('../build-release.cjs');
 const {buildEntry}=require('../build-entry.cjs');
 const target=require('../app-targets.cjs');
-const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.woff2':'font/woff2','.json':'application/json','.webmanifest':'application/manifest+json'};
+const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp':'image/webp','.png':'image/png','.woff2':'font/woff2','.json':'application/json','.webmanifest':'application/manifest+json'};
 const fixture={selectedCourses:[{name:'独立缓存测试',teacher:'测试',room:'T101',day:0,periods:[1,2],weeks:[[1,17]],type:'major'}],days:Array.from({length:7},(_,i)=>({name:'星期'+i,date:'',line:'测试',tasks:[]})),checked:{isolation:true},englishProgress:{},englishStart:'2026-09-18',appointments:[],englishAdjustments:[],changedAt:1};
 (async()=>{
   const personal=buildRelease('personal'),share=buildRelease('share');

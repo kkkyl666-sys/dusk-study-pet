@@ -3,7 +3,7 @@ const {chromium}=require(path.resolve(__dirname,'../../方案预览/.tools/node_
 const root=path.resolve(__dirname,'..'),reproduce=process.argv.includes('--reproduce');
 const fixture={selectedCourses:[{name:'启动测试课程',teacher:'测试',room:'T101',day:0,periods:[1,2],weeks:[[1,17]],type:'major'}],days:['星期一','星期二','星期三','星期四','星期五','星期六','星期日'].map(name=>({name,date:'',line:'测试',tasks:[]})),checked:{'test-only':true},englishProgress:{remembered:{},forgotten:{}},englishStart:'2026-09-18',changedAt:Date.now()};
 (async()=>{
- const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.woff2':'font/woff2'};
+ const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp':'image/webp','.png':'image/png','.woff2':'font/woff2'};
  const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://localhost'),file=path.resolve(root,'.'+(url.pathname==='/'?'/index.html':decodeURIComponent(url.pathname)));if(!file.startsWith(root+path.sep))return res.writeHead(403).end();try{res.setHeader('Content-Type',mime[path.extname(file)]||'application/json');res.end(fs.readFileSync(file));}catch{res.writeHead(404).end();}});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
  const browser=await chromium.launch({channel:'msedge',headless:true});let release;

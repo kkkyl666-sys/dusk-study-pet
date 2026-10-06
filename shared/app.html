@@ -327,12 +327,13 @@
     button:active { transform:translateY(1px); }
     @media(max-width:600px) { .utility-actions { gap:6px; } .quick-dialog { margin:auto; } }
   </style>
-  <link rel="stylesheet" href="atelier.css?v=23">
+  <link rel="preload" as="image" href="assets/dusk-pet.webp" fetchpriority="high">
+  <link rel="stylesheet" href="atelier.css?v=24">
 {{EDITION_STYLES}}
 </head>
 <body>
   <section class="private-gate" id="privateGate" aria-labelledby="privateGateTitle">
-    <img src="dusk-pet.png" alt="夕式桌宠">
+    <img src="assets/dusk-pet.webp" fetchpriority="high" width="658" height="658" alt="夕式桌宠">
     <h1 id="privateGateTitle">夕的手账</h1>
     <p id="privateGateText">这是你的个人课表和计划。输入个人解锁码后才能查看。</p>
     <button class="speak" id="privateGateLogin" type="button">输入解锁码</button>
@@ -342,7 +343,7 @@
     <aside>
       <div class="pet-wrap">
         <div class="pet-frame" aria-label="夕式学习桌宠">
-          <img class="pet-img" src="dusk-pet.png" alt="夕式桌宠立绘">
+          <img class="pet-img" src="assets/dusk-pet.webp" width="658" height="658" alt="夕式桌宠立绘">
         </div>
         <div>
           <h1>{{TITLE}}</h1>
@@ -1126,7 +1127,7 @@
   <script src="lucide.min.js" defer onload="window.refreshIcons?.()"></script>
   {{RECOVERY_RUNTIME}}
   <script src="assets/motion.js" defer></script>
-  <script src="atelier.js?v=29"></script>
+  <script src="atelier.js?v=30"></script>
 {{EDITION_SCRIPTS}}
 </body>
 </html>

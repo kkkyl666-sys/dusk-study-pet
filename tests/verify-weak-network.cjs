@@ -5,7 +5,7 @@ const root=path.resolve(__dirname,'..');
   let failedAssets=0;
   let serveCurrentWorker=false;
   const currentCache=fs.readFileSync(path.join(root,'sw.js'),'utf8').match(/const CACHE_NAME = "([^"]+)"/)[1];
-  const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.woff2':'font/woff2'};
+  const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp':'image/webp','.png':'image/png','.woff2':'font/woff2'};
   const server=http.createServer((req,res)=>{
     const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
     if(pathname==='/seed.html'){res.setHeader('Content-Type','text/html');return res.end('<!doctype html><title>Worker upgrade test</title>');}

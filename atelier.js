@@ -7,6 +7,7 @@
   let sceneOnly = false, focusGroup = 'new', focusIndex = 0, scheduleMode = 'day';
   let focusDate = dateISO(englishStudyDate()), petControl, petTimer, lastPetTap = 0;
   let mediaURL = null, wallpaperDB = null, focusInitialized = false;
+  let resizeSession = null, sceneRequest = 0, sceneKey = '';
   const wordUndo = new Map();
   const app = document.querySelector('.app'), pet = app.querySelector('aside'), main = app.querySelector('main');
   pet.classList.add('atelier-window'); main.classList.add('atelier-window');
@@ -17,11 +18,50 @@
   const icon = (name) => `<i data-lucide="${name}"></i>`;
   const tool = (id, name, label, extra = '') => `<button type="button" class="atelier-icon${extra.includes('desktop-only')?' desktop-only':''}" id="${id}" title="${label}" aria-label="${label}">${icon(name)}</button>`;
   document.body.insertAdjacentHTML('afterbegin', `
-    <div class="atelier-wallpaper" aria-hidden="true"><img id="atelierScene" src="assets/wallpapers/dusk-studio-concept.png" alt=""><video id="atelierVideo" muted loop playsinline hidden></video><div class="rain" id="atelierRain" hidden>${Array.from({length:20},(_,i)=>`<i style="left:${i*5}%;animation-delay:-${i*.14}s"></i>`).join('')}</div></div>
+    <div class="atelier-wallpaper" aria-hidden="true"><img id="atelierScene" alt="" decoding="async"><video id="atelierVideo" muted loop playsinline hidden></video><div class="rain" id="atelierRain" hidden>${Array.from({length:20},(_,i)=>`<i style="left:${i*5}%;animation-delay:-${i*.14}s"></i>`).join('')}</div></div>
     <header class="atelier-bar"><span class="atelier-brand">夕的手账</span><div class="atelier-tools"><span class="atelier-date" id="atelierDate"></span>${tool('atelierSceneMode','image','看画室','class="desktop-only"')}${tool('atelierMotion','pause','暂停背景')}${tool('atelierSettings','sliders-horizontal','画室设置')}</div></header>`);
   const planner = document.createElement('section'); planner.className = 'atelier-window atelier-planner desktop-only';
   planner.innerHTML = '<div class="planner-body" id="atelierPlannerBody"></div>'; document.body.append(planner);
   const panels = {study:main,pet,planner};
+  const windowMinimums = {study:[380,220],pet:[210,275],planner:[230,180]};
+  function windowBounds(id) {
+    return {left:8,top:55,right:innerWidth-8,bottom:innerHeight-80,
+      width:Math.min(windowMinimums[id][0],innerWidth-16),height:Math.min(windowMinimums[id][1],innerHeight-135)};
+  }
+  function resizeWindow(panel,id,edge,start,dx,dy) {
+    const limit=windowBounds(id),clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+    let {left,top,right,bottom}=start;
+    if(edge.includes('w'))left=clamp(left+dx,limit.left,right-limit.width);
+    if(edge.includes('e'))right=clamp(right+dx,left+limit.width,limit.right);
+    if(edge.includes('n'))top=clamp(top+dy,limit.top,bottom-limit.height);
+    if(edge.includes('s'))bottom=clamp(bottom+dy,top+limit.height,limit.bottom);
+    Object.assign(panel.style,{left:left+'px',top:top+'px',width:(right-left)+'px',height:(bottom-top)+'px'});
+  }
+  function resizeHandles(panel,id) {
+    const labels={n:'上边',s:'下边',w:'左边',e:'右边',nw:'左上角',ne:'右上角',sw:'左下角',se:'右下角'};
+    for(const [edge,label] of Object.entries(labels)) {
+      const handle=document.createElement('div');handle.className='window-resize window-resize-'+edge;
+      handle.dataset.resizeEdge=edge;handle.tabIndex=0;handle.role='button';
+      handle.title='拖动'+label+'缩放';handle.setAttribute('aria-label',handle.title);panel.append(handle);
+      handle.addEventListener('pointerdown',event=>{
+        if(mobile.matches||panel.classList.contains('maximized')||event.button!==0)return;
+        event.preventDefault();event.stopPropagation();focusPanel(panel);
+        resizeSession={panel,id,edge,start:panel.getBoundingClientRect(),x:event.clientX,y:event.clientY};
+        handle.setPointerCapture(event.pointerId);document.body.classList.add('window-resizing');panel.classList.add('resizing');
+      });
+      handle.addEventListener('pointermove',event=>{
+        if(resizeSession?.panel!==panel||resizeSession.edge!==edge)return;
+        resizeWindow(panel,id,edge,resizeSession.start,event.clientX-resizeSession.x,event.clientY-resizeSession.y);
+      });
+      const finish=()=>{if(resizeSession?.panel!==panel)return;resizeSession=null;panel.classList.remove('resizing');document.body.classList.remove('window-resizing');saveWindows();};
+      handle.addEventListener('pointerup',finish);handle.addEventListener('pointercancel',finish);handle.addEventListener('lostpointercapture',finish);
+      handle.addEventListener('keydown',event=>{
+        if(mobile.matches||panel.classList.contains('maximized')||!event.key.startsWith('Arrow'))return;
+        event.preventDefault();const step=event.shiftKey?20:5;
+        resizeWindow(panel,id,edge,panel.getBoundingClientRect(),event.key==='ArrowLeft'?-step:event.key==='ArrowRight'?step:0,event.key==='ArrowUp'?-step:event.key==='ArrowDown'?step:0);saveWindows();
+      });
+    }
+  }
   function titlebar(panel, title, id) {
     const bar = document.createElement('header'); bar.className = 'atelier-titlebar';
     bar.innerHTML = `<span>${title}</span><div><button type="button" class="atelier-icon" title="收起" aria-label="收起${title}" data-window-min="${id}">${icon('minus')}</button>${id === 'study' ? `<button type="button" class="atelier-icon" title="放大 / 还原" aria-label="放大或还原学习画夹" data-window-max>${icon('maximize-2')}</button>` : ''}</div>`;
@@ -36,22 +76,26 @@
     });
     bar.addEventListener('pointermove', event => {
       if(!drag) return;
-      panel.style.left = Math.max(0,Math.min(innerWidth-panel.offsetWidth,event.clientX-drag.x+drag.left))+'px';
-      panel.style.top = Math.max(50,Math.min(innerHeight-120,event.clientY-drag.y+drag.top))+'px';
+      panel.style.left = Math.max(8,Math.min(innerWidth-panel.offsetWidth-8,event.clientX-drag.x+drag.left))+'px';
+      panel.style.top = Math.max(55,Math.min(innerHeight-120,event.clientY-drag.y+drag.top))+'px';
     });
     bar.addEventListener('pointerup', () => {if(drag){drag=null;saveWindows();}});
     bar.addEventListener('pointercancel', () => {drag=null;});
     panel.addEventListener('pointerdown',()=>focusPanel(panel));
     panel.addEventListener('pointerup',()=>{if(!mobile.matches)saveWindows();});
+    resizeHandles(panel,id);
   }
   titlebar(main,'今日画夹','study'); titlebar(pet,'夕 · 片刻闲暇','pet'); titlebar(planner,'今日便笺','planner');
-  pet.insertAdjacentHTML('afterbegin',`<div class="mobile-scene mobile-only" aria-hidden="true"><img id="atelierMobileScene" src="assets/wallpapers/dusk-studio-concept.png" alt=""><video id="atelierMobileVideo" muted loop playsinline hidden></video><div class="rain" id="atelierMobileRain" hidden>${Array.from({length:12},(_,i)=>`<i style="left:${i*8}%;animation-delay:-${i*.14}s"></i>`).join('')}</div></div>`);
+  pet.insertAdjacentHTML('afterbegin',`<div class="mobile-scene mobile-only" aria-hidden="true"><img id="atelierMobileScene" alt="" decoding="async"><video id="atelierMobileVideo" muted loop playsinline hidden></video><div class="rain" id="atelierMobileRain" hidden>${Array.from({length:12},(_,i)=>`<i style="left:${i*8}%;animation-delay:-${i*.14}s"></i>`).join('')}</div></div>`);
   pet.insertAdjacentHTML('beforeend','<span class="atelier-portrait-label">夕</span>');
   pet.querySelector('.pet-actions').insertAdjacentHTML('beforeend',tool('petQuiet','sparkles','夕的轻动作'));
   pet.querySelector('#modeBtn').innerHTML = icon('picture-in-picture-2'); pet.querySelector('#modeBtn').title = '只留夕 / 展开画夹';
   pet.querySelector('#syncBtn').innerHTML = icon('cloud'); pet.querySelector('#syncBtn').title = '云同步';
+  const petContent=document.createElement('div');petContent.className='atelier-pet-content';
+  [...pet.children].filter(child=>!child.matches('.atelier-titlebar,.window-resize,.mobile-scene,.atelier-portrait-label')).forEach(child=>petContent.append(child));
+  pet.append(petContent);pet.querySelector('.pet-frame').append(pet.querySelector('.atelier-portrait-label'));
   pet.querySelector('#modeBtn').addEventListener('click',()=>{
-    if(mobile.matches) return;
+    if(mobile.matches || resizeSession) return;
     main.classList.toggle('minimized',document.body.classList.contains('pet-mode'));
     planner.classList.toggle('minimized',document.body.classList.contains('pet-mode'));
   });
@@ -79,7 +123,7 @@
   function saveUI() {try{localStorage.setItem(UI_KEY,JSON.stringify(ui));}catch{showActionToast('外观设置未保存，本机空间不足');}}
   function focusPanel(panel) {Object.values(panels).forEach(p=>p.classList.toggle('focused',p===panel));}
   function saveWindows() {
-    if(mobile.matches) return;
+    if(mobile.matches || resizeSession) return;
     ui.windows ||= {};
     Object.entries(panels).forEach(([id,panel])=>{
       if(panel.classList.contains('maximized') || panel.classList.contains('minimized'))return;
@@ -89,21 +133,40 @@
   function restoreWindows() {
     if(mobile.matches) return;
     Object.entries(panels).forEach(([id,panel])=>{
-      const rect=ui.windows?.[id];if(!rect)return;
-      const width=Math.min(innerWidth-24,Math.max(id==='study'?540:210,Number(rect.width)||300));
-      const height=Math.min(innerHeight-130,Math.max(200,Number(rect.height)||350));
-      Object.assign(panel.style,{width:width+'px',height:height+'px',left:Math.max(8,Math.min(innerWidth-width-8,Number(rect.left)||8))+'px',top:Math.max(55,Math.min(innerHeight-height-75,Number(rect.top)||55))+'px'});
+      const saved=ui.windows?.[id];
+      if(!saved)panel.removeAttribute('style');
+      const rect=saved||panel.getBoundingClientRect();
+      const limits=windowBounds(id);
+      const width=Math.min(innerWidth-16,Math.max(limits.width,Number(rect.width)||300));
+      const height=Math.min(innerHeight-135,Math.max(limits.height,Number(rect.height)||350));
+      Object.assign(panel.style,{width:width+'px',height:height+'px',left:Math.max(8,Math.min(innerWidth-width-8,Number(rect.left)||8))+'px',top:Math.max(55,Math.min(innerHeight-height-80,Number(rect.top)||55))+'px'});
     });
   }
   function sceneInspect(on) {sceneOnly=on;document.body.classList.toggle('scene-only',on);main.inert=on;pet.inert=on;planner.inert=on;}
   document.querySelector('#atelierSceneMode').onclick=()=>sceneInspect(!sceneOnly);
   document.addEventListener('keydown',event=>{if(event.key==='Escape')sceneInspect(false);});
   document.querySelector('#atelierPetRestore').onclick=()=>{sceneInspect(false);pet.classList.remove('minimized');planner.classList.remove('minimized');focusPanel(pet);};
-  document.querySelector('#atelierLayoutReset').onclick=()=>{ui.windows={};Object.values(panels).forEach(p=>{p.removeAttribute('style');p.classList.remove('maximized','minimized');});saveUI();};
+  document.querySelector('#atelierLayoutReset').onclick=()=>{ui.windows={};Object.values(panels).forEach(p=>{p.removeAttribute('style');p.classList.remove('maximized','minimized');});restoreWindows();saveUI();};
   document.querySelector('#atelierSettings').onclick=()=>openQuickDialog('atelierSettingsDialog');
   document.querySelector('#atelierSettingsClose').onclick=closeQuickDialog;
   settings.addEventListener('cancel',event=>{event.preventDefault();closeQuickDialog();});
   document.querySelector('#atelierCloudSettings').onclick=()=>{closeQuickDialog();setTimeout(()=>document.querySelector('#syncBtn').click(),180);};
+  function loadScene(force=false, fallback=false) {
+    if(ui.scene==='custom'&&!fallback)return;
+    const scene=ui.scene==='realm'?'realm':'studio',key=scene+':'+mobile.matches;
+    const image=document.querySelector(mobile.matches?'#atelierMobileScene':'#atelierScene');
+    if(sceneKey===key&&(!force||image.complete&&image.naturalWidth>0&&image.dataset.quality==='full'))return;
+    sceneKey=key;const token=++sceneRequest;
+    const inactive=document.querySelector(mobile.matches?'#atelierScene':'#atelierMobileScene');
+    inactive.removeAttribute('src');image.hidden=false;
+    const base='assets/wallpapers/dusk-'+scene+'-concept';
+    image.src=base+'-preview.webp';image.dataset.quality='preview';
+    // A small version is usable even if the full image is slow or unavailable.
+    if(mobile.matches)return;
+    const full=new Image();full.decoding='async';full.fetchPriority='low';
+    full.onload=()=>{if(token===sceneRequest){image.src=full.src;image.dataset.quality='full';}};
+    full.src=base+'.webp';
+  }
   function applyUI() {
     document.documentElement.dataset.font=ui.font||'mixed';
     document.documentElement.dataset.motion=ui.motion===false?'off':'on';
@@ -120,8 +183,7 @@
     document.querySelector('#atelierRain').hidden=ui.scene!=='rain';
     document.querySelector('#atelierMobileRain').hidden=ui.scene!=='rain';
     if(ui.scene!=='custom') {
-      const source='assets/wallpapers/dusk-'+(ui.scene==='realm'?'realm':'studio')+'-concept.png';
-      for(const id of ['atelierScene','atelierMobileScene']){document.querySelector('#'+id).src=source;document.querySelector('#'+id).hidden=false;}
+      loadScene();
       for(const id of ['atelierVideo','atelierMobileVideo']){document.querySelector('#'+id).pause();document.querySelector('#'+id).hidden=true;}
     }
     refreshIcons();
@@ -137,6 +199,7 @@
     wallpaperDB=await new Promise((resolve,reject)=>{const request=indexedDB.open(appStorageKey('dusk-atelier-media-v1'),1);request.onupgradeneeded=()=>request.result.createObjectStore('wallpaper');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});return wallpaperDB;
   }
   function showWallpaper(blob) {
+    ++sceneRequest;sceneKey='custom';
     if(mediaURL)URL.revokeObjectURL(mediaURL);mediaURL=URL.createObjectURL(blob);
     for(const [videoId,imageId] of [['atelierVideo','atelierScene'],['atelierMobileVideo','atelierMobileScene']]){
       const video=document.querySelector('#'+videoId),image=document.querySelector('#'+imageId);
@@ -145,7 +208,7 @@
     }
     backgroundActivity();
   }
-  async function restoreCustomWallpaper() {try{const db=await wallpaperStore();const blob=await new Promise((resolve,reject)=>{const r=db.transaction('wallpaper').objectStore('wallpaper').get('current');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});if(blob)showWallpaper(blob);else showActionToast('还没有自选壁纸，请先上传');}catch{showActionToast('自选壁纸不可用，已保留案台背景');}}
+  async function restoreCustomWallpaper() {try{const db=await wallpaperStore();const blob=await new Promise((resolve,reject)=>{const r=db.transaction('wallpaper').objectStore('wallpaper').get('current');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});if(blob)showWallpaper(blob);else{loadScene(true,true);showActionToast('还没有自选壁纸，请先上传');}}catch{loadScene(true,true);showActionToast('自选壁纸不可用，已保留案台背景');}}
   document.querySelector('#atelierWallpaperFile').onchange=async event=>{
     const file=event.target.files[0];if(!file)return;
     if(!/^(image|video)\//.test(file.type)||file.size>50*1024*1024){showActionToast('请选择不超过 50MB 的图片或视频');return;}
@@ -160,7 +223,7 @@
     if(paused){petControl?.stop();pet.querySelector('.pet-img').style.transform='';}
   }
   const savedApplyUI=applyUI;applyUI=function(){savedApplyUI();backgroundActivity();};
-  reduced.addEventListener('change',backgroundActivity);document.addEventListener('visibilitychange',backgroundActivity);
+  reduced.addEventListener('change',backgroundActivity);document.addEventListener('visibilitychange',()=>{backgroundActivity();if(!document.hidden&&ui.scene!=='custom')loadScene(true);});
 
   function todayContext(fn) {
     if(!days.length)return '';
@@ -352,7 +415,7 @@
     applyFocus();refreshIcons();backgroundActivity();
   }
   mobile.addEventListener('change',()=>{placePet();if(days.length)activateView(mobile.matches?'homeView':currentViewId());});
-  window.addEventListener('resize',()=>{if(!mobile.matches)restoreWindows();});
+  window.addEventListener('resize',()=>{if(!mobile.matches)restoreWindows();loadScene();});
   function petReact(line,celebrate=false) {
     if(ui.pet===false)return;
     petLine.textContent=line;clearTimeout(petTimer);petTimer=setTimeout(()=>{if(days[todayIndex])petLine.textContent=days[todayIndex].line;},5000);

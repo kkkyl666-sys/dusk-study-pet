@@ -5,7 +5,7 @@ const cacheName=fs.readFileSync(path.join(root,'sw.js'),'utf8').match(/const CAC
 const fixture={selectedCourses:[{name:'缓存测试课程',teacher:'测试',room:'T101',day:0,periods:[1,2],weeks:[[1,17]],type:'major'}],days:Array.from({length:7},(_,i)=>({name:'星期'+i,date:'',line:'测试',tasks:[]})),checked:{test:true},englishProgress:{},englishStart:'2026-09-18',changedAt:1};
 (async()=>{
   let failAuxiliary=true,denyPage=false,denyWords=false;
-  const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.woff2':'font/woff2'};
+  const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp':'image/webp','.png':'image/png','.woff2':'font/woff2'};
   const server=http.createServer((req,res)=>{
     const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
     if(failAuxiliary&&/^\/(share|demo|manifest-demo|papaparse|feedback|development|DEVELOPMENT)/.test(pathname))return res.writeHead(503).end('auxiliary unavailable');

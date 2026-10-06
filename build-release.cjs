@@ -19,7 +19,7 @@ function buildRelease(edition, output) {
     for (const entry of fs.readdirSync(path.join(__dirname,dir),{withFileTypes:true})) {
       const name=dir+'/'+entry.name;
       if (entry.isDirectory()) assets(name);
-      else if (entry.isFile()) files[name]=fs.readFileSync(path.join(__dirname,name));
+      else if (entry.isFile() && !/^assets\/wallpapers\/dusk-(studio|realm)-concept\.png$/.test(name)) files[name]=fs.readFileSync(path.join(__dirname,name));
     }
   }
   assets('assets');

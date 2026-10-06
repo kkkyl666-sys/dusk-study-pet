@@ -3,7 +3,7 @@ const modules=process.env.TEST_MODULES||path.resolve(__dirname,'../../方案预�
 const {chromium}=require(path.join(modules,'playwright'));
 const {PGlite}=require(path.join(modules,'@electric-sql/pglite'));
 const root=path.resolve(__dirname,'..');
-const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.woff2':'font/woff2','.webmanifest':'application/manifest+json'};
+const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp':'image/webp','.png':'image/png','.woff2':'font/woff2','.webmanifest':'application/manifest+json'};
 const privateFixture={selectedCourses:[{code:'TEST',name:'仅自用课程',teacher:'测试',room:'P101',day:0,periods:[1,2],weeks:[[1,17]],type:'major'}],days:Array.from({length:7},(_,i)=>({name:['星期一','星期二','星期三','星期四','星期五','星期六','星期日'][i],date:'',line:'今日安排',tasks:[]})),checked:{},englishProgress:{},englishStart:'2026-10-04',changedAt:1};
 (async()=>{
   const db=new PGlite(),key=crypto.randomBytes(32).toString('base64url'),hash=crypto.createHash('sha256').update(key).digest('hex');
