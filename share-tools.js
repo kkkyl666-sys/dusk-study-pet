@@ -168,6 +168,10 @@
     if (d.days.some(day=>typeof day.name!=='string'||typeof day.line!=='string'||day.name.length>120||day.line.length>2000))throw Error('周计划格式不正确');
     const learner={};
     for (const name of ['remembered','forgotten']) if (d.englishProgress[name]) learner[name]=structuredClone(d.englishProgress[name]);
+    if (d.englishProgress.trainingV1) {
+      if (!window.validateWordTrainingState?.(d.englishProgress.trainingV1)) throw Error('背词练习记录格式不正确，原存档保留');
+      learner.trainingV1=structuredClone(d.englishProgress.trainingV1);
+    }
     if(Object.values(d.checked).some(value=>typeof value!=='boolean'))throw Error('打勾记录不正确');
     // Only study fields are imported; credentials and arbitrary browser keys never are.
     return {selectedCourses:courses,days:d.days.map(day=>({name:day.name,date:typeof day.date==='string'?day.date:'',line:day.line,tasks:structuredClone(day.tasks)})),appointments:appts,checked:structuredClone(d.checked),englishProgress:learner,englishStart:d.englishStart,englishAdjustments:structuredClone(d.englishAdjustments || []),shareCalendar:d.shareCalendar || '2026-09-07',mode:'full',changedAt:Date.now()};

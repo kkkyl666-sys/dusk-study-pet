@@ -82,6 +82,7 @@ const privateFixture={selectedCourses:[{code:'TEST',name:'仅自用课程',teach
     await page.locator('#shareTermStart').fill('2026-09-14');await page.locator('#shareSetTerm').click();
     assert.equal(await page.evaluate(()=>selectedDateISO(0)),'2026-09-28');
     await page.locator('.atelier-nav [data-atelier-view=englishView]').click();
+    await page.locator('[data-word-layout=list]').click();
     await page.locator('#newWords .word-card:visible [data-remember-word]').first().click();
     await page.locator('.atelier-nav [data-atelier-view=editView]').click();
     await page.evaluate(()=>{days[0].tasks.push(['19:00 周计划','学习','旧分享版本中的周次限制',[[1,8],[10,17]],'legacy-weekly-test']);commitQuickChange('测试旧周计划');});

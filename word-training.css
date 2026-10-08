@@ -1,0 +1,27 @@
+#englishView[data-training=true]>:is(h3,.word-list,.quiz,.focus-pager,.completion-quote){display:none!important}
+#wordTraining[hidden]{display:none}
+#wordTraining{max-width:780px;margin:0 auto;color:#30443b}
+.training-head{display:flex;align-items:center;gap:12px;border-bottom:1px solid #ccd6c8;padding:8px 0 12px;font-size:13px}
+.training-head>span{margin-left:auto;color:#64756a;font-variant-numeric:tabular-nums}
+.training-tabs{display:flex;gap:4px}.training-tabs button{border:0;background:transparent;padding:8px 12px}.training-tabs [aria-pressed=true]{background:#e3ecdd;color:#305b44}
+#wordTraining button{color:inherit;border-radius:6px;cursor:pointer;min-height:40px;font-size:15px;transition:background .12s,transform .12s}
+#wordTraining button:active:not(:disabled){transform:translateY(2px)}
+#wordTraining button:disabled{opacity:.4;cursor:default}
+#wordTraining svg,#trainingSettings svg{width:19px;height:19px;vertical-align:middle;flex-shrink:0}
+#wordTraining button:focus-visible{outline:3px solid #4e8064;outline-offset:3px}
+.training-card{padding:24px 2px 12px;min-width:0}
+.training-word-row{display:flex;align-items:center;gap:12px}.training-word-row h3{font:600 42px Georgia,serif;color:#3c658d;margin:0;overflow-wrap:anywhere;min-width:0;flex:1}
+.training-card[data-pos^="v"] h3{color:#3d7756}.training-card[data-pos^="adj"] h3{color:#86609e}.training-card[data-pos^="adv"] h3{color:#a37736}
+.training-word-row button{flex-shrink:0;width:46px;background:#f3f7ef;border:1px solid #b6c7b6;box-shadow:0 3px #b7c8b4}
+.training-ipa{font-size:18px;color:#6a7c70;margin:10px 0 16px}.training-prompt{font-size:14px;color:#56715f;min-height:22px;margin-bottom:12px}
+.training-options{display:grid;gap:10px}.training-options button{display:flex;gap:12px;align-items:center;text-align:left;border:1px solid #c4d0c0;background:#fff;box-shadow:0 2px #d5dece;padding:13px 16px;min-width:0}
+.training-options button:hover{background:#edf4e8}.training-options small{font-size:12px;color:#738273}.training-options span{overflow-wrap:anywhere}
+.training-unknown{display:block;margin:14px auto 0;border:0;background:transparent;color:#7d7566!important}
+.training-explanation{padding:12px 0 24px;min-height:160px}.training-explanation p{font-size:20px;line-height:1.6;margin:8px 0}.training-explanation p[lang=en]{font-family:Georgia,serif;border-top:1px solid #d7dfd1;padding-top:14px}.training-explanation small{font-size:14px;color:#75836e}
+.training-footer{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 0;border-top:1px solid #ccd6c8;background:#fcfdf9;position:sticky;bottom:0;z-index:2}
+.training-footer>div{display:flex;gap:6px}.training-footer button{border:1px solid #c2cdbd;background:#f7faf4;padding:8px 10px}.training-footer .training-continue{background:#416e57;color:white!important;border-color:#416e57}
+.training-complete{text-align:center;padding:28px 8px}.training-complete>svg{width:40px!important;height:40px!important;color:#548166}.training-complete button,.training-self button{border:1px solid #b8c9b5;background:#f0f5e9;padding:10px 16px;margin:6px}.training-self{display:flex;gap:10px}
+@media(min-width:761px){.training-options{grid-template-columns:1fr 1fr}.training-card{padding-top:18px}.training-word-row h3{font-size:38px}}
+@container study (max-width:520px){.training-options{grid-template-columns:1fr}.training-footer{flex-wrap:wrap}.training-footer .training-continue{flex:1}}
+@media(max-width:760px){#englishView[data-training=true]>.review-guide{display:none}#englishView[data-training=true] .english-head{margin-bottom:4px}#englishView[data-training=true] .english-head h2{font-size:18px}#englishView[data-training=true] .english-head p{display:none}#englishView[data-training=true] .word-layout-toolbar{padding:4px 0}.training-head{gap:6px;font-size:12px}.training-tabs button{padding:6px 9px!important}.training-card{padding-top:18px}.training-word-row h3{font-size:36px}.training-options button{padding:12px;min-height:48px!important}.training-footer{bottom:0;flex-wrap:wrap}.training-footer .training-continue{flex:1}.training-explanation{min-height:140px}.training-explanation p{font-size:18px}}
+@media(max-width:360px){.training-head>span{font-size:11px}.training-card{padding-top:12px}.training-ipa{margin:6px 0 8px}.training-options{gap:8px}.training-options button{padding:9px 11px;min-height:42px!important}.training-footer{gap:8px}.training-footer button{padding:6px 8px;font-size:13px!important}}
