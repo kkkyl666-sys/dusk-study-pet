@@ -1,19 +1,21 @@
 {
   "edition": "personal",
-  "version": "2026.10.06.4",
+  "version": "2026.10.08.1",
   "repository": "kkkyl666-sys/dusk-study-pet",
   "files": {
     "atelier.js": "d2cdd7e087f8caef2af8b9e48afc303d80285a642734a97665e37345a305e60e",
     "atelier.css": "1ad7a1d28f8f2767860a49d553dd34eef23864b3cb9e54adf252e9772024e39a",
+    "word-training.js": "2c7e30ef9498571304f7f7dc15baed81857d167fc0235be83aa4b6126bab9d9f",
+    "word-training.css": "d75a0dfa26348014902c5cde660e1c0767e6e9b4b4461c078b48c1077ecb2359",
     "cet6-35.js": "9b87668514baf9e6801be33184210aa757e66a1d351b3fc377a425dc8c92f793",
     "dusk-pet.png": "9aadf875aa5c2f060729aec4670330031267e3afe3fdcfe0039b2ac5efb12e74",
     "lucide.min.js": "b26eac159a876454404f10be2f7e471bccb9d6f2398b5cfdf1045425ac94abf0",
     "lucide-LICENSE.txt": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
     "development.html": "e86c0893a741934de49638f3b005b6571d1705cb1ab36d63c2068caca7f302e5",
-    "development-log.json": "7f6b2e0d6df415d4d9c51b881d9ab3808d327758d31934ada9f8b09a22c96a5d",
+    "development-log.json": "a287028b27c2743d35794cfc29bda84313a29a5cfc2b553f913f753612916587",
     "development.js": "463f23d1856bce929b7e962af4fe33dc3b7e3f648c85d4341e562b4c64be3164",
     "development.css": "d6226fe108c30573c4a11d77c4e552065aa5ac23ec41f5a73260ddd23d8d1c5b",
-    "DEVELOPMENT.md": "32943e7f258fc5cbc41d53757f8492b5f1c8aec3da74d84022a2185e6029ebb5",
+    "DEVELOPMENT.md": "f9bea1957d7491dbc21b1b449f133675d1fbdc19d25e34e523872233f597c9cf",
     "ASSETS.md": "ff32d5d490666cd144b0c885afab8c4b087d7843e251fc65bc79587f5940fb82",
     "sync-config.js": "d65cb2641022345f5862d827bf95e356a7be99ea115ae8f88e3188c33fad02be",
     "feedback-admin.html": "51d049dda55a08c7990e8650f89f0e83a1ecd8891e9c9935ff2d84212fb1f4f8",
@@ -34,11 +36,11 @@
     "assets/wallpapers/dusk-realm-concept.webp": "90b97f5424b8217d330caab44f7a0a5704c892edfdeb6f2582389f397f40d5ae",
     "assets/wallpapers/dusk-studio-concept-preview.webp": "a3ea1f6d3193e3c09be6a738e8134a1ac6a02e5765ea6f4dec65a01abdae531a",
     "assets/wallpapers/dusk-studio-concept.webp": "40c9df9301075b39afa9c983f783ab367caf9513bed9e77c7b546bb14a75d892",
-    "index.html": "3af008c278515d762195a73f0e73341254ac3845cad4412f5f0e7f367cdd20af",
+    "index.html": "21a34a951dceecf6a98f08bc9909fcef9ef4f38cb0f2bf81c7a5281aa2c72794",
     "share.html": "5b7c8b4f8d9dcb985a6561bf9a6d4e834146b89822fbe3bdd46685ebb35fa648",
     "manifest.webmanifest": "079434083d4d2cb5d909c824e966adcd5fe540a5236550acb57da8ac1d461fb0",
     ".nojekyll": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "sw.js": "d218b5a3a2f4e5cec304bca6fe52e5bb64434a91fcaa28a205c8a5d81db0221d"
+    "sw.js": "618db4cc9b0f4cd63604fdf696342b5d104970bf07f10d2896cd3610f6931eec"
   },
-  "sourceCommit": "5b72293cbc62181fadd2e0e46c6c90ac7b6e3284"
+  "sourceCommit": "6bf976dff9d56342ff374fd1ab0c81bfb1e0be29"
 }
