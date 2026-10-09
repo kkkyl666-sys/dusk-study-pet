@@ -329,7 +329,7 @@
   </style>
   <link rel="preload" as="image" href="assets/dusk-pet.webp" fetchpriority="high">
   <link rel="stylesheet" href="atelier.css?v=25">
-  <link rel="stylesheet" href="word-training.css?v=1">
+  <link rel="stylesheet" href="word-training.css?v=2">
 {{EDITION_STYLES}}
 </head>
 <body>
@@ -508,7 +508,7 @@
     const pronunciationCache = new Map();
     let englishProgress = JSON.parse(localStorage.getItem(englishStateKey) || "{}") || {};
     let englishStart = localStorage.getItem(englishStartKey);
-    if (!englishStart) { englishStart = new Date().toISOString().slice(0, 10); localStorage.setItem(englishStartKey, englishStart); }
+    if (!englishStart) { const start=englishStudyDate(); englishStart = isDemo ? `${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,'0')}-${String(start.getDate()).padStart(2,'0')}` : new Date().toISOString().slice(0, 10); localStorage.setItem(englishStartKey, englishStart); }
     const tagClass = { "上课": "drive", "信号": "hardware", "复变": "software", "数电": "prompt", "量子": "video", "程序": "software", "实验": "hardware", "公共": "drive", "规划": "prompt", "恢复": "video", "社团": "drive", "学习": "software", "英语": "video" };
     const stateKey = appStorageKey("summer-study-pet-v2");
     const modeKey = appStorageKey("summer-study-pet-mode-v2");
@@ -1145,7 +1145,7 @@
   {{RECOVERY_RUNTIME}}
   <script src="assets/motion.js" defer></script>
   <script src="atelier.js?v=32"></script>
-  <script src="word-training.js?v=1"></script>
+  <script src="word-training.js?v=2"></script>
 {{EDITION_SCRIPTS}}
 </body>
 </html>

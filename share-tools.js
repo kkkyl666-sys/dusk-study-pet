@@ -6,6 +6,30 @@
   const backupDateKey = appStorageKey('last-backup-v1');
   const dayNames = ['星期一','星期二','星期三','星期四','星期五','星期六','星期日'];
   let courseIndex = null, pendingImport = null, stagedBackup = null;
+  const studyDayButton=document.createElement('button');
+  studyDayButton.type='button';studyDayButton.id='shareStudyDay';studyDayButton.className='mode utility-button';
+  studyDayButton.innerHTML=icon('calendar-range')+'选择背词天数';
+  $('#englishView .word-layout-toolbar').append(studyDayButton);
+  document.body.insertAdjacentHTML('beforeend',`<dialog class="quick-dialog" id="shareStudyDayDialog"><header><h2>选择背词天数</h2><button type="button" id="shareStudyDayClose" aria-label="关闭">${icon('x')}</button></header><form class="quick-form" id="shareStudyDayForm"><label>今天学习<select id="shareStudyDayValue">${englishLessons.map((lesson,i)=>`<option value="${i+1}">第 ${i+1} 天 · ${escapeHtml(lesson.title||lesson[0])}</option>`).join('')}</select></label><p id="shareStudyDayPreview" role="status"></p><p>保留课表、计划和历史背词记录；已完成的词不会自动重置。次日凌晨 4 点接续下一天。</p><p class="form-error" id="shareStudyDayError" role="status"></p><div class="form-footer"><button type="button" id="shareStudyDayCancel">取消</button><button type="submit">从这天开始</button></div></form></dialog>`);
+  const dayPreview=()=>{const target=Number($('#shareStudyDayValue').value);$('#shareStudyDayPreview').textContent=`当前第 ${lessonForToday().index+1} 天 → 第 ${target} 天；下个学习日第 ${Math.min(englishLessons.length,target+1)} 天。`;};
+  studyDayButton.onclick=()=>{if(!readyToEdit())return;$('#shareStudyDayValue').value=String(lessonForToday().index+1);$('#shareStudyDayError').textContent='';dayPreview();openQuickDialog('shareStudyDayDialog');};
+  $('#shareStudyDayValue').onchange=dayPreview;
+  $('#shareStudyDayClose').onclick=$('#shareStudyDayCancel').onclick=closeQuickDialog;
+  $('#shareStudyDayDialog').addEventListener('cancel',e=>{e.preventDefault();closeQuickDialog();});
+  $('#shareStudyDayForm').onsubmit=e=>{
+    e.preventDefault();if(!readyToEdit())return;
+    const target=Number($('#shareStudyDayValue').value);
+    if(!Number.isInteger(target)||target<1||target>englishLessons.length)return;
+    if(target===lessonForToday().index+1){closeQuickDialog();return;}
+    const previous=englishStart,from=lessonForToday().index+1,date=englishStudyDate();
+    date.setDate(date.getDate()-(target-1));
+    try{localStorage.setItem(englishStartKey,dateISO(date));}
+    catch{$('#shareStudyDayError').textContent='未能保存，请先下载备份并检查本机空间。';return;}
+    englishStart=dateISO(date);
+    englishAdjustments.push({date:dateISO(new Date()),from,to:target,previousStart:previous});
+    markStateChanged();closeQuickDialog();renderEnglish();renderTasks();
+    showActionToast(`今天从第 ${target} 天开始 · 已存本机`);
+  };
   function download(data, name, type = 'application/json') {
     const url = URL.createObjectURL(new Blob([data], {type}));
     const a = document.createElement('a'); a.href = url; a.download = name; a.click();
