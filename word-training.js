@@ -8,27 +8,61 @@
   const preference = appStorageKey('dusk-word-training-layout-v1');
   let enabled = localStorage.getItem(preference) !== 'reference';
   let timer, browsing = null, revealed = false;
-  let sceneTimer, sceneKey;
-  const sceneImage=new Image();sceneImage.src='assets/dusk-sword.webp';
-  const sceneLines=['哼，心思又飘到画外了？','下笔倒快，看清了么？','莫不是闭着眼选的？'];
-  function endScene() {
-    clearTimeout(sceneTimer);
-    sceneKey=null;
-    root.querySelector('.training-scene')?.remove();
-    root.classList.remove('training-scene-active');
-    [...root.children].forEach(el=>el.inert=false);
+  let sceneTimer, sceneKey, sceneRequest=0, sceneImage, imageJob, sceneElement;
+  const scenePane=view.closest('.atelier-main-content');
+  let paneWasInert=false;
+  function prepareSceneImage() {
+    if(sceneImage?.complete&&sceneImage.naturalWidth)return Promise.resolve(sceneImage);
+    if(imageJob)return imageJob;
+    imageJob=new Promise(resolve=>{
+      const img=new Image();img.decoding='async';img.fetchPriority='high';let finished=false;
+      const finish=value=>{if(finished)return;finished=true;clearTimeout(timeout);img.onload=img.onerror=null;if(value)sceneImage=value;imageJob=null;resolve(value);};
+      const timeout=setTimeout(()=>finish(null),5000);
+      img.onload=async()=>{try{await img.decode();finish(img);}catch{finish(null);}};
+      img.onerror=()=>finish(null);img.src='assets/dusk-sword.webp';
+    });
+    return imageJob;
   }
-  function startScene(serial) {
+  prepareSceneImage();
+  const sceneLines=['哼，心思又飘到画外了？','下笔倒快，看清了么？','莫不是闭着眼选的？'];
+  function layoutScene() {
+    if(!sceneElement)return;
+    const mobile=matchMedia('(max-width:760px)').matches;
+    const rect=scenePane.getBoundingClientRect();
+    const top=mobile?document.querySelector('.atelier-bar').getBoundingClientRect().bottom:Math.max(0,rect.top);
+    const bottom=mobile?document.querySelector('.atelier-nav').getBoundingClientRect().top:Math.min(innerHeight,rect.bottom);
+    const left=mobile?0:Math.max(0,rect.left),right=mobile?innerWidth:Math.min(innerWidth,rect.right);
+    const width=Math.max(0,right-left),height=Math.max(0,bottom-top),compact=height<320;
+    Object.assign(sceneElement.style,{left:left+'px',top:top+'px',width:width+'px',height:height+'px'});
+    sceneElement.style.setProperty('--scene-art-size',Math.max(0,Math.min(width-24,height-(compact?100:150)))+'px');
+    sceneElement.classList.toggle('training-scene-compact',compact);
+  }
+  function endScene() {
+    clearTimeout(sceneTimer);sceneRequest++;
+    sceneKey=null;
+    if(sceneElement){sceneElement.remove();sceneElement=null;scenePane.classList.remove('training-pane-hidden');scenePane.inert=paneWasInert;}
+  }
+  async function startScene(serial) {
     if (document.hidden || currentViewId()!=='englishView') return;
+    const request=++sceneRequest;
     sceneKey=`${englishStart}:${englishDayIndex()}:${serial}:${englishProgress.trainingV1.feedback.id}`;
-    root.insertAdjacentHTML('beforeend',`<section class="training-scene" aria-label="夕的错答提醒"><button type="button" class="training-scene-skip" title="跳过动作，查看答案" aria-label="跳过动作，查看答案">${icon('skip-forward')}</button><div class="training-scene-art"><img src="assets/dusk-sword.webp" alt="夕提剑回望"></div><p class="training-scene-name">夕</p><p class="training-scene-line" role="status">${sceneLines[(serial-1)%sceneLines.length]}</p></section>`);
-    root.classList.add('training-scene-active');
-    [...root.children].filter(el=>!el.matches('.training-scene')).forEach(el=>el.inert=true);
-    const skip=root.querySelector('.training-scene-skip');
+    const image=await prepareSceneImage();
+    if(request!==sceneRequest)return;
+    if(!image||document.hidden||currentViewId()!=='englishView'||document.querySelector('dialog[open]')){endScene();return;}
+    sceneElement=document.createElement('section');sceneElement.className='training-scene';sceneElement.setAttribute('aria-label','夕的错答提醒');
+    sceneElement.innerHTML=`<button type="button" class="training-scene-skip" title="跳过动作，查看答案" aria-label="跳过动作，查看答案">${icon('skip-forward')}</button><div class="training-scene-art"></div><p class="training-scene-name">夕</p><p class="training-scene-line" role="status">${sceneLines[(serial-1)%sceneLines.length]}</p>`;
+    image.alt='夕提剑回望';sceneElement.querySelector('.training-scene-art').append(image);
+    document.body.append(sceneElement);layoutScene();
+    paneWasInert=scenePane.inert;scenePane.inert=true;scenePane.classList.add('training-pane-hidden');
+    const skip=sceneElement.querySelector('.training-scene-skip');
     const finish=()=>{endScene();if(!document.querySelector('dialog[open]'))root.querySelector('[data-training="continue"]')?.focus({preventScroll:true});};
     skip.onclick=finish;skip.focus({preventScroll:true});refreshIcons();
     sceneTimer=setTimeout(finish,1000);
   }
+  new ResizeObserver(layoutScene).observe(scenePane);
+  window.addEventListener('resize',layoutScene);
+  window.addEventListener('scroll',layoutScene,true);
+  window.addEventListener('pointermove',layoutScene,{passive:true});
   const esc = escapeHtml;
   const icon = name => `<i data-lucide="${name}"></i>`;
   const button = (action, name, label, disabled = false) => `<button type="button" data-training="${action}" title="${label}" aria-label="${label}" ${disabled ? 'disabled' : ''}>${icon(name)}</button>`;
@@ -135,7 +169,7 @@
   }
   function render() {
     // A queued view observer may render again after grading; keep this one-shot scene alive.
-    if (root.querySelector('.training-scene') && enabled && currentViewId()==='englishView' && sceneKey===`${englishStart}:${englishDayIndex()}:${englishProgress.trainingV1?.serial}:${englishProgress.trainingV1?.feedback?.id}`) return;
+    if (sceneKey && enabled && currentViewId()==='englishView' && sceneKey===`${englishStart}:${englishDayIndex()}:${englishProgress.trainingV1?.serial}:${englishProgress.trainingV1?.feedback?.id}`) return;
     endScene();
     clearTimeout(timer);
     view.dataset.training=String(enabled); root.hidden=!enabled;
@@ -213,6 +247,7 @@
   const base=renderEnglish; renderEnglish=function(){base();render();};
   document.addEventListener('visibilitychange',()=>{if(document.hidden)endScene();resumeTimer();});
   new MutationObserver(records=>{
+    if(document.querySelector('dialog[open]'))endScene();
     if(records.some(r=>r.attributeName==='data-atelier-view'))render();
     else resumeTimer();
   }).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open','data-atelier-view']});

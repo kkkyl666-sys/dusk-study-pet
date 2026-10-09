@@ -31,16 +31,17 @@ const data={selectedCourses:[{name:'Synthetic',teacher:'Test',room:'C102',day:1,
     assert.equal(await p.locator('.training-options button').count(),4);
     assert.equal(await p.locator('[data-training="next"]').isDisabled(),true);
     await answer(false);
+    await p.locator('.training-scene').waitFor({state:'visible'});
     assert.equal(await p.locator('.training-scene').isVisible(),true);
     assert.equal(await p.locator('.training-word-row').isVisible(),false);
-    assert.equal(await p.locator('.training-card').evaluate(el=>el.inert),true);
+    assert.equal(await p.locator('.atelier-main-content').evaluate(el=>el.inert),true);
     await p.locator('.training-scene').evaluate(el=>el.getAnimations({subtree:true}).forEach(a=>{a.pause();a.currentTime=400;}));
     await p.waitForFunction(()=>{const img=document.querySelector('.training-scene img');return img?.complete&&img.naturalWidth>0;});
     await p.screenshot({path:path.resolve(__dirname,`../../方案预览/正式错答-${edition}-390.png`)});
     assert.equal(await p.locator('.training-scene img').evaluate(img=>img.complete&&img.naturalWidth>0),true);
     await p.clock.runFor(999);assert.equal(await p.locator('.training-scene').isVisible(),true);
     await p.clock.runFor(1);assert.equal(await p.locator('.training-scene').count(),0);
-    assert.equal(await p.locator('.training-card').evaluate(el=>el.inert),false);
+    assert.equal(await p.locator('.atelier-main-content').evaluate(el=>el.inert),false);
     assert.equal(await p.locator('.training-wrong').isVisible(),true);
     assert.equal(await p.locator('.training-right').isVisible(),true);
     assert.match(await p.locator('.training-prompt').textContent(),/明天加练/);
@@ -69,6 +70,7 @@ const data={selectedCourses:[{name:'Synthetic',teacher:'Test',room:'C102',day:1,
       assert.equal(await p.locator('.training-options button').count(),4);
       assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false,'no horizontal overflow');
       await answer(false);
+      await p.locator('.training-scene').waitFor({state:'visible'});
       await p.locator('.training-scene').evaluate(el=>el.getAnimations({subtree:true}).forEach(a=>{a.pause();a.currentTime=400;}));
       assert.equal(await p.evaluate(()=>{const image=document.querySelector('.training-scene-art img').getBoundingClientRect(),line=document.querySelector('.training-scene-line').getBoundingClientRect();return image.bottom<=line.top&&line.right<=innerWidth&&line.left>=0;}),true,'image and subtitle do not overlap or spill');
       await p.screenshot({path:path.resolve(__dirname,`../../方案预览/正式错答-${edition}-${size.width}.png`)});

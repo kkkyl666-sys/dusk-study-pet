@@ -3,13 +3,15 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 function buildWorker(target, files) {
   const source=fs.readFileSync(path.join(__dirname,'shared','worker.js'),'utf8');
-  const required = ['./index.html','./cet6-35.js','./atelier.js?v=32','./atelier.css?v=25','./word-training.js?v=2','./word-training.css?v=2'];
+  const required = ['./index.html','./cet6-35.js','./atelier.js?v=32','./atelier.css?v=25','./word-training.js?v=3','./word-training.css?v=3'];
   if (target.label === '自用版') required.push('./sync-config.js');
   else required.push('./share.html','./demo.js?v=29','./demo.css?v=26','./share-tools.js?v=3','./share-tools.css?v=1','./papaparse.min.js');
   const query = {'feedback-admin.css':1,'feedback-admin.js':1,'feedback-config.js':1,'feedback.js':2,'development.js':25,'development.css':25};
   const optional = Object.keys(files).filter(file => !['sw.js','release.json','.nojekyll'].includes(file))
     .map(file => './'+file+(query[file] ? '?v='+query[file] : ''))
     .filter(entry => !required.some(req => req.split('?')[0] === entry.split('?')[0]));
+  // This visible, time-limited feedback image takes priority over speculative wallpapers/fonts.
+  optional.sort((a,b)=>Number(b==='./assets/dusk-sword.webp')-Number(a==='./assets/dusk-sword.webp'));
   const hash = crypto.createHash('sha256');
   hash.update(source);
   for (const file of Object.keys(files).sort()) hash.update(file).update(files[file]);
