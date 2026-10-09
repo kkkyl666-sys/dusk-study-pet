@@ -8,6 +8,27 @@
   const preference = appStorageKey('dusk-word-training-layout-v1');
   let enabled = localStorage.getItem(preference) !== 'reference';
   let timer, browsing = null, revealed = false;
+  let sceneTimer, sceneKey;
+  const sceneImage=new Image();sceneImage.src='assets/dusk-sword.webp';
+  const sceneLines=['哼，心思又飘到画外了？','下笔倒快，看清了么？','莫不是闭着眼选的？'];
+  function endScene() {
+    clearTimeout(sceneTimer);
+    sceneKey=null;
+    root.querySelector('.training-scene')?.remove();
+    root.classList.remove('training-scene-active');
+    [...root.children].forEach(el=>el.inert=false);
+  }
+  function startScene(serial) {
+    if (document.hidden || currentViewId()!=='englishView') return;
+    sceneKey=`${englishStart}:${englishDayIndex()}:${serial}:${englishProgress.trainingV1.feedback.id}`;
+    root.insertAdjacentHTML('beforeend',`<section class="training-scene" aria-label="夕的错答提醒"><button type="button" class="training-scene-skip" title="跳过动作，查看答案" aria-label="跳过动作，查看答案">${icon('skip-forward')}</button><div class="training-scene-art"><img src="assets/dusk-sword.webp" alt="夕提剑回望"></div><p class="training-scene-name">夕</p><p class="training-scene-line" role="status">${sceneLines[(serial-1)%sceneLines.length]}</p></section>`);
+    root.classList.add('training-scene-active');
+    [...root.children].filter(el=>!el.matches('.training-scene')).forEach(el=>el.inert=true);
+    const skip=root.querySelector('.training-scene-skip');
+    const finish=()=>{endScene();if(!document.querySelector('dialog[open]'))root.querySelector('[data-training="continue"]')?.focus({preventScroll:true});};
+    skip.onclick=finish;skip.focus({preventScroll:true});refreshIcons();
+    sceneTimer=setTimeout(finish,1000);
+  }
   const esc = escapeHtml;
   const icon = name => `<i data-lucide="${name}"></i>`;
   const button = (action, name, label, disabled = false) => `<button type="button" data-training="${action}" title="${label}" aria-label="${label}" ${disabled ? 'disabled' : ''}>${icon(name)}</button>`;
@@ -17,7 +38,7 @@
     return englishLessons[day] && wordsFromLesson(englishLessons[day], day).find(w => w.id === id);
   }
   function valid(s, nested=false) {
-    const items=a=>Array.isArray(a)&&a.length<=800&&a.every(x=>x&&typeof x.id==='string'&&lookup(x.id));
+    const items=a=>Array.isArray(a)&&a.length<=800&&a.every(x=>x&&typeof x.id==='string'&&lookup(x.id)&&(x.selectedMeaning===undefined||(typeof x.selectedMeaning==='string'&&x.selectedMeaning.length<=300)));
     return !!s && s.version===1 && typeof s.key==='string' && s.key.length<100 && ['new','review'].includes(s.track)
       && ['choice','recall'].includes(s.mode) && typeof s.auto==='boolean' && Number.isInteger(s.serial) && s.serial>=0 && s.serial<=10000
       && items(s.queues?.new) && items(s.queues?.review) && items(s.events) && items(s.retries)
@@ -85,7 +106,7 @@
       },2000);
     }
   }
-  function grade(raw) {
+  function grade(raw, selectedMeaning) {
     const s=state(), item=s.queues[s.track][0];
     if (!item || s.feedback || browsing!==null) return;
     const previous = clone({...s,undo:[]});
@@ -99,6 +120,7 @@
     }
     if (!success && !item.retry && !s.retries.some(r => r.id===item.id)) s.retries.push({id:item.id,track:s.track,after:s.serial+3,queued:false});
     s.feedback={...item,raw,success,help:s.hint,track:s.track};
+    if (typeof selectedMeaning==='string') s.feedback.selectedMeaning=selectedMeaning;
     s.events.push(clone(s.feedback));
     s.undo.push({previous,marks,id:item.id}); s.undo=s.undo.slice(-5);
     // A successful in-session retry intentionally leaves tomorrow's forgotten mark intact.
@@ -109,8 +131,12 @@
       showActionToast('未能保存，请保留页面并导出备份'); render(); return;
     }
     revealed=true; refresh();
+    if (raw===false && typeof selectedMeaning==='string') startScene(s.serial);
   }
   function render() {
+    // A queued view observer may render again after grading; keep this one-shot scene alive.
+    if (root.querySelector('.training-scene') && enabled && currentViewId()==='englishView' && sceneKey===`${englishStart}:${englishDayIndex()}:${englishProgress.trainingV1?.serial}:${englishProgress.trainingV1?.feedback?.id}`) return;
+    endScene();
     clearTimeout(timer);
     view.dataset.training=String(enabled); root.hidden=!enabled;
     view.querySelector('[data-word-layout="training"]').setAttribute('aria-pressed',String(enabled));
@@ -131,8 +157,13 @@
       if (s.mode==='choice') answers=`<div class="training-options">${choices(s,w).map((o,i)=>`<button type="button" data-training="answer" data-option="${i}"><small>${'ABCD'[i]}</small><span>${esc(o.meaning)}</span></button>`).join('')}</div><button type="button" class="training-unknown" data-training="unknown">不认识，看看解释</button>`;
       else answers=explanation?'<div class="training-self"><button type="button" data-training="unknown">没想起 / 不确定</button><button type="button" data-training="recalled">刚才想起来了</button></div>':'<button type="button" data-training="reveal">看看答案</button>';
     }
+    const compare=feedback && typeof feedback.selectedMeaning==='string';
+    if (compare) {
+      const wrong=feedback.selectedMeaning!==w.meaning;
+      answers=`<div class="training-options training-comparison"><button type="button" class="training-right" disabled><span>${esc(w.meaning)}</span><small>${icon('check')}正确答案</small></button>${wrong?`<button type="button" class="training-wrong" disabled><span>${esc(feedback.selectedMeaning)}</span><small>${icon('x')}你选的</small></button>`:''}</div>`;
+    }
     const status=feedback ? historical ? '已答记录 · 浏览不改进度' : feedback.success ? item.retry?'再练答对 · 明天仍会复习':'答对了' : feedback.help?'已看提示 · 明天加练':'没关系，明天加练' : '选出正确释义';
-    root.innerHTML=heading+`<article class="training-card" data-pos="${esc(w.pos)}"><div class="training-word-row"><h3>${esc(w.word)}</h3><button type="button" data-pronounce-word="${esc(w.word)}" title="播放英式发音" aria-label="播放英式发音">${icon('volume-2')}</button></div><p class="training-ipa">${esc(w.phonetic||'')}</p><div class="training-prompt" role="status">${status}</div>${explanation?`<div class="training-explanation"><p><small>${esc(w.pos)}</small> ${esc(w.meaning)}</p><p lang="en">${esc(exampleForWord(w))}</p></div>`:''}${answers}</article><footer class="training-footer"><div>${button('previous','chevron-left','上一个单词',historical?browsing===0:!history(s).length)}${button('next','chevron-right',feedback?'下一个单词':'请先作答，再看下一个',!feedback)}<button type="button" data-training="details">词条 ${icon('book-open')}</button>${button('undo','undo-2','撤销上一次作答',!s.undo.length)}</div>${feedback&&!historical?`<button type="button" class="training-continue" data-training="continue">${feedback.success&&s.auto?'2 秒后继续':'看懂了，继续'} ${icon('arrow-right')}</button>`:historical?'<button type="button" data-training="return">回到当前单词</button>':''}</footer>`;
+    root.innerHTML=heading+`<article class="training-card" data-pos="${esc(w.pos)}"><div class="training-word-row"><h3>${esc(w.word)}</h3><button type="button" data-pronounce-word="${esc(w.word)}" title="播放英式发音" aria-label="播放英式发音">${icon('volume-2')}</button></div><p class="training-ipa">${esc(w.phonetic||'')}</p><div class="training-prompt" role="status">${status}</div>${compare?answers:''}${explanation?`<div class="training-explanation">${compare?'':`<p><small>${esc(w.pos)}</small> ${esc(w.meaning)}</p>`}<p lang="en">${esc(exampleForWord(w))}</p></div>`:''}${compare?'':answers}</article><footer class="training-footer"><div>${button('previous','chevron-left','上一个单词',historical?browsing===0:!history(s).length)}${button('next','chevron-right',feedback?'下一个单词':'请先作答，再看下一个',!feedback)}<button type="button" data-training="details">词条 ${icon('book-open')}</button>${button('undo','undo-2','撤销上一次作答',!s.undo.length)}</div>${feedback&&!historical?`<button type="button" class="training-continue" data-training="continue">${feedback.success&&s.auto?'2 秒后继续':'看懂了，继续'} ${icon('arrow-right')}</button>`:historical?'<button type="button" data-training="return">回到当前单词</button>':''}</footer>`;
     refreshIcons(); resumeTimer();
   }
   function showDetails(s,w) {
@@ -147,7 +178,7 @@
     const b=event.target.closest('[data-training]'); if (!b || b.disabled) return;
     const s=state(), action=b.dataset.training, item=current(s), w=item&&lookup(item.id);
     clearTimeout(timer);
-    if (action==='answer') return grade(s.options[Number(b.dataset.option)]?.correct===true);
+    if (action==='answer') {const option=s.options[Number(b.dataset.option)];if(option)return grade(option.correct===true,option.meaning);return;}
     if (action==='unknown') return grade(false);
     if (action==='recalled') return grade(true);
     if (action==='reveal') { revealed=true; render(); return; }
@@ -180,7 +211,7 @@
   view.querySelector('.word-layout-switch').prepend(toggle);
   view.querySelectorAll('[data-word-layout]').forEach(b=>b.addEventListener('click',()=>{enabled=b.dataset.wordLayout==='training';browsing=null;localStorage.setItem(preference,enabled?'training':'reference');render();}));
   const base=renderEnglish; renderEnglish=function(){base();render();};
-  document.addEventListener('visibilitychange',resumeTimer);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)endScene();resumeTimer();});
   new MutationObserver(records=>{
     if(records.some(r=>r.attributeName==='data-atelier-view'))render();
     else resumeTimer();

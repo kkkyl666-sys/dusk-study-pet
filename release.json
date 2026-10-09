@@ -1,22 +1,22 @@
 {
   "edition": "personal",
-  "version": "2026.10.08.1",
+  "version": "2026.10.09.1",
   "repository": "kkkyl666-sys/dusk-study-pet",
   "files": {
     "atelier.js": "d2cdd7e087f8caef2af8b9e48afc303d80285a642734a97665e37345a305e60e",
     "atelier.css": "1ad7a1d28f8f2767860a49d553dd34eef23864b3cb9e54adf252e9772024e39a",
-    "word-training.js": "2c7e30ef9498571304f7f7dc15baed81857d167fc0235be83aa4b6126bab9d9f",
-    "word-training.css": "d75a0dfa26348014902c5cde660e1c0767e6e9b4b4461c078b48c1077ecb2359",
+    "word-training.js": "aa27bcfea66a5dd3e1aca63f2bf7811da5d84c43bdddddb207f7ee638c4353ff",
+    "word-training.css": "d60f7ae3a1453669ebfad1794ec7a025bab8f55f4713accffbce74534dc1e537",
     "cet6-35.js": "9b87668514baf9e6801be33184210aa757e66a1d351b3fc377a425dc8c92f793",
     "dusk-pet.png": "9aadf875aa5c2f060729aec4670330031267e3afe3fdcfe0039b2ac5efb12e74",
     "lucide.min.js": "b26eac159a876454404f10be2f7e471bccb9d6f2398b5cfdf1045425ac94abf0",
     "lucide-LICENSE.txt": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
     "development.html": "e86c0893a741934de49638f3b005b6571d1705cb1ab36d63c2068caca7f302e5",
-    "development-log.json": "d87746aadd9b36a05348f3119e0c39fb2c58809db0fa4eaa4642a7abd858d277",
+    "development-log.json": "0e1a08da81e30a81be837d7cdd60725a297106db33049a445ad997e3730eca40",
     "development.js": "463f23d1856bce929b7e962af4fe33dc3b7e3f648c85d4341e562b4c64be3164",
     "development.css": "d6226fe108c30573c4a11d77c4e552065aa5ac23ec41f5a73260ddd23d8d1c5b",
-    "DEVELOPMENT.md": "99895e56eaf8403c8a632cd9dda85b64c943789d6e95d0770bbdb539c6654617",
-    "ASSETS.md": "ff32d5d490666cd144b0c885afab8c4b087d7843e251fc65bc79587f5940fb82",
+    "DEVELOPMENT.md": "dcdfbb24e8d595a257921a57b589a0bcd61a6f39275b43fcf79e33a69856d68c",
+    "ASSETS.md": "0e3fb889d5e4dd1ec1155fba594b57dbc745d0d7442e7469755a63dd543a7e91",
     "sync-config.js": "d65cb2641022345f5862d827bf95e356a7be99ea115ae8f88e3188c33fad02be",
     "feedback-admin.html": "51d049dda55a08c7990e8650f89f0e83a1ecd8891e9c9935ff2d84212fb1f4f8",
     "feedback-admin.css": "df8e8c36e2af87f6304a5d869a4086bc18b5d2a92bd7e4c705da2040007fdd38",
@@ -24,6 +24,7 @@
     "feedback-config.js": "a079dcef7beca89d5f6fc8857f870e3d8d3075d4b61cbd996979c4b2a2432bfa",
     "feedback.js": "1121d83636c99512edc25d819ccd54acdc51121585977b0d71dd4abaafd16df2",
     "assets/dusk-pet.webp": "158457f71c08487e343bfdd49f54cbfc5e11755157c2d6bec06cf2e8159fe49b",
+    "assets/dusk-sword.webp": "023cc9c4ce92e657a55bd9414b73c64d1db552893d3143e9249cff70881c27e8",
     "assets/fonts/Lora-LICENSE.txt": "948aed765160f7b974105606c21994715a171f89fca48e57bf1e0a23aca0bef1",
     "assets/fonts/lora.woff2": "7bbfe9f3c9e9d6d07e17da4d5229a42b042cc2e16024993cb687dc08cc762557",
     "assets/fonts/Smiley-LICENSE.txt": "9401f4050f1b66c26b6ccdc8b0e14a3c1cc37aac122eda84386f25854a9bec72",
@@ -36,11 +37,11 @@
     "assets/wallpapers/dusk-realm-concept.webp": "90b97f5424b8217d330caab44f7a0a5704c892edfdeb6f2582389f397f40d5ae",
     "assets/wallpapers/dusk-studio-concept-preview.webp": "a3ea1f6d3193e3c09be6a738e8134a1ac6a02e5765ea6f4dec65a01abdae531a",
     "assets/wallpapers/dusk-studio-concept.webp": "40c9df9301075b39afa9c983f783ab367caf9513bed9e77c7b546bb14a75d892",
-    "index.html": "21a34a951dceecf6a98f08bc9909fcef9ef4f38cb0f2bf81c7a5281aa2c72794",
+    "index.html": "8c66174f794d39e0a4c8facaa689ca9cd7ea6c36662f31bbafe3e6384884a60a",
     "share.html": "5b7c8b4f8d9dcb985a6561bf9a6d4e834146b89822fbe3bdd46685ebb35fa648",
     "manifest.webmanifest": "079434083d4d2cb5d909c824e966adcd5fe540a5236550acb57da8ac1d461fb0",
     ".nojekyll": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "sw.js": "96e48a9e1cb7e90700e3b222081cd25db6764c5b7b9c3e58d20db1c46007bbaf"
+    "sw.js": "214a51ba6922dc1a0cf4dcbaa3cafac451f1f40ba62172e2c64704a66213c437"
   },
-  "sourceCommit": "f78dd719d74886892091c0382cc13506f1ec94b1"
+  "sourceCommit": "798c36551bd74c6dcf5c9599210248cc6e6e8666"
 }

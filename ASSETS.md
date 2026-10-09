@@ -11,6 +11,9 @@ The existing Dusk portrait remains unchanged.
 - Lora: https://github.com/cyrealtype/Lora-Cyrillic (OFL; `assets/fonts/Lora-LICENSE.txt`).
 
 These assets are bundled locally for offline use. There is no runtime font CDN.
+`assets/dusk-sword.webp` is the user-supplied Dusk illustration used for the
+one-second wrong-answer scene, copied unchanged. It is not original artwork
+created by this project; no additional artwork license is asserted.
 Wallpaper uploads and layout preferences are device-local. Courses, plans,
 vocabulary progress and rollback dates continue to use the existing shared model.
 No demo records or preview storage keys are imported.
