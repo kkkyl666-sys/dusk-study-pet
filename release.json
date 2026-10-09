@@ -1,21 +1,21 @@
 {
   "edition": "personal",
-  "version": "2026.10.09.1",
+  "version": "2026.10.09.2",
   "repository": "kkkyl666-sys/dusk-study-pet",
   "files": {
     "atelier.js": "d2cdd7e087f8caef2af8b9e48afc303d80285a642734a97665e37345a305e60e",
     "atelier.css": "1ad7a1d28f8f2767860a49d553dd34eef23864b3cb9e54adf252e9772024e39a",
-    "word-training.js": "aa27bcfea66a5dd3e1aca63f2bf7811da5d84c43bdddddb207f7ee638c4353ff",
-    "word-training.css": "d60f7ae3a1453669ebfad1794ec7a025bab8f55f4713accffbce74534dc1e537",
+    "word-training.js": "d438804289927529436a57324f66604fe0f5bd2d1b579b37a46ba4e832cbb324",
+    "word-training.css": "ff42bb3da354296b4a44bf556739dd9bdfb8f2c1ca0d011f6d1136271150aa36",
     "cet6-35.js": "9b87668514baf9e6801be33184210aa757e66a1d351b3fc377a425dc8c92f793",
     "dusk-pet.png": "9aadf875aa5c2f060729aec4670330031267e3afe3fdcfe0039b2ac5efb12e74",
     "lucide.min.js": "b26eac159a876454404f10be2f7e471bccb9d6f2398b5cfdf1045425ac94abf0",
     "lucide-LICENSE.txt": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
     "development.html": "e86c0893a741934de49638f3b005b6571d1705cb1ab36d63c2068caca7f302e5",
-    "development-log.json": "a3fefc01ed0ce65679e4a0197dea7715ab1a75243deb50255581b9ce5b4b02d3",
+    "development-log.json": "e2d9d1700185323a93ecb75e44286f8a3ee4bbff7d46e81e1fe4c61499f7969e",
     "development.js": "463f23d1856bce929b7e962af4fe33dc3b7e3f648c85d4341e562b4c64be3164",
     "development.css": "d6226fe108c30573c4a11d77c4e552065aa5ac23ec41f5a73260ddd23d8d1c5b",
-    "DEVELOPMENT.md": "165dd2c94a9851ec0e68daf450126092b76601b416135b578b5b10dc9698ac45",
+    "DEVELOPMENT.md": "3819c68db1bbbb9c711696ffa35809e4e15c2136df04711a201ea1bde4a9a7ea",
     "ASSETS.md": "0e3fb889d5e4dd1ec1155fba594b57dbc745d0d7442e7469755a63dd543a7e91",
     "sync-config.js": "d65cb2641022345f5862d827bf95e356a7be99ea115ae8f88e3188c33fad02be",
     "feedback-admin.html": "51d049dda55a08c7990e8650f89f0e83a1ecd8891e9c9935ff2d84212fb1f4f8",
@@ -37,11 +37,11 @@
     "assets/wallpapers/dusk-realm-concept.webp": "90b97f5424b8217d330caab44f7a0a5704c892edfdeb6f2582389f397f40d5ae",
     "assets/wallpapers/dusk-studio-concept-preview.webp": "a3ea1f6d3193e3c09be6a738e8134a1ac6a02e5765ea6f4dec65a01abdae531a",
     "assets/wallpapers/dusk-studio-concept.webp": "40c9df9301075b39afa9c983f783ab367caf9513bed9e77c7b546bb14a75d892",
-    "index.html": "8c66174f794d39e0a4c8facaa689ca9cd7ea6c36662f31bbafe3e6384884a60a",
+    "index.html": "9c45a0705b9b75319bfd187a0f9777fde4c5c2070712708c63cb8bd585c3ac11",
     "share.html": "5b7c8b4f8d9dcb985a6561bf9a6d4e834146b89822fbe3bdd46685ebb35fa648",
     "manifest.webmanifest": "079434083d4d2cb5d909c824e966adcd5fe540a5236550acb57da8ac1d461fb0",
     ".nojekyll": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "sw.js": "1a2291243a088652f18fb41f94145c6fcf9ff614f5db70a1bb0705aad5cf5839"
+    "sw.js": "d133977ae1bc9e8f08c76b1a296acab7a96bb730741efb6deebf38e998b2c24f"
   },
-  "sourceCommit": "0a48c1301ec957f2357598f1b91711f4f768ea35"
+  "sourceCommit": "aaa25eab264103078ff5fd65480957b7d2c6af40"
 }
