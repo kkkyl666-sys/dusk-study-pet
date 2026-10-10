@@ -14,7 +14,7 @@
 #wordTraining .training-comparison button>small:first-child{display:block}
 #wordTraining .training-result{position:static;flex-shrink:0}
 #wordTraining .training-comparison:has(>button:only-child){grid-template-columns:1fr}
-#wordTraining .training-wrong:hover{background:#eee8e8}
+@media(hover:hover) and (pointer:fine){#wordTraining .training-wrong:hover{background:#eee8e8}}
 .training-scene[data-kind=praise]{background:#f4f5e9}
 .training-scene[data-kind=praise]{animation:training-praise-fade 2s ease both}
 .training-scene[data-kind=praise] .training-scene-art{animation:training-praise-arrive 2s ease both}
@@ -50,7 +50,7 @@
 .training-word-row button{flex-shrink:0;width:46px;background:#f3f7ef;border:1px solid #b6c7b6;box-shadow:0 3px #b7c8b4}
 .training-ipa{font-size:18px;color:#6a7c70;margin:10px 0 16px}.training-prompt{font-size:14px;color:#56715f;min-height:22px;margin-bottom:12px}
 .training-options{display:grid;gap:10px}.training-options button{display:flex;gap:12px;align-items:center;text-align:left;border:1px solid #c4d0c0;background:#fff;box-shadow:0 2px #d5dece;padding:13px 16px;min-width:0}
-.training-options button:hover{background:#edf4e8}.training-options small{font-size:12px;color:#738273}.training-options span{overflow-wrap:anywhere}
+@media(hover:hover) and (pointer:fine){.training-options button:hover{background:#edf4e8}}.training-options small{font-size:12px;color:#738273}.training-options span{overflow-wrap:anywhere}
 .training-unknown{display:block;margin:14px auto 0;border:0;background:transparent;color:#7d7566!important}
 .training-explanation{padding:12px 0 16px;min-height:0}.training-explanation p{font-size:20px;line-height:1.6;margin:8px 0}.training-explanation p[lang=en]{font-family:Georgia,serif;border-top:1px solid #d7dfd1;padding-top:14px}.training-explanation small{font-size:14px;color:#75836e}
 .training-footer{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 0;border-top:1px solid #ccd6c8;background:#fcfdf9;position:sticky;bottom:0;z-index:2}

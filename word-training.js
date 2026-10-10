@@ -11,6 +11,7 @@
   let sceneTimer, sceneKey, sceneRequest=0, sceneElement;
   const scenePane=view.closest('.atelier-main-content');
   let paneWasInert=false;
+  const readingOpen=()=>document.body.dataset.mobileDrawer!=='collapsed';
   DuskMedia.prepare('assets/dusk-sword.webp');
   function layoutScene() {
     if(!sceneElement)return;
@@ -29,13 +30,13 @@
     if(sceneElement){sceneElement.remove();sceneElement=null;scenePane.classList.remove('training-pane-hidden');scenePane.inert=paneWasInert;}
   }
   async function startScene(serial,kind='anger') {
-    if (document.hidden || currentViewId()!=='englishView') return;
+    if (document.hidden || !readingOpen() || currentViewId()!=='englishView') return;
     clearTimeout(timer);
     const request=++sceneRequest;
     sceneKey=`${englishStart}:${englishDayIndex()}:${serial}:${englishProgress.trainingV1.feedback.id}`;
     const image=await DuskMedia.scene(kind);
     if(request!==sceneRequest)return;
-    if(!image||document.hidden||currentViewId()!=='englishView'||document.querySelector('dialog[open]')){endScene();resumeTimer();return;}
+    if(!image||document.hidden||!readingOpen()||currentViewId()!=='englishView'||document.querySelector('dialog[open]')){endScene();resumeTimer();return;}
     sceneElement=document.createElement('section');sceneElement.className='training-scene';sceneElement.setAttribute('aria-label','夕的错答提醒');
     sceneElement.dataset.kind=kind;sceneElement.setAttribute('aria-label',kind==='anger'?'夕的错答提醒':'夕的夸奖');
     sceneElement.innerHTML=`<button type="button" class="training-scene-skip" title="跳过动作，查看答案" aria-label="跳过动作，查看答案">${icon('skip-forward')}</button><div class="training-scene-art"></div><p class="training-scene-name">夕</p><p class="training-scene-line" role="status">${DuskMedia.line(kind)}</p>`;
@@ -119,13 +120,13 @@
   }
   function resumeTimer() {
     clearTimeout(timer);
-    if (!enabled || sceneKey || currentViewId()!=='englishView') return;
+    if (!enabled || !readingOpen() || sceneKey || currentViewId()!=='englishView') return;
     const s=state();
     if (enabled && browsing===null && s.feedback?.success && s.auto && !document.hidden && !document.querySelector('dialog[open]') && currentViewId()==='englishView') {
       const key=s.key, id=s.feedback.id;
       timer=setTimeout(() => {
         const live=state();
-        if (enabled && live.key===key && live.feedback?.id===id && browsing===null && !document.hidden && !document.querySelector('dialog[open]') && currentViewId()==='englishView') advance();
+        if (enabled && readingOpen() && live.key===key && live.feedback?.id===id && browsing===null && !document.hidden && !document.querySelector('dialog[open]') && currentViewId()==='englishView') advance();
       },800);
     }
   }
@@ -249,9 +250,9 @@
   const base=renderEnglish; renderEnglish=function(){base();render();};
   document.addEventListener('visibilitychange',()=>{if(document.hidden)endScene();resumeTimer();});
   new MutationObserver(records=>{
-    if(document.querySelector('dialog[open]'))endScene();
+    if(!readingOpen()||document.querySelector('dialog[open]'))endScene();
     if(records.some(r=>r.attributeName==='data-atelier-view'))render();
     else resumeTimer();
-  }).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open','data-atelier-view']});
+  }).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open','data-atelier-view','data-mobile-drawer']});
   render();
 })();
