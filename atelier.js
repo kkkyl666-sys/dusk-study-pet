@@ -17,6 +17,18 @@
   main.append(mainContent);
   const icon = (name) => `<i data-lucide="${name}"></i>`;
   const tool = (id, name, label, extra = '') => `<button type="button" class="atelier-icon${extra.includes('desktop-only')?' desktop-only':extra.includes('mobile-only')?' mobile-only':''}" id="${id}" title="${label}" aria-label="${label}">${icon(name)}</button>`;
+  const drawer=document.createElement('button');drawer.type='button';drawer.id='atelierDrawer';drawer.className='mobile-reading-handle mobile-only';
+  drawer.setAttribute('aria-controls','atelierReadingContent');drawer.setAttribute('aria-expanded','true');
+  drawer.innerHTML=`<span class="reading-grip"></span><span id="atelierDrawerTitle">今日画夹</span>${icon('chevron-down')}`;
+  mainContent.id='atelierReadingContent';main.prepend(drawer);
+  let drawerView='';
+  function setMobileDrawer(collapsed){
+    main.classList.toggle('mobile-reading-collapsed',collapsed);
+    drawer.setAttribute('aria-expanded',String(!collapsed));
+    const state=collapsed&&mobile.matches?'collapsed':'open';
+    if(document.body.dataset.mobileDrawer!==state)document.body.dataset.mobileDrawer=state;
+  }
+  drawer.onclick=()=>setMobileDrawer(!main.classList.contains('mobile-reading-collapsed'));
   document.body.insertAdjacentHTML('afterbegin', `
     <div class="atelier-wallpaper" aria-hidden="true"><img id="atelierScene" alt="" decoding="async"><video id="atelierVideo" muted loop playsinline hidden></video><div class="rain" id="atelierRain" hidden>${Array.from({length:20},(_,i)=>`<i style="left:${i*5}%;animation-delay:-${i*.14}s"></i>`).join('')}</div></div>
     <header class="atelier-bar"><span class="atelier-brand">夕的手账</span><div class="atelier-tools"><span class="atelier-date" id="atelierDate"></span>${tool('atelierSceneMode','image','看画室','class="desktop-only"')}${tool('atelierPainting','expand','展开完整画卷','class="mobile-only"')}${tool('atelierMotion','pause','暂停背景')}${tool('atelierSettings','sliders-horizontal','画室设置')}</div></header>`);
@@ -184,7 +196,7 @@
       const copy=document.createElement('video');copy.src=video.src;copy.controls=true;copy.playsInline=true;copy.muted=true;container.append(copy);return;
     }
     // Reuse the visible image immediately, then upgrade without blanking the painting.
-    const copy=new Image();copy.alt=selected?.label||'夕的画室';copy.src=active.currentSrc||active.src;container.append(copy);
+    const copy=new Image();copy.alt=selected?.label||'夕的画室';copy.src=active.currentSrc||active.src;copy.tabIndex=0;copy.setAttribute('role','button');copy.setAttribute('aria-label','收起完整画卷');copy.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();closePainting();}};container.append(copy);
     const src=ui.scene==='custom'?active.src:selected?.file||`assets/wallpapers/dusk-${ui.scene==='realm'?'realm':'studio'}-concept.webp`;
     const ready=await DuskMedia.prepare(src);
     if(token!==paintingRequest||!painting.open)return;
@@ -192,6 +204,8 @@
   }
   document.querySelector('#atelierPainting').onclick=openPainting;
   document.querySelector('#atelierPaintingClose').onclick=closePainting;
+  const wallpaperTrigger=document.createElement('button');wallpaperTrigger.type='button';wallpaperTrigger.className='mobile-painting-trigger mobile-only';wallpaperTrigger.setAttribute('aria-label','展开完整画卷');wallpaperTrigger.title='展开完整画卷';wallpaperTrigger.onclick=openPainting;document.body.append(wallpaperTrigger);
+  painting.querySelector('.painting-art').addEventListener('click',event=>{if(event.target.matches('img'))closePainting();});
   painting.addEventListener('cancel',event=>{event.preventDefault();closePainting();});
   pet.addEventListener('click',event=>{if(mobile.matches&&!event.target.closest('button,a,input,.pet-frame'))openPainting();});
   document.addEventListener('keydown',event=>{if(event.key==='Escape')sceneInspect(false);});
@@ -415,6 +429,33 @@
   const schedule=document.querySelector('#scheduleView');
   schedule.querySelector('.schedule-toolbar').insertAdjacentHTML('beforeend','<div class="schedule-mode"><button type="button" data-schedule-mode="day" class="active">按日</button><button type="button" data-schedule-mode="week">整周</button></div>');
   schedule.insertAdjacentHTML('beforeend',`<div class="daily-schedule"><div class="mobile-date-nav">${tool('schedulePrevDay','chevron-left','前一天')}<strong id="scheduleDayLabel"></strong>${tool('scheduleNextDay','chevron-right','后一天')}</div><div id="dailyCourses"></div></div>`);
+  const compactWeek=document.createElement('div');compactWeek.className='mobile-compact-week mobile-only';schedule.append(compactWeek);
+  const courseDetails=document.createElement('dialog');courseDetails.id='atelierCourseDetails';courseDetails.className='quick-dialog';courseDetails.setAttribute('aria-labelledby','atelierCourseTitle');
+  courseDetails.innerHTML=`<header><h2 id="atelierCourseTitle">课程详情</h2>${tool('atelierCourseClose','x','关闭课程详情')}</header><div class="mobile-course-details"></div><div class="form-footer"><button type="button" id="atelierCourseEdit" class="mode utility-button">${icon('pencil')}修改课程</button></div>`;document.body.append(courseDetails);
+  document.querySelector('#atelierCourseClose').onclick=closeQuickDialog;
+  courseDetails.addEventListener('cancel',event=>{event.preventDefault();closeQuickDialog();});
+  let detailCourse=-1;
+  function showCourseDetails(index){
+    const c=selectedCourses[index];if(!c)return;detailCourse=index;
+    document.querySelector('#atelierCourseTitle').textContent=c.name;
+    const first=periods.find(p=>p[0]===c.periods[0])?.[1].slice(0,5)||'',last=periods.find(p=>p[0]===c.periods.at(-1))?.[1].slice(-5)||'';
+    courseDetails.querySelector('.mobile-course-details').innerHTML=`<dl><dt>教室</dt><dd>${escapeHtml(c.room||'待填写')}</dd><dt>教师</dt><dd>${escapeHtml(c.teacher||'待填写')}</dd><dt>时间</dt><dd>${courseDate(c.day)} · ${dayNames[c.day]}<br>${first}–${last} · ${periodText(c.periods)}</dd><dt>周次</dt><dd>${weekText(c.weeks)}</dd></dl>`;
+    openQuickDialog(courseDetails.id);
+  }
+  document.querySelector('#atelierCourseEdit').onclick=()=>{
+    const index=detailCourse,edit=()=>document.querySelector(`#scheduleGrid [data-course-index="${index}"]`)?.click();
+    // Finish the detail dialog's back navigation before opening the editor.
+    const navigating=!!history.state?.petDialog;
+    if(navigating)window.addEventListener('popstate',edit,{once:true});
+    closeQuickDialog();if(!navigating)edit();
+  };
+  compactWeek.addEventListener('click',event=>{const button=event.target.closest('[data-compact-course]');if(button)showCourseDetails(Number(button.dataset.compactCourse));});
+  function compactCourse(c){return `<button type="button" class="compact-course ${c.type==='lab'?'lab':''}" data-compact-course="${selectedCourses.indexOf(c)}"><strong>${escapeHtml(c.name)}</strong><span>${escapeHtml(c.room||'待填写').replaceAll('/','/<wbr>')}</span></button>`;}
+  function renderCompactWeek(){
+    const courses=selectedCourses.filter(c=>inWeekRange(c.weeks));
+    const weekday=i=>`<span class="compact-day" role="columnheader">周${'一二三四五'[i]}<small>${courseDate(i).replace('月','/').replace('日','')}</small></span>`;
+    compactWeek.innerHTML=`<div class="compact-week-grid" role="table" aria-label="工作日课程概览"><div class="compact-grid-row" role="row"><span class="compact-day" role="columnheader">节次</span>${Array.from({length:5},(_,i)=>weekday(i)).join('')}</div>${periodGroups.map(group=>`<div class="compact-grid-row" role="row"><span class="compact-period" role="rowheader">${group.periods.join('–')}</span>${Array.from({length:5},(_,day)=>`<div class="compact-cell" role="cell">${courses.filter(c=>c.day===day&&c.periods.some(p=>group.periods.includes(p))).map(compactCourse).join('')}</div>`).join('')}</div>`).join('')}</div><div class="compact-weekends">${[5,6].map(day=>`<section><h3>${dayNames[day]} <small>${courseDate(day)}</small></h3>${courses.filter(c=>c.day===day).sort((a,b)=>a.periods[0]-b.periods[0]).map(c=>`<div class="compact-weekend-course"><small>${periodText(c.periods)}</small>${compactCourse(c)}</div>`).join('')||'<p>无课</p>'}</section>`).join('')}</div>`;
+  }
   function renderDailySchedule() {
     if(!days.length)return;
     document.querySelector('#scheduleDayLabel').textContent=`${courseDate(activeDay)} · ${dayNames[activeDay]}`;
@@ -426,7 +467,7 @@
   }
   const baseSchedule=renderSchedule;
   renderSchedule=function(){
-    baseSchedule();renderDailySchedule();
+    baseSchedule();renderDailySchedule();renderCompactWeek();
     document.querySelectorAll('#dailyCourses .course-block').forEach(block=>{
       const source=document.querySelector(`#scheduleGrid [data-course-index="${block.dataset.courseIndex}"]`);
       if(!source)return;
@@ -443,14 +484,17 @@
 
   function decorateView() {
     const view=currentViewId();document.body.dataset.atelierView=view;
-    document.querySelectorAll('[data-atelier-view]').forEach(b=>b.classList.toggle('active',b.dataset.atelierView===view));
+    document.querySelector('#atelierDrawerTitle').textContent=({homeView:'今日画夹',tasksView:'每日计划',englishView:'英语手帖',scheduleView:'课程安排',editView:'编辑手账',selectView:'学习策略'})[view]||'今日画夹';
+    if(drawerView!==view){setMobileDrawer(false);drawerView=view;}
+    document.querySelectorAll('.atelier-nav [data-atelier-view]').forEach(b=>b.classList.toggle('active',b.dataset.atelierView===view));
     if(view==='homeView'){mainHeading.textContent='今天';mainSub.textContent='';renderHome();}
     else if(view==='tasksView'){mainHeading.textContent=`${courseDate(activeDay)} · ${dayNames[activeDay]}`;}
     else{mainHeading.textContent=({englishView:'英语手帖',scheduleView:'课程安排',editView:'编辑课表与计划',selectView:'学习策略'})[view]||'今日画夹';}
     applyFocus();refreshIcons();
   }
   document.querySelectorAll('.tab-button').forEach(b=>b.addEventListener('click',decorateView));
-  document.querySelectorAll('[data-atelier-view]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.atelier-nav [data-atelier-view]').forEach(b=>b.onclick=()=>{
+    setMobileDrawer(false);
     sceneInspect(false);setWindowMinimized('study',false);focusPanel(main);
     if(b.dataset.atelierView==='homeView')refreshCalendarNavigation(true);
     if(b.dataset.atelierView==='englishView'&&currentViewId()!=='englishView')focusInitialized=false;
@@ -461,6 +505,7 @@
   const baseCalendar=refreshCalendarNavigation;refreshCalendarNavigation=function(force=false){baseCalendar(force);decorateView();};
   const baseMode=syncModeButton;syncModeButton=function(){baseMode();document.querySelector('#modeBtn').innerHTML=icon('picture-in-picture-2');};
   function placePet() {
+    setMobileDrawer(false);
     if(mobile.matches){home.prepend(pet);Object.values(panels).forEach(p=>{p.classList.remove('minimized','maximized');p.removeAttribute('style');});sceneInspect(false);}
     else{app.prepend(pet);restoreWindows();}
     applyFocus();refreshIcons();backgroundActivity();

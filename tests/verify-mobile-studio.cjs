@@ -24,7 +24,7 @@ const fixture={selectedCourses:[{name:'Test',day:0,periods:[1,2],weeks:[[1,17]],
     await p.locator('#atelierSettings').click();await p.locator('#atelierSceneSelect').selectOption('phone-window');await p.locator('#atelierSettingsClose').click();
     await p.waitForFunction(()=>document.querySelector('#atelierMobileScene').naturalWidth>0);
     const layout=await p.evaluate(()=>{const wall=document.querySelector('.mobile-scene').getBoundingClientRect(),hero=document.querySelector('#homeView aside').getBoundingClientRect();return {wall:[wall.width,wall.height],hero:hero.height,bg:getComputedStyle(document.querySelector('.home-body')).backgroundColor,overflow:document.documentElement.scrollWidth>innerWidth+1};});
-    assert.deepEqual(layout.wall,[size.width,size.height]);assert(Math.abs(layout.hero-size.height*.48)<2);assert.equal(layout.bg,'rgb(252, 253, 251)');assert(!layout.overflow);
+    assert.deepEqual(layout.wall,[size.width,size.height]);assert.equal(layout.hero,0);assert.equal(layout.bg,'rgba(0, 0, 0, 0)');assert(!layout.overflow);
     await p.screenshot({path:path.resolve(__dirname,`../../方案预览/正式手机画室-${edition}-${size.width}.png`)});
     await p.locator('#atelierPainting').click();await p.locator('#atelierPaintingDialog').waitFor({state:'visible'});
     await p.waitForFunction(()=>document.querySelector('.painting-art img')?.naturalWidth>0);
