@@ -8,6 +8,16 @@
 #wordTraining .training-wrong{border:1px solid #d2c4c5;background:#f5f1f1;color:#827475;box-shadow:none}
 .training-comparison button>span{flex:1}.training-comparison button>small{display:flex;align-items:center;gap:4px;white-space:nowrap}
 .training-comparison .training-wrong>small{color:#98626a}
+#wordTraining .training-slot-hidden{visibility:hidden;pointer-events:none}
+#wordTraining .training-options button{position:relative;padding-right:74px;border-width:1px;min-height:56px}
+#wordTraining .training-right{box-shadow:inset 0 0 0 1px #619171,0 2px #c1d4b9}
+#wordTraining .training-options button>span:not(.training-inline-continue){flex:1}
+#wordTraining .training-comparison button>small:first-child{display:block}
+#wordTraining .training-result{position:absolute;right:14px;top:8px}
+#wordTraining .training-inline-continue{position:absolute;right:9px;bottom:5px;font-size:12px;display:flex;gap:3px;align-items:center;color:#416e57}
+#wordTraining .training-inline-continue svg{width:14px;height:14px}
+#wordTraining .training-wrong:hover{background:#eee8e8}
+.training-scene[data-kind=praise]{background:#f4f5e9}
 .training-scene{position:fixed;z-index:14;display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;padding:24px 12px;background:#edf2e8;overflow:hidden;animation:training-scene-fade 1s ease both}
 .training-scene .training-scene-skip{position:absolute;top:8px;right:8px;z-index:2;width:40px;height:40px;min-height:40px;padding:0;border:0;border-radius:6px;background:#edf2e8d9;color:#748775;cursor:pointer}
 .training-scene-skip svg{width:19px;height:19px;vertical-align:middle}

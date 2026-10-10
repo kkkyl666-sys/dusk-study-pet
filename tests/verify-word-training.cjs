@@ -22,10 +22,10 @@ const data={selectedCourses:[{name:'Synthetic',teacher:'Test',room:'C102',day:1,
     await p.clock.pauseAt(new Date('2026-10-08T12:00:01+08:00'));
     const ready=()=>p.waitForFunction(()=>days.length===7&&!restoringResume&&document.querySelector('#wordTraining'));
     await p.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});await ready();
-    const open=async()=>{await p.locator('button[data-atelier-view="englishView"]').click();await p.locator('[data-word-layout="training"]').click();};
+    const open=async()=>{await p.evaluate(()=>{DuskMedia.drawPraise=()=>false;});await p.locator('button[data-atelier-view="englishView"]').click();await p.locator('[data-word-layout="training"]').click();};
     await open();
     const word=()=>p.locator('.training-word-row h3').textContent();
-    const click=a=>p.locator(`#wordTraining [data-training="${a}"]`).click();
+    const click=a=>p.locator(`#wordTraining [data-training="${a}"]`).last().click();
     const answer=async correct=>{const index=await p.evaluate(correct=>englishProgress.trainingV1.options.findIndex(x=>x.correct===correct),correct);await p.locator(`#wordTraining [data-option="${index}"]`).click();};
     const first=await word();
     assert.equal(await p.locator('.training-options button').count(),4);
@@ -51,7 +51,7 @@ const data={selectedCourses:[{name:'Synthetic',teacher:'Test',room:'C102',day:1,
     assert.equal(await p.locator('.training-scene').count(),0,'reload never replays');
     assert.equal(await p.locator('.training-wrong').isVisible(),true,'selected wrong option survives reload');
     await click('continue');
-    const second=await word();await answer(true);await p.clock.runFor(1900);assert.equal(await word(),second);await p.clock.runFor(150);assert.notEqual(await word(),second,'advance after 2 sec');
+    const second=await word();await answer(true);await p.clock.runFor(799);assert.equal(await word(),second);await p.clock.runFor(1);assert.notEqual(await word(),second,'advance after 0.8 sec');
     const saved=await p.evaluate(()=>JSON.stringify(englishProgress));
     await click('previous');await p.clock.runFor(2200);assert.equal(await word(),second);assert.equal(await p.evaluate(()=>JSON.stringify(englishProgress)),saved,'history read only');await click('return');
     await answer(true);await click('next');await answer(true);await click('next');
@@ -87,7 +87,7 @@ const data={selectedCourses:[{name:'Synthetic',teacher:'Test',room:'C102',day:1,
     assert.equal(await p.evaluate(()=>englishProgress.trainingV1.events.length),0,'no fabricated old quiz scores');
     await answer(true);await click('details');await p.clock.runFor(2500);
     assert.equal(await p.evaluate(()=>englishProgress.trainingV1.feedback!==null),true,'dialog pauses auto');
-    await p.locator('#trainingReturn').click();await p.clock.runFor(2050);
+    await p.locator('#trainingReturn').click();await p.clock.runFor(850);
     assert.equal(await p.evaluate(()=>englishProgress.trainingV1.feedback===null),true,'closing resumes auto');
     for(let i=0;i<8;i++){await answer(true);await click('next');}
     assert.match(await p.locator('.training-complete').textContent(),/今日新词已完成/);
@@ -117,6 +117,6 @@ const data={selectedCourses:[{name:'Synthetic',teacher:'Test',room:'C102',day:1,
       assert.equal(await f.evaluate(()=>lessonForToday().index),34);
       await fresh.close();
     }else assert.equal(await p.locator('#shareStudyDay').count(),0,'share-only day selector');
-    assert.deepEqual(errors,[]);console.log('PASS '+edition+': 1s scene, comparison persistence, grading, 2s, reload, history, spacing, retry, hints, undo, snapshot, list, viewport, 04:00, share day selector; synthetic only');
+    assert.deepEqual(errors,[]);console.log('PASS '+edition+': 1s scene, comparison persistence, grading, 0.8s, reload, history, spacing, retry, hints, undo, snapshot, list, viewport, 04:00, share day selector; synthetic only');
   }finally{clearTimeout(watchdog);await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

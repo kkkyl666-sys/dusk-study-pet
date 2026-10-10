@@ -1,0 +1,90 @@
+{
+  "anger": [
+    "assets/companion/anger-1.webp",
+    "assets/companion/anger-2.webp",
+    "assets/companion/anger-3.webp",
+    "assets/companion/anger-4.webp",
+    "assets/companion/anger-5.webp",
+    "assets/companion/anger-6.webp",
+    "assets/companion/anger-7.webp",
+    "assets/companion/anger-8.webp",
+    "assets/companion/anger-9.webp",
+    "assets/companion/anger-10.webp"
+  ],
+  "praise": [
+    "assets/companion/praise-1.webp",
+    "assets/companion/praise-2.webp",
+    "assets/companion/praise-3.webp",
+    "assets/companion/praise-4.webp",
+    "assets/companion/praise-5.webp",
+    "assets/companion/praise-6.webp",
+    "assets/companion/praise-7.webp",
+    "assets/companion/praise-8.webp"
+  ],
+  "wallpapers": [
+    {
+      "id": "desk-study",
+      "device": "desktop",
+      "label": "窗前案台",
+      "position": "50% 50%",
+      "file": "assets/wallpapers/desk-study.webp",
+      "preview": "assets/wallpapers/desk-study-preview.webp"
+    },
+    {
+      "id": "desk-ink",
+      "device": "desktop",
+      "label": "山水入画",
+      "position": "50% 45%",
+      "file": "assets/wallpapers/desk-ink.webp",
+      "preview": "assets/wallpapers/desk-ink-preview.webp"
+    },
+    {
+      "id": "desk-sword",
+      "device": "desktop",
+      "label": "剑与画境",
+      "position": "50% 45%",
+      "file": "assets/wallpapers/desk-sword.webp",
+      "preview": "assets/wallpapers/desk-sword-preview.webp"
+    },
+    {
+      "id": "desk-breeze",
+      "device": "desktop",
+      "label": "长卷清风",
+      "position": "50% 40%",
+      "file": "assets/wallpapers/desk-breeze.webp",
+      "preview": "assets/wallpapers/desk-breeze-preview.webp"
+    },
+    {
+      "id": "phone-ink",
+      "device": "mobile",
+      "label": "墨中山水",
+      "position": "50% 12%",
+      "file": "assets/wallpapers/phone-ink.webp",
+      "preview": "assets/wallpapers/phone-ink-preview.webp"
+    },
+    {
+      "id": "phone-mist",
+      "device": "mobile",
+      "label": "雾中画意",
+      "position": "50% 20%",
+      "file": "assets/wallpapers/phone-mist.webp",
+      "preview": "assets/wallpapers/phone-mist-preview.webp"
+    },
+    {
+      "id": "phone-window",
+      "device": "mobile",
+      "label": "窗边小憩",
+      "position": "50% 15%",
+      "file": "assets/wallpapers/phone-window.webp",
+      "preview": "assets/wallpapers/phone-window-preview.webp"
+    },
+    {
+      "id": "phone-studio",
+      "device": "mobile",
+      "label": "画室一角",
+      "position": "50% 14%",
+      "file": "assets/wallpapers/phone-studio.webp",
+      "preview": "assets/wallpapers/phone-studio-preview.webp"
+    }
+  ]
+}

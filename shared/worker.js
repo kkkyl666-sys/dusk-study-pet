@@ -53,8 +53,10 @@ self.addEventListener('install', event => {
     const oldKeys=(await caches.keys()).filter(key=>key!==CACHE_NAME &&
       (key.startsWith(CONFIG.cachePrefix) || CONFIG.legacyCachePrefix && key.startsWith(CONFIG.legacyCachePrefix)));
     const oldCaches=await Promise.all(oldKeys.map(key=>caches.open(key)));
+    // Carry unchanged artwork across releases before deleting the old edition cache.
+    for(const entry of Object.keys(CONFIG.assets||{}))await reuseAsset(cache,entry,oldCaches);
     // Limit speculative downloads so wallpaper and visible text do not compete with every asset.
-    const queue=CONFIG.optional.slice(), deadline=Date.now()+8000;
+    const queue=CONFIG.optional.filter(x=>!x.includes('/companion/')&&!/\/(desk|phone)-/.test(x)), deadline=Date.now()+8000;
     await Promise.all(Array.from({length:4},async()=>{
       while(queue.length && Date.now()<deadline) {
         const entry=queue.shift();
@@ -63,6 +65,18 @@ self.addEventListener('install', event => {
     }));
     await self.skipWaiting();
   })());
+});
+let warming;
+self.addEventListener('message',event=>{
+  if(event.data?.type!=='WARM_MEDIA')return;
+  if(!warming)warming=(async()=>{
+    const cache=await caches.open(CACHE_NAME);
+    const queue=Object.keys(CONFIG.assets||{}).filter(x=>/\.(webp|png)$/.test(x));
+    await Promise.all(Array.from({length:2},async()=>{
+      while(queue.length){const entry=queue.shift();if(await cache.match(new URL(entry,baseURL)))continue;try{await precache(cache,entry,5000);}catch{}}
+    }));
+  })().finally(()=>warming=null);
+  event.waitUntil(warming);
 });
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {

@@ -4,7 +4,7 @@ const crypto = require('node:crypto');
 const targets = require('./app-targets.cjs');
 const {buildEntry} = require('./build-entry.cjs');
 const {buildWorker} = require('./build-worker.cjs');
-const common = ['atelier.js','atelier.css','word-training.js','word-training.css','cet6-35.js','dusk-pet.png','lucide.min.js','lucide-LICENSE.txt',
+const common = ['atelier.js','atelier.css','word-training.js','word-training.css','companion-media.js','companion-art.json','cet6-35.js','dusk-pet.png','lucide.min.js','lucide-LICENSE.txt',
   'development.html','development-log.json','development.js','development.css','DEVELOPMENT.md','ASSETS.md'];
 const extra = {
   personal:['sync-config.js','feedback-admin.html','feedback-admin.css','feedback-admin.js','feedback-config.js','feedback.js'],

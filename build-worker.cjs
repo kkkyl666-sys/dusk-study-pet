@@ -3,7 +3,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 function buildWorker(target, files) {
   const source=fs.readFileSync(path.join(__dirname,'shared','worker.js'),'utf8');
-  const required = ['./index.html','./cet6-35.js','./atelier.js?v=32','./atelier.css?v=25','./word-training.js?v=3','./word-training.css?v=3'];
+  const required = ['./index.html','./cet6-35.js','./atelier.js?v=33','./atelier.css?v=26','./word-training.js?v=4','./word-training.css?v=4'];
   if (target.label === '自用版') required.push('./sync-config.js');
   else required.push('./share.html','./demo.js?v=29','./demo.css?v=26','./share-tools.js?v=3','./share-tools.css?v=1','./papaparse.min.js');
   const query = {'feedback-admin.css':1,'feedback-admin.js':1,'feedback-config.js':1,'feedback.js':2,'development.js':25,'development.css':25};

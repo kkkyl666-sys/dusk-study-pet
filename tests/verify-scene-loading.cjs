@@ -19,6 +19,8 @@ const fixture={selectedCourses:[{name:'Test',teacher:'Test',room:'T1',day:0,peri
    const p=await c.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));
    await p.clock.install({time:new Date('2026-10-09T12:00:00+08:00')});await p.clock.pauseAt(new Date('2026-10-09T12:00:01+08:00'));
    await p.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>days.length===7&&!restoringResume&&document.querySelector('#wordTraining'));
+   // This regression isolates the original fallback resource. Random-pool loading has its own tests.
+   await p.evaluate(()=>{DuskMedia.scene=()=>DuskMedia.prepare('assets/dusk-sword.webp');DuskMedia.drawPraise=()=>false;});
    await p.locator('button[data-atelier-view="englishView"]').click();
    const index=await p.evaluate(()=>englishProgress.trainingV1.options.findIndex(o=>!o.correct));
    await p.locator(`#wordTraining [data-option="${index}"]`).click();
@@ -55,13 +57,13 @@ const fixture={selectedCourses:[{name:'Test',teacher:'Test',room:'T1',day:0,peri
      await p.locator('.training-scene-skip').click();
     }
    }else if(mode==='cancel'){
-    await p.locator('[data-training="continue"]').click();release();await p.waitForTimeout(100);
+    await p.locator('.training-footer [data-training="continue"]').click();release();await p.waitForTimeout(100);
     assert.equal(await p.locator('.training-scene').count(),0,'late image must not interrupt next word');
    }else{
     await p.clock.runFor(5100);release();await p.waitForTimeout(100);
     assert.equal(await p.locator('.training-scene').count(),0,'failed/late image never hides answer');
     assert.equal(await p.locator('.training-wrong').isVisible(),true);
-    assert.equal(await p.locator('[data-training="continue"]').isEnabled(),true);
+    assert.equal(await p.locator('.training-footer [data-training="continue"]').isEnabled(),true);
    }
    assert.equal(await p.locator('.atelier-main-content').evaluate(el=>el.inert),false);
    assert.deepEqual(errors,[]);await c.close();

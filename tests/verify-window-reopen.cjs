@@ -28,6 +28,9 @@ const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp
       const ready=()=>p.waitForFunction(()=>days.length===7&&!restoringResume&&document.querySelectorAll('.window-resize').length===24);
       await p.goto('http://127.0.0.1:'+server.address().port+'/'+edition+'/',{waitUntil:'domcontentloaded'});await ready();
       await p.waitForFunction(()=>document.querySelector('.pet-img').naturalWidth>0);
+      // First visit initializes the training queue, not a resize side effect.
+      await p.locator('.atelier-nav [data-atelier-view="englishView"]').click();
+      await p.locator('.atelier-nav [data-atelier-view="homeView"]').click();
       const selectors={study:'main.atelier-window',pet:'aside.atelier-window',planner:'.atelier-planner'};
       const defaults={};for(const [id,selector]of Object.entries(selectors))defaults[id]=await p.locator(selector).boundingBox();
       const before=await p.evaluate(()=>JSON.stringify(snapshot()));

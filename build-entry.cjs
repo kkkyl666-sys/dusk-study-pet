@@ -35,6 +35,8 @@ function buildEntry(edition) {
   const identity = `<script id="app-target">window.PET_APP=${JSON.stringify({edition,version:target.version,shareURL:target.shareURL})};</script>`;
   const values = {
     TITLE:target.title, SHORT_NAME:target.shortName, VERSION:target.version, LABEL:target.label,
+    COMPANION_ART:'<script>window.DUSK_ART='+JSON.stringify(JSON.parse(fs.readFileSync(path.join(root,'companion-art.json'),'utf8')))+';</script>',
+    COMPANION_RUNTIME:'<script id="companion-media-runtime">\n'+fs.readFileSync(path.join(root,'companion-media.js'),'utf8').trimEnd()+'\n</script>',
     MANIFEST:edition === 'share' ? 'manifest-demo.webmanifest' : 'manifest.webmanifest',
     BOOTSTRAP:identity + (edition === 'share' ? '\n<script id="share-bootstrap">\n'+demo.trimEnd()+'\n</script>' : '\n<script src="sync-config.js"></script>'),
     RECOVERY_RUNTIME:'<script id="experience-runtime" data-runtime="26">\n// Generated from experience.js.\n'+source.trimEnd()+'\n</script>',

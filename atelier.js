@@ -120,6 +120,13 @@
     document.querySelector('#atelierInboxLink').onclick=()=>window.open('feedback-admin.html','_blank','noopener');
   }
   const sceneSelect = document.querySelector('#atelierSceneSelect');
+  for(const device of ['desktop','mobile']){
+    const group=document.createElement('optgroup');group.label=device==='desktop'?'横版画卷':'竖版画卷';
+    DuskMedia.art.wallpapers.filter(x=>x.device===device).forEach(x=>group.append(new Option(x.label,x.id)));
+    sceneSelect.append(group);
+  }
+  // Existing choices survive upgrades. New devices get one appropriate, stable first wallpaper.
+  if(!ui.scene){ui.scene=DuskMedia.pickRandom(DuskMedia.art.wallpapers.filter(x=>x.device===(mobile.matches?'mobile':'desktop')),'first-wallpaper').id;saveUI();}
   function saveUI() {try{localStorage.setItem(UI_KEY,JSON.stringify(ui));}catch{showActionToast('外观设置未保存，本机空间不足');}}
   function focusPanel(panel) {Object.values(panels).forEach(p=>p.classList.toggle('focused',p===panel));}
   function saveWindows() {
@@ -167,19 +174,21 @@
   document.querySelector('#atelierCloudSettings').onclick=()=>{closeQuickDialog();setTimeout(()=>document.querySelector('#syncBtn').click(),180);};
   function loadScene(force=false, fallback=false) {
     if(ui.scene==='custom'&&!fallback)return;
-    const scene=ui.scene==='realm'?'realm':'studio',key=scene+':'+mobile.matches;
+    const selected=DuskMedia.art.wallpapers.find(x=>x.id===ui.scene);
+    const scene=ui.scene==='realm'?'realm':'studio',key=(selected?.id||scene)+':'+mobile.matches;
     const image=document.querySelector(mobile.matches?'#atelierMobileScene':'#atelierScene');
     if(sceneKey===key&&(!force||image.complete&&image.naturalWidth>0&&image.dataset.quality==='full'))return;
     sceneKey=key;const token=++sceneRequest;
     const inactive=document.querySelector(mobile.matches?'#atelierScene':'#atelierMobileScene');
     inactive.removeAttribute('src');image.hidden=false;
     const base='assets/wallpapers/dusk-'+scene+'-concept';
-    image.src=base+'-preview.webp';image.dataset.quality='preview';
+    image.style.objectPosition=selected?.position||(mobile.matches?'18% 36%':'42% 50%');
+    image.src=selected?.preview||base+'-preview.webp';image.dataset.quality='preview';
     // A small version is usable even if the full image is slow or unavailable.
-    if(mobile.matches)return;
+    if(mobile.matches&&!selected)return;
     const full=new Image();full.decoding='async';full.fetchPriority='low';
     full.onload=()=>{if(token===sceneRequest){image.src=full.src;image.dataset.quality='full';}};
-    full.src=base+'.webp';
+    full.src=selected?.file||base+'.webp';
   }
   function applyUI() {
     document.documentElement.dataset.font=ui.font||'mixed';

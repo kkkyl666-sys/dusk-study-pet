@@ -26,3 +26,14 @@ The foreground portrait has priority; the selected wallpaper starts with its
 compact preview. Fonts and images are served directly from the current release's
 cache after download. Upgrades reuse old asset bytes only after SHA-256 matches
 the new release, within the same application's cache namespace.
+
+October 10 additions: 10 wrong-answer pictures and 8 praise pictures, supplied
+by the user in the `anger`/`praise` source folders, plus four landscape and four
+portrait wallpapers selected from their general collection. `companion-art.json`
+lists the delivery copies and focal positions. Originals are not modified or
+published; WebP copies are resized for delivery by `build-companion-art.cjs`.
+No ownership or redistribution license is asserted for these supplied fan images.
+Verify artist permission/credits before broader redistribution.
+Short companion lines are original character-inspired writing, not official quotes.
+Image caching is best effort: clearing browser data or storage eviction requires
+downloads again. A failed image never blocks learning or starts an empty animation.
