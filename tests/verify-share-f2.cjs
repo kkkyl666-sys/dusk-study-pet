@@ -63,6 +63,9 @@ const privateFixture={selectedCourses:[{code:'TEST',name:'仅自用课程',teach
     await page.clock.setFixedTime(new Date('2026-10-04T12:00:00+08:00'));
     page.on('dialog',d=>d.accept());
     await page.goto(base+'/share.html');await page.waitForFunction(()=>window.shareTools&&!restoringResume);
+    if(await page.locator('#shareWelcomeSkip').isVisible()){
+      await page.locator('#shareWelcomeSkip').click();await page.waitForFunction(()=>!history.state?.petDialog);
+    }
     assert.equal(await page.title(),'夕的手账 · 分享版');
     assert.equal(await page.locator('.atelier-brand').innerText(),'夕的手账 · 分享版');
     assert.equal(await page.locator('meta[name="apple-mobile-web-app-title"]').getAttribute('content'),'夕的手账分享版');

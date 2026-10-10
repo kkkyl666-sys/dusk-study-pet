@@ -101,6 +101,7 @@ const data={selectedCourses:[{name:'Synthetic',teacher:'Test',room:'C102',day:1,
       await f.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
       await f.waitForFunction(()=>days.length===7&&!restoringResume);
       assert.equal(await f.evaluate(()=>englishDayIndex()),0,'fresh device starts day 1, including before 04:00');
+      await f.locator('#shareWelcomeSkip').click();await f.waitForFunction(()=>!history.state?.petDialog);
       await f.locator('button[data-atelier-view="englishView"]').click();
       const calendar=await f.evaluate(()=>JSON.stringify({selectedCourses,days,appointments}));
       await f.locator('#shareStudyDay').click();await f.locator('#shareStudyDayValue').selectOption('7');

@@ -1,5 +1,11 @@
 // This entry has no sync configuration and never reads the personal storage keys.
 window.PET_DEMO = true;
+// Capture before startup creates a default snapshot; existing learners skip onboarding.
+window.PET_SHARE_EXISTING = true;
+try {
+  window.PET_SHARE_EXISTING = Object.keys(localStorage).some(key => key.startsWith('dusk-demo-v1:') &&
+    /(?:full-state|english|resume|draft|summer-study)/.test(key));
+} catch { /* Do not interrupt existing work when storage is unavailable. */ }
 try {
   const saved = JSON.parse(localStorage.getItem("dusk-demo-v1:dusk-study-pet-full-state-v1") || "null");
   const date = new Date(saved?.shareCalendar + "T00:00:00");

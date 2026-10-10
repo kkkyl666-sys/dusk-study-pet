@@ -10,7 +10,7 @@ function buildWorker(target, files) {
   }
   if (target.label === '自用版') required.push('./sync-config.js');
   else required.push('./share.html','./demo.js?v=29','./demo.css?v=26','./share-tools.js?v=3','./share-tools.css?v=1','./papaparse.min.js');
-  const query = {'feedback-admin.css':1,'feedback-admin.js':1,'feedback-config.js':1,'feedback.js':2,'development.js':25,'development.css':25};
+  const query = {'share-guide.js':1,'share-guide.css':1,'feedback-admin.css':1,'feedback-admin.js':1,'feedback-config.js':1,'feedback.js':2,'development.js':25,'development.css':25};
   const optional = Object.keys(files).filter(file => !['sw.js','release.json','.nojekyll'].includes(file))
     .map(file => './'+file+(query[file] ? '?v='+query[file] : ''))
     .filter(entry => !required.some(req => req.split('?')[0] === entry.split('?')[0]));

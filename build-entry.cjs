@@ -40,8 +40,8 @@ function buildEntry(edition) {
     MANIFEST:edition === 'share' ? 'manifest-demo.webmanifest' : 'manifest.webmanifest',
     BOOTSTRAP:identity + (edition === 'share' ? '\n<script id="share-bootstrap">\n'+demo.trimEnd()+'\n</script>' : '\n<script src="sync-config.js"></script>'),
     RECOVERY_RUNTIME:'<script id="experience-runtime" data-runtime="26">\n// Generated from experience.js.\n'+source.trimEnd()+'\n</script>',
-    EDITION_STYLES:edition === 'share' ? '<link rel="stylesheet" href="demo.css?v=26">\n<link rel="stylesheet" href="share-tools.css?v=1">' : '',
-    EDITION_SCRIPTS:edition === 'share' ? '<script src="demo.js?v=29"></script>\n<script src="papaparse.min.js"></script>\n<script src="feedback-config.js?v=1"></script>\n<script src="feedback.js?v=2"></script>\n<script src="share-tools.js?v=3"></script>' : '',
+    EDITION_STYLES:edition === 'share' ? '<link rel="stylesheet" href="demo.css?v=26">\n<link rel="stylesheet" href="share-tools.css?v=1">\n<link rel="stylesheet" href="share-guide.css?v=1">' : '',
+    EDITION_SCRIPTS:edition === 'share' ? '<script src="demo.js?v=29"></script>\n<script src="papaparse.min.js"></script>\n<script src="feedback-config.js?v=1"></script>\n<script src="feedback.js?v=2"></script>\n<script src="share-tools.js?v=3"></script>\n<script src="share-guide.js?v=1"></script>' : '',
   };
   const html = fs.readFileSync(templateFile, 'utf8').replace(/\{\{([A-Z_]+)\}\}/g, (_, key) => {
     if (!(key in values)) throw new Error('Unknown template field: '+key);

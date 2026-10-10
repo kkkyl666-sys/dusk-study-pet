@@ -8,7 +8,7 @@ const common = ['atelier.js','atelier.css','word-training.js','word-training.css
   'development.html','development-log.json','development.js','development.css','DEVELOPMENT.md','ASSETS.md'];
 const extra = {
   personal:['sync-config.js','feedback-admin.html','feedback-admin.css','feedback-admin.js','feedback-config.js','feedback.js'],
-  share:['demo.js','demo.css','share-tools.js','share-tools.css','papaparse.min.js','papaparse-LICENSE.txt','feedback-config.js','feedback.js','SHARE.md'],
+  share:['demo.js','demo.css','share-tools.js','share-tools.css','share-guide.js','share-guide.css','papaparse.min.js','papaparse-LICENSE.txt','feedback-config.js','feedback.js','SHARE.md'],
 };
 function buildRelease(edition, output) {
   const target = targets[edition];
