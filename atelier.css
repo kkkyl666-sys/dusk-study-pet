@@ -44,6 +44,25 @@ body[data-atelier-view=englishView] .topbar{display:none}#englishView>.utility-a
 @media(max-width:760px){.mobile-scene{position:absolute;inset:0;overflow:hidden;pointer-events:none}.mobile-scene img,.mobile-scene video{position:absolute;inset:-2%;width:104%;height:104%;object-fit:cover;object-position:18% 36%;animation:room-drift 40s ease-in-out infinite alternate}.mobile-scene .rain{position:absolute;inset:0 45% 0 0}.mobile-scene .rain i{height:25px}.pet-wrap,.voice-row{z-index:1}html[data-motion=off] .mobile-scene img{animation:none}html[data-background-paused] .mobile-scene img{animation-play-state:paused}}
 .word-layout-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;margin:10px 0;color:var(--muted);font-size:12px;background:var(--panel);position:sticky;top:0;z-index:6;border-bottom:1px solid #dce6d3}.word-layout-switch{display:flex;gap:3px;border:1px solid #b4c6aa;border-radius:6px;padding:3px;background:#eef4e7}.word-layout-switch button{display:flex;align-items:center;justify-content:center;gap:7px;padding:5px 12px;border:0;border-radius:4px;background:none;min-height:34px;color:#64785b;font-size:13px}.word-layout-switch button[aria-pressed=true]{background:#fff;color:#3d5f38;box-shadow:0 1px 2px #98ae8c66}.word-layout-switch svg{width:16px;height:16px}
 @media(max-width:760px){body[data-atelier-view=englishView] main.atelier-window{overflow:visible}}
+/* Mobile wallpaper is viewport-sized; reading surfaces remain opaque. */
+@media(max-width:760px){
+  body,body.pet-mode{background:#dbe3dc}
+  .atelier-wallpaper{display:block}
+  .atelier-wallpaper>#atelierScene,.atelier-wallpaper>#atelierVideo,.atelier-wallpaper>#atelierRain{display:none}
+  .mobile-scene{position:absolute;inset:0}
+  body:not([data-atelier-view=homeView]) .atelier-main-content{background:#fcfdfb;min-height:calc(100dvh - 48px - env(safe-area-inset-top))}
+  body[data-atelier-view=homeView] aside.atelier-window,body.pet-mode[data-atelier-view=homeView] aside.atelier-window{height:48dvh;background:transparent;margin-bottom:0;cursor:zoom-in}
+  body[data-atelier-view=homeView] aside .pet-wrap,body[data-atelier-view=homeView] .atelier-portrait-label{display:none}
+  body[data-atelier-view=homeView] aside .voice-row{left:16px;right:16px;bottom:20px;width:auto;background:#fcfdf9;border:0;box-shadow:none}
+  #homeView .home-body{background:#fcfdfb;padding:20px 16px;margin:0 -16px}
+}
+.atelier-painting{padding:0;background:#18251f;color:#fff;overflow:hidden}
+.atelier-painting header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#18251f;color:#fff}
+.atelier-painting h2{margin:0;font-size:20px}.atelier-painting .atelier-icon{color:#fff}
+.painting-art{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.painting-art img,.painting-art video{width:100%;height:100%;object-fit:contain;animation:none}
+.painting-status{margin:0;padding:8px 16px;flex-shrink:0}
+dialog.atelier-painting[open]{display:flex;flex-direction:column;position:fixed;inset:0;margin:0!important;width:100%;height:100dvh;max-width:none;max-height:none;border:0;border-radius:0;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
 #englishView .focus-hidden{display:none}#englishView[data-word-layout=focus] .focus-pager{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:14px 0;padding:8px 0;border-bottom:1px solid #dce6d3}#englishView[data-word-layout=focus] .word-list{grid-template-columns:minmax(0,1fr)}.focus-group{display:flex;gap:4px}.focus-group button{min-height:38px;border:0;border-radius:5px;padding:8px;background:none;color:#6f7e64;font-size:14px}.focus-group button.active{background:#e6eedb;color:#3d5f3e}#englishView .word-card{scroll-margin-top:70px}#focusPosition{font-size:13px;color:#6e7c63}
 @media(max-width:760px){.word-layout-toolbar{top:calc(48px + env(safe-area-inset-top));background:#f8faf3f5;margin:10px 0 12px;padding:6px 0}.word-layout-switch button{min-height:38px}#englishView[data-word-layout=list]>h3{display:block;margin:18px 0 10px;font-size:17px}#englishView[data-word-layout=list] .word-list{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}#englishView[data-word-layout=list] .word-card{min-height:0;padding:12px;gap:7px;scroll-margin-top:125px}#englishView[data-word-layout=list] .word-detail-button{font-size:22px}#englishView[data-word-layout=list] .long-word .word-detail-button{font-size:20px}#englishView[data-word-layout=list] .word-title .sound-button{width:36px;height:36px}#englishView[data-word-layout=list] .word-card span{font-size:14px}#englishView[data-word-layout=list] .word-card .phonetic{font-size:15px}#englishView[data-word-layout=list] .word-card .example{font-size:14px;line-height:1.6;flex:initial;padding-top:7px}#englishView[data-word-layout=list] .word-actions{margin-top:7px;gap:8px}#englishView[data-word-layout=list] .word-actions button{min-height:40px;font-size:13px}#englishView[data-word-layout=list] .word-status{min-height:40px;margin-top:0}}
 /* Restrained POS ink; meanings and examples retain the reading palette. */

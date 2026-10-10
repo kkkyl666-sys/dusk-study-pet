@@ -16,10 +16,10 @@
   while (main.firstChild) mainContent.append(main.firstChild);
   main.append(mainContent);
   const icon = (name) => `<i data-lucide="${name}"></i>`;
-  const tool = (id, name, label, extra = '') => `<button type="button" class="atelier-icon${extra.includes('desktop-only')?' desktop-only':''}" id="${id}" title="${label}" aria-label="${label}">${icon(name)}</button>`;
+  const tool = (id, name, label, extra = '') => `<button type="button" class="atelier-icon${extra.includes('desktop-only')?' desktop-only':extra.includes('mobile-only')?' mobile-only':''}" id="${id}" title="${label}" aria-label="${label}">${icon(name)}</button>`;
   document.body.insertAdjacentHTML('afterbegin', `
     <div class="atelier-wallpaper" aria-hidden="true"><img id="atelierScene" alt="" decoding="async"><video id="atelierVideo" muted loop playsinline hidden></video><div class="rain" id="atelierRain" hidden>${Array.from({length:20},(_,i)=>`<i style="left:${i*5}%;animation-delay:-${i*.14}s"></i>`).join('')}</div></div>
-    <header class="atelier-bar"><span class="atelier-brand">夕的手账</span><div class="atelier-tools"><span class="atelier-date" id="atelierDate"></span>${tool('atelierSceneMode','image','看画室','class="desktop-only"')}${tool('atelierMotion','pause','暂停背景')}${tool('atelierSettings','sliders-horizontal','画室设置')}</div></header>`);
+    <header class="atelier-bar"><span class="atelier-brand">夕的手账</span><div class="atelier-tools"><span class="atelier-date" id="atelierDate"></span>${tool('atelierSceneMode','image','看画室','class="desktop-only"')}${tool('atelierPainting','expand','展开完整画卷','class="mobile-only"')}${tool('atelierMotion','pause','暂停背景')}${tool('atelierSettings','sliders-horizontal','画室设置')}</div></header>`);
   const planner = document.createElement('section'); planner.className = 'atelier-window atelier-planner desktop-only';
   planner.innerHTML = '<div class="planner-body" id="atelierPlannerBody"></div>'; document.body.append(planner);
   const panels = {study:main,pet,planner};
@@ -86,7 +86,7 @@
     resizeHandles(panel,id);
   }
   titlebar(main,'今日画夹','study'); titlebar(pet,'夕 · 片刻闲暇','pet'); titlebar(planner,'今日便笺','planner');
-  pet.insertAdjacentHTML('afterbegin',`<div class="mobile-scene mobile-only" aria-hidden="true"><img id="atelierMobileScene" alt="" decoding="async"><video id="atelierMobileVideo" muted loop playsinline hidden></video><div class="rain" id="atelierMobileRain" hidden>${Array.from({length:12},(_,i)=>`<i style="left:${i*8}%;animation-delay:-${i*.14}s"></i>`).join('')}</div></div>`);
+  document.querySelector('.atelier-wallpaper').insertAdjacentHTML('beforeend',`<div class="mobile-scene mobile-only" aria-hidden="true"><img id="atelierMobileScene" alt="" decoding="async"><video id="atelierMobileVideo" muted loop playsinline hidden></video><div class="rain" id="atelierMobileRain" hidden>${Array.from({length:12},(_,i)=>`<i style="left:${i*8}%;animation-delay:-${i*.14}s"></i>`).join('')}</div></div>`);
   pet.insertAdjacentHTML('beforeend','<span class="atelier-portrait-label">夕</span>');
   pet.querySelector('.pet-actions').insertAdjacentHTML('beforeend',tool('petQuiet','sparkles','夕的轻动作'));
   pet.querySelector('#modeBtn').innerHTML = icon('picture-in-picture-2'); pet.querySelector('#modeBtn').title = '只留夕 / 展开画夹';
@@ -165,6 +165,35 @@
   }
   function sceneInspect(on) {sceneOnly=on;document.body.classList.toggle('scene-only',on);main.inert=on;pet.inert=on;planner.inert=on;}
   document.querySelector('#atelierSceneMode').onclick=()=>sceneInspect(!sceneOnly);
+  const painting=document.createElement('dialog');
+  painting.id='atelierPaintingDialog';painting.className='quick-dialog atelier-painting';
+  painting.setAttribute('aria-labelledby','atelierPaintingTitle');
+  painting.innerHTML=`<header><h2 id="atelierPaintingTitle">画卷</h2>${tool('atelierPaintingClose','x','收起画卷')}</header><div class="painting-art"></div><p class="painting-status" role="status"></p>`;
+  document.body.append(painting);
+  let paintingRequest=0;
+  function closePainting(){++paintingRequest;painting.querySelector('video')?.pause();closeQuickDialog();backgroundActivity();}
+  async function openPainting(){
+    const token=++paintingRequest,selected=DuskMedia.art.wallpapers.find(x=>x.id===ui.scene);
+    const active=document.querySelector(mobile.matches?'#atelierMobileScene':'#atelierScene');
+    const video=document.querySelector(mobile.matches?'#atelierMobileVideo':'#atelierVideo');
+    const container=painting.querySelector('.painting-art'),status=painting.querySelector('.painting-status');
+    container.replaceChildren();status.textContent='';
+    document.querySelector('#atelierPaintingTitle').textContent=selected?.label||'画卷';
+    openQuickDialog(painting.id);backgroundActivity();
+    if(!video.hidden&&video.src){
+      const copy=document.createElement('video');copy.src=video.src;copy.controls=true;copy.playsInline=true;copy.muted=true;container.append(copy);return;
+    }
+    // Reuse the visible image immediately, then upgrade without blanking the painting.
+    const copy=new Image();copy.alt=selected?.label||'夕的画室';copy.src=active.currentSrc||active.src;container.append(copy);
+    const src=ui.scene==='custom'?active.src:selected?.file||`assets/wallpapers/dusk-${ui.scene==='realm'?'realm':'studio'}-concept.webp`;
+    const ready=await DuskMedia.prepare(src);
+    if(token!==paintingRequest||!painting.open)return;
+    if(ready){copy.src=ready.src;}else if(!copy.naturalWidth){status.textContent='画卷暂未加载，请稍后重试。';}
+  }
+  document.querySelector('#atelierPainting').onclick=openPainting;
+  document.querySelector('#atelierPaintingClose').onclick=closePainting;
+  painting.addEventListener('cancel',event=>{event.preventDefault();closePainting();});
+  pet.addEventListener('click',event=>{if(mobile.matches&&!event.target.closest('button,a,input,.pet-frame'))openPainting();});
   document.addEventListener('keydown',event=>{if(event.key==='Escape')sceneInspect(false);});
   document.querySelector('#atelierPetRestore').onclick=()=>{sceneInspect(false);setWindowMinimized('pet',false);setWindowMinimized('planner',false);focusPanel(pet);};
   document.querySelector('#atelierLayoutReset').onclick=()=>{ui.windows={};Object.values(panels).forEach(p=>{p.removeAttribute('style');p.classList.remove('maximized','minimized');});restoreWindows();saveUI();};
@@ -185,7 +214,6 @@
     image.style.objectPosition=selected?.position||(mobile.matches?'18% 36%':'42% 50%');
     image.src=selected?.preview||base+'-preview.webp';image.dataset.quality='preview';
     // A small version is usable even if the full image is slow or unavailable.
-    if(mobile.matches&&!selected)return;
     const full=new Image();full.decoding='async';full.fetchPriority='low';
     full.onload=()=>{if(token===sceneRequest){image.src=full.src;image.dataset.quality='full';}};
     full.src=selected?.file||base+'.webp';
@@ -238,7 +266,7 @@
     try{const db=await wallpaperStore();await new Promise((resolve,reject)=>{const tx=db.transaction('wallpaper','readwrite');tx.objectStore('wallpaper').put(file,'current');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});ui.scene='custom';saveUI();applyUI();showWallpaper(file);showActionToast('壁纸已存本机');}catch{showActionToast('壁纸未保存，本机空间不足或存储不可用');}
   };
   function backgroundActivity() {
-    const paused=document.hidden||reduced.matches||ui.motion===false;
+    const paused=document.hidden||reduced.matches||ui.motion===false||painting.open;
     document.documentElement.toggleAttribute('data-background-paused',paused);
     for(const [id,isMobile] of [['atelierVideo',false],['atelierMobileVideo',true]]){
       const video=document.querySelector('#'+id);if(paused||isMobile!==mobile.matches)video.pause();else if(!video.hidden)video.play().catch(()=>{});
