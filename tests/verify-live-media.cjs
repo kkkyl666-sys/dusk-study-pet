@@ -11,7 +11,7 @@ const source=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
    await new Promise(r=>setTimeout(r,5000));
   }
   assert(release,'online release not current: '+edition);
-  const names=['word-training.js','word-training.css','companion-media.js','companion-art.json','atelier.js',...Object.keys(release.files).filter(n=>n.startsWith('assets/companion/')||/assets\/wallpapers\/(desk|phone)-/.test(n))];
+  const names=['word-training.js','word-training.css','companion-media.js','companion-art.json','atelier.js','atelier.css',...Object.keys(release.files).filter(n=>n.startsWith('assets/companion/')||/assets\/wallpapers\/(desk|phone)-/.test(n))];
   for(let i=0;i<names.length;i+=5)await Promise.all(names.slice(i,i+5).map(async name=>{
    const r=await fetch(target.url+name+'?check='+Date.now());assert(r.ok,name);
    const hash=crypto.createHash('sha256').update(Buffer.from(await r.arrayBuffer())).digest('hex');assert.equal(hash,release.files[name],edition+' '+name);
