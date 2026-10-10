@@ -54,7 +54,7 @@ const fixture={selectedCourses:[{name:'Test',day:0,periods:[1,2],weeks:[[1,17]],
    await answer(true);await p.locator('.training-scene[data-kind="praise"]').waitFor({state:'visible'});
    assert.equal(await p.evaluate(()=>localStorage.getItem(appStorageKey('dusk-praise-chance-v1'))),'15','hit resets to base');
    assert(await p.locator('.training-scene img').evaluate(x=>x.complete&&x.naturalWidth>0),'first praise decoded');
-   const id=await p.evaluate(()=>englishProgress.trainingV1.feedback.id);await p.clock.runFor(999);assert.equal(await p.evaluate(()=>englishProgress.trainingV1.feedback.id),id,'no auto behind praise');
+   const id=await p.evaluate(()=>englishProgress.trainingV1.feedback.id);await p.clock.runFor(1999);assert.equal(await p.locator('.training-scene').count(),1);assert.equal(await p.locator('.training-scene').evaluate(n=>getComputedStyle(n).animationDuration),'2s');assert.equal(await p.evaluate(()=>englishProgress.trainingV1.feedback.id),id,'no auto behind praise');
    await p.clock.runFor(1);await p.clock.runFor(799);assert.equal(await p.evaluate(()=>englishProgress.trainingV1.feedback.id),id);await p.clock.runFor(1);assert.equal(await p.evaluate(()=>englishProgress.trainingV1.feedback),null);
    // Every media resource can be decoded; random functions visit different members, never adjacent duplicates.
    const stats=await p.evaluate(async()=>{
@@ -87,7 +87,7 @@ const fixture={selectedCourses:[{name:'Test',day:0,periods:[1,2],weeks:[[1,17]],
     const i=await q.evaluate(()=>englishProgress.trainingV1.options.findIndex(o=>o.correct));await q.locator(`[data-option="${i}"]`).click();
     await q.clock.runFor(2000);assert.equal(await q.locator('.training-scene').count(),0);assert(await q.locator('.training-right').isVisible());
     unblock();await q.locator('.training-scene[data-kind="praise"]').waitFor({state:'visible'});
-    assert(await q.locator('.training-scene img').evaluate(x=>x.complete&&x.naturalWidth>0));await q.clock.runFor(999);assert.equal(await q.locator('.training-scene').count(),1);await q.clock.runFor(1);assert.equal(await q.locator('.training-scene').count(),0);
+    assert(await q.locator('.training-scene img').evaluate(x=>x.complete&&x.naturalWidth>0));await q.clock.runFor(1999);assert.equal(await q.locator('.training-scene').count(),1);await q.clock.runFor(1);assert.equal(await q.locator('.training-scene').count(),0);
    }finally{unblock();await cold.close();}
   }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
   console.log('PASS '+edition+': cold wrong/praise decode, four same-position slots, 800ms, persisted pity, random 8 lines and pools, fallback, wallpapers; synthetic only');

@@ -46,7 +46,7 @@
     const skip=sceneElement.querySelector('.training-scene-skip');
     const finish=()=>{endScene();if(!document.querySelector('dialog[open]'))root.querySelector('[data-training="continue"]')?.focus({preventScroll:true});resumeTimer();};
     skip.onclick=finish;skip.focus({preventScroll:true});refreshIcons();
-    sceneTimer=setTimeout(finish,1000);
+    sceneTimer=setTimeout(finish,kind==='praise'?2000:1000);
   }
   new ResizeObserver(layoutScene).observe(scenePane);
   window.addEventListener('resize',layoutScene);
