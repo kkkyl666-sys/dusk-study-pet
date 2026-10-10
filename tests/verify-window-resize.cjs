@@ -27,6 +27,7 @@ const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp
       if(localStorage.getItem('resize-seeded'))return;localStorage.setItem('resize-seeded','yes');
       localStorage.setItem('dusk-study-pet-full-state-v1',JSON.stringify(data));
       localStorage.setItem('dusk-study-pet-access-code-v1','test-only');
+      localStorage.setItem('dusk-atelier-ui-v1',JSON.stringify({scene:'studio'}));
     },fixture);
     return ctx;
   }
@@ -76,6 +77,7 @@ const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp
       document.querySelector('main.atelier-window').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));
     });
     await p.locator('.atelier-nav [data-atelier-view=englishView]').click();
+    await p.locator('button[data-word-layout="list"]').click();
     const setWidth=width=>p.evaluate(width=>{const el=document.querySelector('main.atelier-window');Object.assign(el.style,{left:'500px',top:'66px',width:width+'px',height:'650px'});},width);
     const columns=()=>p.locator('#newWords').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);
     await setWidth(780);assert.equal(await columns(),2);
@@ -111,7 +113,7 @@ const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp
     for(const width of [320,390,760]) {
       const marker=requests.length;await p.setViewportSize({width,height:844});await p.reload({waitUntil:'domcontentloaded'});await ready(p);
       await p.waitForFunction(()=>document.querySelector('#atelierMobileScene').naturalWidth>0);
-      assert(!requests.slice(marker).some(n=>/concept\.webp$/.test(n)),'phone should only request the compact wallpaper');
+      assert.equal(await p.locator('#atelierMobileScene').getAttribute('data-quality'),'preview','failed full wallpaper keeps compact fallback');
       assert.equal(await p.locator('.window-resize:visible').count(),0);
       assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
     }

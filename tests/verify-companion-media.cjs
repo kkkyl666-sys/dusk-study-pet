@@ -18,7 +18,7 @@ const fixture={selectedCourses:[{name:'Test',day:0,periods:[1,2],weeks:[[1,17]],
    await p.clock.install({time:new Date('2026-10-10T12:00:00+08:00')});await p.clock.pauseAt(new Date('2026-10-10T12:00:01+08:00'));
    await p.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>days.length===7&&!restoringResume&&window.DuskMedia&&document.querySelector('#wordTraining'));console.log(edition,'ready');
    const savedDraw=await p.evaluate(()=>{window.testDraw=DuskMedia.drawPraise;DuskMedia.drawPraise=()=>false;return true;});assert(savedDraw);
-   const next=()=>p.locator('.training-footer [data-training="continue"]').click();
+   const next=()=>p.locator('[data-training="continue"]:visible:enabled').first().click();
    const answer=async correct=>{const i=await p.evaluate(v=>englishProgress.trainingV1.options.findIndex(x=>x.correct===v),correct);await p.locator(`[data-option="${i}"]`).click();};
    await p.locator('button[data-atelier-view="englishView"]').click();
    await answer(false);await p.clock.runFor(2000);assert.equal(await p.locator('.training-scene').count(),0);
@@ -26,21 +26,27 @@ const fixture={selectedCourses:[{name:'Test',day:0,periods:[1,2],weeks:[[1,17]],
    await p.locator('.training-scene').waitFor({state:'visible'});
    assert(await p.locator('.training-scene img').evaluate(x=>x.complete&&x.naturalWidth>0));
    await p.clock.runFor(999);assert.equal(await p.locator('.training-scene').count(),1);await p.clock.runFor(1);await next();console.log(edition,'first decoded scene');
-   // Every original option slot remains a same-position continue target in both layouts.
+   // All original answer positions converge to compact, correct-first comparison.
    for(const width of [390,1440]){
     await p.setViewportSize({width,height:1000});await p.locator('button[data-atelier-view="englishView"]').click();
     for(let slot=0;slot<4;slot++){
      await p.evaluate(slot=>{const s=englishProgress.trainingV1;const i=s.options.findIndex(x=>!x.correct);[s.options[slot],s.options[i]]=[s.options[i],s.options[slot]];renderEnglish();},slot);
-     const choice=p.locator(`[data-option="${slot}"]`);await choice.scrollIntoViewIfNeeded();const before=await choice.boundingBox();
+     const choice=p.locator(`[data-option="${slot}"]`);await choice.scrollIntoViewIfNeeded();
      await choice.click();await p.locator('.training-scene').waitFor({state:'visible'});await p.clock.runFor(1000);
-     const target=p.locator('.training-options [data-training="continue"]'),after=await target.boundingBox();
-     assert(Math.abs(before.x-after.x)<2&&Math.abs(before.y-after.y)<2,`slot ${slot} stays put at ${width}: ${JSON.stringify({before,after})}`);
+     assert.equal(await p.locator('.training-comparison button').count(),2);
+     assert(await p.locator('.training-comparison button').first().evaluate(b=>b.classList.contains('training-right')));
+     const gap=await p.evaluate(()=>document.querySelector('.training-explanation').getBoundingClientRect().top-document.querySelector('.training-comparison').getBoundingClientRect().bottom);
+     assert(gap<40,'no invisible option rows');
+     if(width===390){
+      assert(await p.locator('.training-right').isDisabled());
+      const box=await p.locator('.training-footer .training-continue').boundingBox();assert(box.height>=56);assert(box.y+box.height<1000-60);
+     }else assert(await p.locator('.training-right').isEnabled());
      const word=await p.locator('.training-word-row h3').textContent();
-     await p.mouse.click(before.x+before.width/2,before.y+before.height/2);
+     await next();
      assert.notEqual(await p.locator('.training-word-row h3').textContent(),word);
     }
    }
-   console.log(edition,'same-position slots');
+   console.log(edition,'compact comparison and responsive continue');
    // Pure probability boundary, hard pity and per-device inherited chance.
    assert.deepEqual(await p.evaluate(()=>[DuskMedia.nextPraise(15,.149),DuskMedia.nextPraise(15,.15),DuskMedia.nextPraise(95,.99),DuskMedia.nextPraise(100,.999)]),[{hit:true,chance:15},{hit:false,chance:25},{hit:false,chance:100},{hit:true,chance:15}]);
    await p.evaluate(()=>{localStorage.setItem(appStorageKey('dusk-praise-chance-v1'),'45');});
@@ -90,6 +96,6 @@ const fixture={selectedCourses:[{name:'Test',day:0,periods:[1,2],weeks:[[1,17]],
     assert(await q.locator('.training-scene img').evaluate(x=>x.complete&&x.naturalWidth>0));await q.clock.runFor(1999);assert.equal(await q.locator('.training-scene').count(),1);await q.clock.runFor(1);assert.equal(await q.locator('.training-scene').count(),0);
    }finally{unblock();await cold.close();}
   }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
-  console.log('PASS '+edition+': cold wrong/praise decode, four same-position slots, 800ms, persisted pity, random 8 lines and pools, fallback, wallpapers; synthetic only');
+  console.log('PASS '+edition+': cold wrong/praise decode, four-position compact comparison, desktop correct/mobile fixed continue, 800ms, persisted pity, random 8 lines and pools, fallback, wallpapers; synthetic only');
  }}finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

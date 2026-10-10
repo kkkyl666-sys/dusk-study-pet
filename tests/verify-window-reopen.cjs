@@ -82,7 +82,7 @@ const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp
       assert.equal(await p.evaluate(()=>JSON.stringify(snapshot())),before,'window controls do not edit study data');
       for(const width of [900,390,760,1440]){
         await p.setViewportSize({width,height:900});
-        if(width<=760){assert(!await p.locator('aside .window-resize').first().isVisible());assert.equal((await p.locator('aside .pet-frame').boundingBox()).width>100,true);}
+        if(width<=760){assert(!await p.locator('aside .window-resize').first().isVisible());assert(!await p.locator('aside .pet-frame').isVisible());assert.equal((await p.locator('.mobile-scene').boundingBox()).height,900);}
       }
       await ctx.close();console.log('PASS '+edition+': minimize/reopen default size, position, tab-switch retention, maximized/small-window/restart, proportional portrait, mobile and unchanged study data');
     }

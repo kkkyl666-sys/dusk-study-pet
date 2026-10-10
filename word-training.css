@@ -8,14 +8,12 @@
 #wordTraining .training-wrong{border:1px solid #d2c4c5;background:#f5f1f1;color:#827475;box-shadow:none}
 .training-comparison button>span{flex:1}.training-comparison button>small{display:flex;align-items:center;gap:4px;white-space:nowrap}
 .training-comparison .training-wrong>small{color:#98626a}
-#wordTraining .training-slot-hidden{visibility:hidden;pointer-events:none}
-#wordTraining .training-options button{position:relative;padding-right:74px;border-width:1px;min-height:56px}
+#wordTraining .training-options button{position:relative;border-width:1px;min-height:56px}
 #wordTraining .training-right{box-shadow:inset 0 0 0 1px #619171,0 2px #c1d4b9}
-#wordTraining .training-options button>span:not(.training-inline-continue){flex:1}
+#wordTraining .training-options button>span{flex:1}
 #wordTraining .training-comparison button>small:first-child{display:block}
-#wordTraining .training-result{position:absolute;right:14px;top:8px}
-#wordTraining .training-inline-continue{position:absolute;right:9px;bottom:5px;font-size:12px;display:flex;gap:3px;align-items:center;color:#416e57}
-#wordTraining .training-inline-continue svg{width:14px;height:14px}
+#wordTraining .training-result{position:static;flex-shrink:0}
+#wordTraining .training-comparison:has(>button:only-child){grid-template-columns:1fr}
 #wordTraining .training-wrong:hover{background:#eee8e8}
 .training-scene[data-kind=praise]{background:#f4f5e9}
 .training-scene[data-kind=praise]{animation:training-praise-fade 2s ease both}
@@ -24,13 +22,13 @@
 @keyframes training-praise-fade{0%{opacity:0;filter:blur(9px)}8%,89%{opacity:1;filter:blur(0)}100%{opacity:0;filter:blur(12px)}}
 @keyframes training-praise-arrive{0%{transform:scale(.8) translateY(12px);opacity:0;filter:blur(14px)}8%,89%{transform:scale(1);opacity:1;filter:blur(0)}100%{transform:scale(1.1) translateY(-6px);opacity:0;filter:blur(10px)}}
 @keyframes training-praise-line{0%{opacity:0;transform:translateY(5px);filter:blur(5px)}8%,89%{opacity:1;transform:translateY(0);filter:blur(0)}100%{opacity:0;transform:translateY(-3px);filter:blur(6px)}}
-.training-scene{position:fixed;z-index:14;display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;padding:24px 12px;background:#edf2e8;overflow:hidden;animation:training-scene-fade 1s ease both}
+.training-scene{position:fixed;z-index:14;display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;padding:48px 16px 20px;background:#edf2e8;overflow:hidden;animation:training-scene-fade 1s ease both}
 .training-scene .training-scene-skip{position:absolute;top:8px;right:8px;z-index:2;width:40px;height:40px;min-height:40px;padding:0;border:0;border-radius:6px;background:#edf2e8d9;color:#748775;cursor:pointer}
 .training-scene-skip svg{width:19px;height:19px;vertical-align:middle}
-.training-scene-art{width:var(--scene-art-size);height:var(--scene-art-size);min-height:0;flex:0 0 auto;display:flex;justify-content:center;animation:training-scene-arrive 1s cubic-bezier(.16,1,.3,1) both}
+.training-scene-art{width:100%;min-height:0;flex:1;display:flex;justify-content:center;animation:training-scene-arrive 1s cubic-bezier(.16,1,.3,1) both}
 .training-scene-art img{display:block;width:100%;height:100%;min-height:0;object-fit:contain}
-.training-scene-name{font:18px WenKai,KaiTi,serif;margin:14px 0 8px;color:#586e5c}
-.training-scene-line{font:700 34px/1.4 WenKai,KaiTi,serif;color:#203e35;max-width:94%;text-align:center;margin:0;text-wrap:balance;text-shadow:0 2px #fff;animation:training-scene-line 1s ease both}
+.training-scene-name{font:18px WenKai,KaiTi,serif;margin:14px 0 8px;color:#586e5c;flex-shrink:0}
+.training-scene-line{font:700 34px/1.4 WenKai,KaiTi,serif;color:#203e35;max-width:94%;text-align:center;margin:0;flex-shrink:0;text-wrap:balance;text-shadow:0 2px #fff;animation:training-scene-line 1s ease both}
 @keyframes training-scene-fade{0%{opacity:0;filter:blur(9px)}12%,80%{opacity:1;filter:blur(0)}100%{opacity:0;filter:blur(12px)}}
 @keyframes training-scene-arrive{0%{transform:scale(.8) translateY(12px);opacity:0;filter:blur(14px)}14%{transform:scale(1.035);opacity:1;filter:blur(0)}24%{transform:scale(1);opacity:1;filter:blur(0)}80%{transform:scale(1.025);opacity:1;filter:blur(0)}100%{transform:scale(1.1) translateY(-6px);opacity:0;filter:blur(10px)}}
 @keyframes training-scene-line{0%{opacity:0;transform:translateY(5px);filter:blur(5px)}10%,82%{opacity:1;transform:translateY(0);filter:blur(0)}100%{opacity:0;transform:translateY(-3px);filter:blur(6px)}}
@@ -54,7 +52,7 @@
 .training-options{display:grid;gap:10px}.training-options button{display:flex;gap:12px;align-items:center;text-align:left;border:1px solid #c4d0c0;background:#fff;box-shadow:0 2px #d5dece;padding:13px 16px;min-width:0}
 .training-options button:hover{background:#edf4e8}.training-options small{font-size:12px;color:#738273}.training-options span{overflow-wrap:anywhere}
 .training-unknown{display:block;margin:14px auto 0;border:0;background:transparent;color:#7d7566!important}
-.training-explanation{padding:12px 0 24px;min-height:160px}.training-explanation p{font-size:20px;line-height:1.6;margin:8px 0}.training-explanation p[lang=en]{font-family:Georgia,serif;border-top:1px solid #d7dfd1;padding-top:14px}.training-explanation small{font-size:14px;color:#75836e}
+.training-explanation{padding:12px 0 16px;min-height:0}.training-explanation p{font-size:20px;line-height:1.6;margin:8px 0}.training-explanation p[lang=en]{font-family:Georgia,serif;border-top:1px solid #d7dfd1;padding-top:14px}.training-explanation small{font-size:14px;color:#75836e}
 .training-footer{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 0;border-top:1px solid #ccd6c8;background:#fcfdf9;position:sticky;bottom:0;z-index:2}
 .training-footer>div{display:flex;gap:6px}.training-footer button{border:1px solid #c2cdbd;background:#f7faf4;padding:8px 10px}.training-footer .training-continue{background:#416e57;color:white!important;border-color:#416e57}
 .training-complete{text-align:center;padding:28px 8px}.training-complete>svg{width:40px!important;height:40px!important;color:#548166}.training-complete button,.training-self button{border:1px solid #b8c9b5;background:#f0f5e9;padding:10px 16px;margin:6px}.training-self{display:flex;gap:10px}
@@ -62,3 +60,15 @@
 @container study (max-width:520px){.training-options{grid-template-columns:1fr}.training-footer{flex-wrap:wrap}.training-footer .training-continue{flex:1}}
 @media(max-width:760px){#englishView[data-training=true]>.review-guide{display:none}#englishView[data-training=true] .english-head{margin-bottom:4px}#englishView[data-training=true] .english-head h2{font-size:18px}#englishView[data-training=true] .english-head p{display:none}#englishView[data-training=true] .word-layout-toolbar{padding:4px 0}.training-head{gap:6px;font-size:12px}.training-tabs button{padding:6px 9px!important}.training-card{padding-top:18px}.training-word-row h3{font-size:36px}.training-options button{padding:12px;min-height:48px!important}.training-footer{bottom:0;flex-wrap:wrap}.training-footer .training-continue{flex:1}.training-explanation{min-height:140px}.training-explanation p{font-size:18px}}
 @media(max-width:360px){.training-head>span{font-size:11px}.training-card{padding-top:12px}.training-ipa{margin:6px 0 8px}.training-options{gap:8px}.training-options button{padding:9px 11px;min-height:42px!important}.training-footer{gap:8px}.training-footer button{padding:6px 8px;font-size:13px!important}}
+@media(min-width:761px){
+  #wordTraining .training-comparison .training-right{justify-content:center;text-align:center;min-height:70px;font-size:19px}
+  #wordTraining .training-comparison .training-right>span{flex:0 1 auto}
+  #wordTraining.training-compared .training-footer>.training-continue{display:none}
+}
+@media(max-width:760px){
+  #wordTraining .training-explanation{min-height:0}
+  #wordTraining .training-comparison .training-result{font-size:11px}
+  #wordTraining.training-answered{padding-bottom:84px}
+  #wordTraining .training-footer{position:static;flex-wrap:wrap}
+  #wordTraining .training-footer>.training-continue{position:fixed;left:16px;right:16px;bottom:calc(72px + env(safe-area-inset-bottom));width:calc(100% - 32px);min-height:56px!important;font-size:18px!important;z-index:13;box-shadow:0 3px #b7c8b4,0 0 0 8px #fcfdf9}
+}

@@ -25,7 +25,7 @@ const data={selectedCourses:[{name:'Synthetic',teacher:'Test',room:'C102',day:1,
     const open=async()=>{await p.evaluate(()=>{DuskMedia.drawPraise=()=>false;});await p.locator('button[data-atelier-view="englishView"]').click();await p.locator('[data-word-layout="training"]').click();};
     await open();
     const word=()=>p.locator('.training-word-row h3').textContent();
-    const click=a=>p.locator(`#wordTraining [data-training="${a}"]`).last().click();
+    const click=a=>p.locator(`#wordTraining [data-training="${a}"]:visible:enabled`).last().click();
     const answer=async correct=>{const index=await p.evaluate(correct=>englishProgress.trainingV1.options.findIndex(x=>x.correct===correct),correct);await p.locator(`#wordTraining [data-option="${index}"]`).click();};
     const first=await word();
     assert.equal(await p.locator('.training-options button').count(),4);

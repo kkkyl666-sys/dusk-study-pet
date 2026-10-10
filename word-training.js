@@ -21,7 +21,6 @@
     const left=mobile?0:Math.max(0,rect.left),right=mobile?innerWidth:Math.min(innerWidth,rect.right);
     const width=Math.max(0,right-left),height=Math.max(0,bottom-top),compact=height<320;
     Object.assign(sceneElement.style,{left:left+'px',top:top+'px',width:width+'px',height:height+'px'});
-    sceneElement.style.setProperty('--scene-art-size',Math.max(0,Math.min(width-24,height-(compact?100:150)))+'px');
     sceneElement.classList.toggle('training-scene-compact',compact);
   }
   function endScene() {
@@ -44,7 +43,7 @@
     document.body.append(sceneElement);layoutScene();
     paneWasInert=scenePane.inert;scenePane.inert=true;scenePane.classList.add('training-pane-hidden');
     const skip=sceneElement.querySelector('.training-scene-skip');
-    const finish=()=>{endScene();if(!document.querySelector('dialog[open]'))root.querySelector('[data-training="continue"]')?.focus({preventScroll:true});resumeTimer();};
+    const finish=()=>{endScene();if(!document.querySelector('dialog[open]'))[...root.querySelectorAll('[data-training="continue"]')].find(b=>b.getClientRects().length&&!b.disabled)?.focus({preventScroll:true});resumeTimer();};
     skip.onclick=finish;skip.focus({preventScroll:true});refreshIcons();
     sceneTimer=setTimeout(finish,kind==='praise'?2000:1000);
   }
@@ -173,6 +172,7 @@
     const done=s.events.filter(e=>e.track===s.track&&!e.retry).length;
     const heading=`<header class="training-head"><div class="training-tabs"><button type="button" data-training="new" aria-pressed="${s.track==='new'}">新词</button><button type="button" data-training="review" aria-pressed="${s.track==='review'}">复习 <small>${pendingReviewWords().length}</small></button></div><span>${historical?'已答记录':item?.retry?'错词再练':`已处理 ${done} · 剩余 ${remaining}`}</span>${button('settings','sliders-horizontal','练习设置')}</header>`;
     if (!w) {
+      root.classList.remove('training-answered','training-compared');
       root.innerHTML=heading+`<div class="training-complete"><i data-lucide="circle-check"></i><h3>${s.track==='new'?'今日新词已完成':'今日复习已完成'}</h3><p>${s.retries.some(r=>!r.queued)?'错词已安排明天加练，不占新词额度。':'今天的努力，已经收进手账。'}</p>${s.track==='new'?completionQuoteHtml(lessonForToday()):''}<button type="button" data-training="${s.track==='new'?'review':'new'}">${s.track==='new'?'去复习':'看新词'}</button>${button('previous','chevron-left','上一个单词',!history(s).length)}${button('undo','undo-2','撤销上一次作答',!s.undo.length)}</div>`;
       refreshIcons(); return;
     }
@@ -187,15 +187,20 @@
       const wrong=feedback.selectedMeaning!==w.meaning;
       const saved=feedback.answerOptions||(!historical&&s.options[0]?.forId===w.id?s.options:null);
       const options=Array.isArray(saved)&&saved.length<=4&&saved.every(o=>o&&typeof o.meaning==='string'&&o.meaning.length<=300&&typeof o.correct==='boolean')?saved:[{meaning:w.meaning,correct:true},...(wrong?[{meaning:feedback.selectedMeaning,correct:false}]:[])];
-      answers=`<div class="training-options training-comparison">${options.map((o,i)=>{
-        const selected=o.meaning===feedback.selectedMeaning,visible=selected||o.correct;
-        return `<button type="button" class="${visible?o.correct?'training-right':'training-wrong':'training-slot-hidden'}" ${selected&&!historical?'data-training="continue" title="看懂了，继续"':'disabled'} ${visible?'':'aria-hidden="true"'}><small>${'ABCD'[i]}</small><span>${esc(o.meaning)}</span><small class="training-result">${visible?icon(o.correct?'check':'x')+(o.correct?'正确':'你选的'):''}</small>${selected&&!historical?`<span class="training-inline-continue">继续 ${icon('arrow-right')}</span>`:''}</button>`;
+      answers=`<div class="training-options training-comparison">${options.map((o,i)=>({...o,letter:'ABCD'[i]})).filter(o=>o.correct||o.meaning===feedback.selectedMeaning).sort((a,b)=>Number(b.correct)-Number(a.correct)).map(o=>{
+        return `<button type="button" class="${o.correct?'training-right':'training-wrong'}" ${o.correct&&!historical?'data-training="continue" title="看懂了，继续"':'disabled'}><small>${o.letter}</small><span>${esc(o.meaning)}</span><small class="training-result">${icon(o.correct?'check':'x')+(o.correct?'正确答案':'你选的')}</small></button>`;
       }).join('')}</div>`;
     }
     const status=feedback ? historical ? '已答记录 · 浏览不改进度' : feedback.success ? item.retry?'再练答对 · 明天仍会复习':'答对了' : feedback.help?'已看提示 · 明天加练':'没关系，明天加练' : '选出正确释义';
     root.innerHTML=heading+`<article class="training-card" data-pos="${esc(w.pos)}"><div class="training-word-row"><h3>${esc(w.word)}</h3><button type="button" data-pronounce-word="${esc(w.word)}" title="播放英式发音" aria-label="播放英式发音">${icon('volume-2')}</button></div><p class="training-ipa">${esc(w.phonetic||'')}</p><div class="training-prompt" role="status">${status}</div>${compare?answers:''}${explanation?`<div class="training-explanation">${compare?'':`<p><small>${esc(w.pos)}</small> ${esc(w.meaning)}</p>`}<p lang="en">${esc(exampleForWord(w))}</p></div>`:''}${compare?'':answers}</article><footer class="training-footer"><div>${button('previous','chevron-left','上一个单词',historical?browsing===0:!history(s).length)}${button('next','chevron-right',feedback?'下一个单词':'请先作答，再看下一个',!feedback)}<button type="button" data-training="details">词条 ${icon('book-open')}</button>${button('undo','undo-2','撤销上一次作答',!s.undo.length)}</div>${feedback&&!historical?`<button type="button" class="training-continue" data-training="continue">${feedback.success&&s.auto?'0.8 秒后继续':'看懂了，继续'} ${icon('arrow-right')}</button>`:historical?'<button type="button" data-training="return">回到当前单词</button>':''}</footer>`;
-    refreshIcons(); resumeTimer();
+    root.classList.toggle('training-answered',!!feedback);
+    root.classList.toggle('training-compared',!!compare);
+    updateContinueTargets();refreshIcons(); resumeTimer();
   }
+  function updateContinueTargets() {
+    root.querySelectorAll('.training-comparison [data-training="continue"]').forEach(b=>{b.disabled=matchMedia('(max-width:760px)').matches;});
+  }
+  matchMedia('(max-width:760px)').addEventListener('change',updateContinueTargets);
   function showDetails(s,w) {
     if (browsing===null && !s.feedback) { s.hint=true; saveEnglish(); }
     clearTimeout(timer);

@@ -57,13 +57,14 @@ const fixture={selectedCourses:[{name:'Test',teacher:'Test',room:'T1',day:0,peri
      await p.locator('.training-scene-skip').click();
     }
    }else if(mode==='cancel'){
-    await p.locator('.training-footer [data-training="continue"]').click();release();await p.waitForTimeout(100);
+    await p.clock.runFor(251);
+    await p.locator('[data-training="continue"]:visible:enabled').first().click();release();await p.waitForTimeout(100);
     assert.equal(await p.locator('.training-scene').count(),0,'late image must not interrupt next word');
    }else{
     await p.clock.runFor(5100);release();await p.waitForTimeout(100);
     assert.equal(await p.locator('.training-scene').count(),0,'failed/late image never hides answer');
     assert.equal(await p.locator('.training-wrong').isVisible(),true);
-    assert.equal(await p.locator('.training-footer [data-training="continue"]').isEnabled(),true);
+    assert.equal(await p.locator('[data-training="continue"]:visible:enabled').count()>0,true);
    }
    assert.equal(await p.locator('.atelier-main-content').evaluate(el=>el.inert),false);
    assert.deepEqual(errors,[]);await c.close();
