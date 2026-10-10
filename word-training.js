@@ -7,24 +7,11 @@
   view.append(root);
   const preference = appStorageKey('dusk-word-training-layout-v1');
   let enabled = localStorage.getItem(preference) !== 'reference';
-  let timer, browsing = null, revealed = false;
-  let sceneTimer, sceneKey, sceneRequest=0, sceneImage, imageJob, sceneElement;
+  let timer, browsing = null, revealed = false, gradedAt=0;
+  let sceneTimer, sceneKey, sceneRequest=0, sceneElement;
   const scenePane=view.closest('.atelier-main-content');
   let paneWasInert=false;
-  function prepareSceneImage() {
-    if(sceneImage?.complete&&sceneImage.naturalWidth)return Promise.resolve(sceneImage);
-    if(imageJob)return imageJob;
-    imageJob=new Promise(resolve=>{
-      const img=new Image();img.decoding='async';img.fetchPriority='high';let finished=false;
-      const finish=value=>{if(finished)return;finished=true;clearTimeout(timeout);img.onload=img.onerror=null;if(value)sceneImage=value;imageJob=null;resolve(value);};
-      const timeout=setTimeout(()=>finish(null),5000);
-      img.onload=async()=>{try{await img.decode();finish(img);}catch{finish(null);}};
-      img.onerror=()=>finish(null);img.src='assets/dusk-sword.webp';
-    });
-    return imageJob;
-  }
-  prepareSceneImage();
-  const sceneLines=['哼，心思又飘到画外了？','下笔倒快，看清了么？','莫不是闭着眼选的？'];
+  DuskMedia.prepare('assets/dusk-sword.webp');
   function layoutScene() {
     if(!sceneElement)return;
     const mobile=matchMedia('(max-width:760px)').matches;
@@ -42,20 +29,22 @@
     sceneKey=null;
     if(sceneElement){sceneElement.remove();sceneElement=null;scenePane.classList.remove('training-pane-hidden');scenePane.inert=paneWasInert;}
   }
-  async function startScene(serial) {
+  async function startScene(serial,kind='anger') {
     if (document.hidden || currentViewId()!=='englishView') return;
+    clearTimeout(timer);
     const request=++sceneRequest;
     sceneKey=`${englishStart}:${englishDayIndex()}:${serial}:${englishProgress.trainingV1.feedback.id}`;
-    const image=await prepareSceneImage();
+    const image=await DuskMedia.scene(kind);
     if(request!==sceneRequest)return;
-    if(!image||document.hidden||currentViewId()!=='englishView'||document.querySelector('dialog[open]')){endScene();return;}
+    if(!image||document.hidden||currentViewId()!=='englishView'||document.querySelector('dialog[open]')){endScene();resumeTimer();return;}
     sceneElement=document.createElement('section');sceneElement.className='training-scene';sceneElement.setAttribute('aria-label','夕的错答提醒');
-    sceneElement.innerHTML=`<button type="button" class="training-scene-skip" title="跳过动作，查看答案" aria-label="跳过动作，查看答案">${icon('skip-forward')}</button><div class="training-scene-art"></div><p class="training-scene-name">夕</p><p class="training-scene-line" role="status">${sceneLines[(serial-1)%sceneLines.length]}</p>`;
-    image.alt='夕提剑回望';sceneElement.querySelector('.training-scene-art').append(image);
+    sceneElement.dataset.kind=kind;sceneElement.setAttribute('aria-label',kind==='anger'?'夕的错答提醒':'夕的夸奖');
+    sceneElement.innerHTML=`<button type="button" class="training-scene-skip" title="跳过动作，查看答案" aria-label="跳过动作，查看答案">${icon('skip-forward')}</button><div class="training-scene-art"></div><p class="training-scene-name">夕</p><p class="training-scene-line" role="status">${DuskMedia.line(kind)}</p>`;
+    image.alt=kind==='anger'?'夕的错答提醒':'夕的夸奖';sceneElement.querySelector('.training-scene-art').append(image);
     document.body.append(sceneElement);layoutScene();
     paneWasInert=scenePane.inert;scenePane.inert=true;scenePane.classList.add('training-pane-hidden');
     const skip=sceneElement.querySelector('.training-scene-skip');
-    const finish=()=>{endScene();if(!document.querySelector('dialog[open]'))root.querySelector('[data-training="continue"]')?.focus({preventScroll:true});};
+    const finish=()=>{endScene();if(!document.querySelector('dialog[open]'))root.querySelector('[data-training="continue"]')?.focus({preventScroll:true});resumeTimer();};
     skip.onclick=finish;skip.focus({preventScroll:true});refreshIcons();
     sceneTimer=setTimeout(finish,1000);
   }
@@ -72,13 +61,14 @@
     return englishLessons[day] && wordsFromLesson(englishLessons[day], day).find(w => w.id === id);
   }
   function valid(s, nested=false) {
-    const items=a=>Array.isArray(a)&&a.length<=800&&a.every(x=>x&&typeof x.id==='string'&&lookup(x.id)&&(x.selectedMeaning===undefined||(typeof x.selectedMeaning==='string'&&x.selectedMeaning.length<=300)));
+    const options=a=>Array.isArray(a)&&a.length<=4&&a.every(o=>o&&typeof o.meaning==='string'&&o.meaning.length<=300&&typeof o.correct==='boolean'&&lookup(o.forId));
+    const items=a=>Array.isArray(a)&&a.length<=800&&a.every(x=>x&&typeof x.id==='string'&&lookup(x.id)&&(x.selectedMeaning===undefined||(typeof x.selectedMeaning==='string'&&x.selectedMeaning.length<=300))&&(x.answerOptions===undefined||options(x.answerOptions)));
     return !!s && s.version===1 && typeof s.key==='string' && s.key.length<100 && ['new','review'].includes(s.track)
       && ['choice','recall'].includes(s.mode) && typeof s.auto==='boolean' && Number.isInteger(s.serial) && s.serial>=0 && s.serial<=10000
       && items(s.queues?.new) && items(s.queues?.review) && items(s.events) && items(s.retries)
       && s.retries.every(x=>Number.isInteger(x.after)&&['new','review'].includes(x.track))
-      && (!s.feedback || (lookup(s.feedback.id)&&['new','review'].includes(s.feedback.track)&&typeof s.feedback.success==='boolean'))
-      && Array.isArray(s.options) && s.options.length<=4 && s.options.every(o=>o&&typeof o.meaning==='string'&&o.meaning.length<=300&&typeof o.correct==='boolean'&&lookup(o.forId))
+      && (!s.feedback || (items([s.feedback])&&['new','review'].includes(s.feedback.track)&&typeof s.feedback.success==='boolean'))
+      && options(s.options)
       && Array.isArray(s.undo) && s.undo.length<=(nested?0:5) && s.undo.every(u=>u&&lookup(u.id)&&u.marks&&valid(u.previous,true));
   }
   window.validateWordTrainingState=valid;
@@ -130,14 +120,14 @@
   }
   function resumeTimer() {
     clearTimeout(timer);
-    if (!enabled || currentViewId()!=='englishView') return;
+    if (!enabled || sceneKey || currentViewId()!=='englishView') return;
     const s=state();
     if (enabled && browsing===null && s.feedback?.success && s.auto && !document.hidden && !document.querySelector('dialog[open]') && currentViewId()==='englishView') {
       const key=s.key, id=s.feedback.id;
       timer=setTimeout(() => {
         const live=state();
         if (enabled && live.key===key && live.feedback?.id===id && browsing===null && !document.hidden && !document.querySelector('dialog[open]') && currentViewId()==='englishView') advance();
-      },2000);
+      },800);
     }
   }
   function grade(raw, selectedMeaning) {
@@ -154,7 +144,7 @@
     }
     if (!success && !item.retry && !s.retries.some(r => r.id===item.id)) s.retries.push({id:item.id,track:s.track,after:s.serial+3,queued:false});
     s.feedback={...item,raw,success,help:s.hint,track:s.track};
-    if (typeof selectedMeaning==='string') s.feedback.selectedMeaning=selectedMeaning;
+    if (typeof selectedMeaning==='string') {s.feedback.selectedMeaning=selectedMeaning;s.feedback.answerOptions=clone(s.options);}
     s.events.push(clone(s.feedback));
     s.undo.push({previous,marks,id:item.id}); s.undo=s.undo.slice(-5);
     // A successful in-session retry intentionally leaves tomorrow's forgotten mark intact.
@@ -164,8 +154,9 @@
       for (const k of ['remembered','forgotten']) { englishProgress[k] ||= {}; if (marks[k]===undefined) delete englishProgress[k][item.id]; else englishProgress[k][item.id]=marks[k]; }
       showActionToast('未能保存，请保留页面并导出备份'); render(); return;
     }
-    revealed=true; refresh();
+    gradedAt=performance.now();revealed=true; refresh();
     if (raw===false && typeof selectedMeaning==='string') startScene(s.serial);
+    else if(success&&typeof selectedMeaning==='string'&&DuskMedia.drawPraise())startScene(s.serial,'praise');
   }
   function render() {
     // A queued view observer may render again after grading; keep this one-shot scene alive.
@@ -194,10 +185,15 @@
     const compare=feedback && typeof feedback.selectedMeaning==='string';
     if (compare) {
       const wrong=feedback.selectedMeaning!==w.meaning;
-      answers=`<div class="training-options training-comparison"><button type="button" class="training-right" disabled><span>${esc(w.meaning)}</span><small>${icon('check')}正确答案</small></button>${wrong?`<button type="button" class="training-wrong" disabled><span>${esc(feedback.selectedMeaning)}</span><small>${icon('x')}你选的</small></button>`:''}</div>`;
+      const saved=feedback.answerOptions||(!historical&&s.options[0]?.forId===w.id?s.options:null);
+      const options=Array.isArray(saved)&&saved.length<=4&&saved.every(o=>o&&typeof o.meaning==='string'&&o.meaning.length<=300&&typeof o.correct==='boolean')?saved:[{meaning:w.meaning,correct:true},...(wrong?[{meaning:feedback.selectedMeaning,correct:false}]:[])];
+      answers=`<div class="training-options training-comparison">${options.map((o,i)=>{
+        const selected=o.meaning===feedback.selectedMeaning,visible=selected||o.correct;
+        return `<button type="button" class="${visible?o.correct?'training-right':'training-wrong':'training-slot-hidden'}" ${selected&&!historical?'data-training="continue" title="看懂了，继续"':'disabled'} ${visible?'':'aria-hidden="true"'}><small>${'ABCD'[i]}</small><span>${esc(o.meaning)}</span><small class="training-result">${visible?icon(o.correct?'check':'x')+(o.correct?'正确':'你选的'):''}</small>${selected&&!historical?`<span class="training-inline-continue">继续 ${icon('arrow-right')}</span>`:''}</button>`;
+      }).join('')}</div>`;
     }
     const status=feedback ? historical ? '已答记录 · 浏览不改进度' : feedback.success ? item.retry?'再练答对 · 明天仍会复习':'答对了' : feedback.help?'已看提示 · 明天加练':'没关系，明天加练' : '选出正确释义';
-    root.innerHTML=heading+`<article class="training-card" data-pos="${esc(w.pos)}"><div class="training-word-row"><h3>${esc(w.word)}</h3><button type="button" data-pronounce-word="${esc(w.word)}" title="播放英式发音" aria-label="播放英式发音">${icon('volume-2')}</button></div><p class="training-ipa">${esc(w.phonetic||'')}</p><div class="training-prompt" role="status">${status}</div>${compare?answers:''}${explanation?`<div class="training-explanation">${compare?'':`<p><small>${esc(w.pos)}</small> ${esc(w.meaning)}</p>`}<p lang="en">${esc(exampleForWord(w))}</p></div>`:''}${compare?'':answers}</article><footer class="training-footer"><div>${button('previous','chevron-left','上一个单词',historical?browsing===0:!history(s).length)}${button('next','chevron-right',feedback?'下一个单词':'请先作答，再看下一个',!feedback)}<button type="button" data-training="details">词条 ${icon('book-open')}</button>${button('undo','undo-2','撤销上一次作答',!s.undo.length)}</div>${feedback&&!historical?`<button type="button" class="training-continue" data-training="continue">${feedback.success&&s.auto?'2 秒后继续':'看懂了，继续'} ${icon('arrow-right')}</button>`:historical?'<button type="button" data-training="return">回到当前单词</button>':''}</footer>`;
+    root.innerHTML=heading+`<article class="training-card" data-pos="${esc(w.pos)}"><div class="training-word-row"><h3>${esc(w.word)}</h3><button type="button" data-pronounce-word="${esc(w.word)}" title="播放英式发音" aria-label="播放英式发音">${icon('volume-2')}</button></div><p class="training-ipa">${esc(w.phonetic||'')}</p><div class="training-prompt" role="status">${status}</div>${compare?answers:''}${explanation?`<div class="training-explanation">${compare?'':`<p><small>${esc(w.pos)}</small> ${esc(w.meaning)}</p>`}<p lang="en">${esc(exampleForWord(w))}</p></div>`:''}${compare?'':answers}</article><footer class="training-footer"><div>${button('previous','chevron-left','上一个单词',historical?browsing===0:!history(s).length)}${button('next','chevron-right',feedback?'下一个单词':'请先作答，再看下一个',!feedback)}<button type="button" data-training="details">词条 ${icon('book-open')}</button>${button('undo','undo-2','撤销上一次作答',!s.undo.length)}</div>${feedback&&!historical?`<button type="button" class="training-continue" data-training="continue">${feedback.success&&s.auto?'0.8 秒后继续':'看懂了，继续'} ${icon('arrow-right')}</button>`:historical?'<button type="button" data-training="return">回到当前单词</button>':''}</footer>`;
     refreshIcons(); resumeTimer();
   }
   function showDetails(s,w) {
@@ -211,6 +207,7 @@
   root.addEventListener('click',event => {
     const b=event.target.closest('[data-training]'); if (!b || b.disabled) return;
     const s=state(), action=b.dataset.training, item=current(s), w=item&&lookup(item.id);
+    if(action==='continue'&&b.closest('.training-options')&&(event.detail>1||performance.now()-gradedAt<250))return;
     clearTimeout(timer);
     if (action==='answer') {const option=s.options[Number(b.dataset.option)];if(option)return grade(option.correct===true,option.meaning);return;}
     if (action==='unknown') return grade(false);
@@ -237,7 +234,7 @@
     }
     render();
   });
-  document.body.insertAdjacentHTML('beforeend',`<dialog class="quick-dialog" id="trainingSettings"><header><h2>练习设置</h2><button type="button" id="trainingSettingsClose" aria-label="关闭">${icon('x')}</button></header><form class="quick-form" id="trainingSettingsForm"><label>练习方式<select id="trainingMode"><option value="choice">选义练习</option><option value="recall">回想自评</option></select></label><label><input type="checkbox" id="trainingAuto">答对后 2 秒自动继续</label><button type="submit">保存</button></form></dialog>`);
+  document.body.insertAdjacentHTML('beforeend',`<dialog class="quick-dialog" id="trainingSettings"><header><h2>练习设置</h2><button type="button" id="trainingSettingsClose" aria-label="关闭">${icon('x')}</button></header><form class="quick-form" id="trainingSettingsForm"><label>练习方式<select id="trainingMode"><option value="choice">选义练习</option><option value="recall">回想自评</option></select></label><label><input type="checkbox" id="trainingAuto">答对后 0.8 秒自动继续</label><button type="submit">保存</button></form></dialog>`);
   document.querySelector('#trainingSettingsClose').onclick=closeQuickDialog;
   document.querySelector('#trainingSettings').addEventListener('cancel',e=>{e.preventDefault();closeQuickDialog();});
   document.querySelector('#trainingSettingsForm').onsubmit=e=>{e.preventDefault();const s=state();s.mode=document.querySelector('#trainingMode').value;s.auto=document.querySelector('#trainingAuto').checked;saveEnglish();closeQuickDialog();render();};
