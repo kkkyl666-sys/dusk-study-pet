@@ -312,6 +312,7 @@
     home.append(body);
     document.querySelector('#atelierPlannerBody').innerHTML=`<div class="home-summary">${summary}</div><div class="agenda-heading"><h2>今天安排</h2><button type="button" class="atelier-icon" data-planner-add aria-label="添加日程">${icon('plus')}</button></div><div class="home-agenda">${agendaHTML()}</div>`;
     document.querySelector('#homeSyncNote').textContent=syncStatus.textContent;
+    window.DuskDaily?.renderHome();
     refreshIcons();
   }
   [home,planner].forEach(el=>{
