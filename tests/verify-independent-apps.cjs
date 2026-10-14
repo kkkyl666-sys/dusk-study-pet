@@ -62,7 +62,10 @@ const fixture={selectedCourses:[{name:'独立缓存测试',teacher:'测试',room
     assert(!requests.slice(marker).some(r=>r.edition==='personal'));
     assert.equal(await s.evaluate(()=>localStorage.getItem('dusk-study-pet-full-state-v1')),oldPersonal);
     await s.locator('.atelier-nav [data-atelier-view=englishView]').click();
-    await s.locator('[data-word-layout=list]').click();
+    await s.locator('#studyOverview [data-study=tools]').click();
+    await s.locator('#studyToolsBody [data-study=modes]').click();
+    await s.locator('#studyToolsBody [data-study=mode-list]').click();
+    await s.waitForFunction(()=>!history.state?.petDialog);
     await s.locator('#newWords .word-card:visible [data-remember-word]').first().click();
     const shareState=await s.evaluate(()=>localStorage.getItem('dusk-demo-v1:dusk-study-pet-full-state-v1'));
     assert.equal(await s.evaluate(()=>localStorage.getItem('dusk-study-pet-full-state-v1')),oldPersonal);

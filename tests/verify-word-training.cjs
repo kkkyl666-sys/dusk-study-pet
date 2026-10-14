@@ -22,10 +22,10 @@ const data={selectedCourses:[{name:'Synthetic',teacher:'Test',room:'C102',day:1,
     await p.clock.pauseAt(new Date('2026-10-08T12:00:01+08:00'));
     const ready=()=>p.waitForFunction(()=>days.length===7&&!restoringResume&&document.querySelector('#wordTraining'));
     await p.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});await ready();
-    const open=async()=>{await p.evaluate(()=>{DuskMedia.drawPraise=()=>false;});await p.locator('button[data-atelier-view="englishView"]').click();await p.locator('[data-word-layout="training"]').click();};
+    const open=async()=>{await p.evaluate(()=>{DuskMedia.drawPraise=()=>false;activateView('englishView');document.querySelector('[data-word-layout="training"]').click();DuskStudyUI.enter();});};
     await open();
     const word=()=>p.locator('.training-word-row h3').textContent();
-    const click=a=>p.locator(`#wordTraining [data-training="${a}"]:visible:enabled`).last().click();
+    const click=a=>['new','review','details','settings'].includes(a)?p.evaluate(a=>document.querySelector(`#wordTraining [data-training="${a}"]`).click(),a):p.locator(`#wordTraining [data-training="${a}"]:visible:enabled`).last().click();
     const answer=async correct=>{const index=await p.evaluate(correct=>englishProgress.trainingV1.options.findIndex(x=>x.correct===correct),correct);await p.locator(`#wordTraining [data-option="${index}"]`).click();};
     const first=await word();
     assert.equal(await p.locator('.training-options button').count(),4);
@@ -59,12 +59,12 @@ const data={selectedCourses:[{name:'Synthetic',teacher:'Test',room:'C102',day:1,
     await answer(true);
     assert.equal(await p.evaluate(id=>englishProgress.forgotten[id]===englishDayIndex(),firstId),true,'retry keeps tomorrow');
     await click('undo');assert.equal(await p.locator('.training-options button').count(),4);await answer(true);await click('next');
-    await click('details');assert.equal(await p.locator('#wordDetailDialog').isVisible(),true);await p.locator('#trainingReturn').click();await answer(true);assert.match(await p.locator('.training-prompt').textContent(),/已看提示/);await click('next');
+    await click('details');assert.equal(await p.locator('#wordDetailDialog').isVisible(),true);await p.locator('#wordDetailDialog [data-quick-close]').click();await p.waitForFunction(()=>!history.state?.petDialog);await answer(true);assert.match(await p.locator('.training-prompt').textContent(),/答对了/);await click('next');
     await click('review');const before=await p.evaluate(()=>pendingReviewWords().length);await answer(true);assert.equal(await p.evaluate(()=>pendingReviewWords().length),before-1);await click('undo');assert.equal(await p.evaluate(()=>pendingReviewWords().length),before);
     // Snapshot restoration exercises the existing cloud/backup boundary without real network writes.
     await p.evaluate(()=>{const s=structuredClone(snapshot());applySnapshot(s);});
     assert.equal(await p.locator('.training-options button').count(),4);
-    await p.locator('[data-word-layout="list"]').click();assert.equal(await p.locator('#wordTraining').isVisible(),false);assert.equal(await p.locator('#newWords .word-card').count(),10);await p.locator('[data-word-layout="training"]').click();
+    await p.evaluate(()=>document.querySelector('[data-word-layout="list"]').click());assert.equal(await p.locator('#wordTraining').isVisible(),false);assert.equal(await p.locator('#newWords .word-card').count(),10);await p.evaluate(()=>document.querySelector('[data-word-layout="training"]').click());
     for(const size of [{width:320,height:700},{width:390,height:844},{width:1440,height:1000}]){
       await p.setViewportSize(size);await open();await p.screenshot({path:path.resolve(__dirname,`../../方案预览/正式背词-${edition}-${size.width}.png`)});
       assert.equal(await p.locator('.training-options button').count(),4);
@@ -88,7 +88,7 @@ const data={selectedCourses:[{name:'Synthetic',teacher:'Test',room:'C102',day:1,
     assert.equal(await p.evaluate(()=>englishProgress.trainingV1.events.length),0,'no fabricated old quiz scores');
     await answer(true);await click('details');await p.clock.runFor(2500);
     assert.equal(await p.evaluate(()=>englishProgress.trainingV1.feedback!==null),true,'dialog pauses auto');
-    await p.locator('#trainingReturn').click();await p.clock.runFor(850);
+    await p.locator('#wordDetailDialog [data-quick-close]').click();await p.waitForFunction(()=>!history.state?.petDialog);await p.clock.runFor(850);
     assert.equal(await p.evaluate(()=>englishProgress.trainingV1.feedback===null),true,'closing resumes auto');
     for(let i=0;i<8;i++){await answer(true);await click('next');}
     assert.match(await p.locator('.training-complete').textContent(),/今日新词已完成/);
@@ -105,7 +105,7 @@ const data={selectedCourses:[{name:'Synthetic',teacher:'Test',room:'C102',day:1,
       await f.locator('#shareWelcomeSkip').click();await f.waitForFunction(()=>!history.state?.petDialog);
       await f.locator('button[data-atelier-view="englishView"]').click();
       const calendar=await f.evaluate(()=>JSON.stringify({selectedCourses,days,appointments}));
-      await f.locator('#shareStudyDay').click();await f.locator('#shareStudyDayValue').selectOption('7');
+      await f.evaluate(()=>document.querySelector('#shareStudyDay').click());await f.locator('#shareStudyDayValue').selectOption('7');
       await f.locator('#shareStudyDayForm button[type="submit"]').click();
       assert.equal(await f.evaluate(()=>englishDayIndex()),6);
       assert.equal(await f.evaluate(()=>englishAdjustments.at(-1).from),1);
@@ -114,7 +114,7 @@ const data={selectedCourses:[{name:'Synthetic',teacher:'Test',room:'C102',day:1,
       assert.equal(await f.evaluate(()=>englishDayIndex()),6,'chosen day survives reload');
       await f.clock.setSystemTime(new Date('2026-10-09T04:00:00+08:00'));await f.evaluate(()=>refreshCalendarNavigation());
       assert.equal(await f.evaluate(()=>englishDayIndex()),7,'next study day continues in fixed order');
-      await f.locator('button[data-atelier-view="englishView"]').click();await f.locator('#shareStudyDay').click();
+      await f.locator('button[data-atelier-view="englishView"]').click();await f.evaluate(()=>document.querySelector('#shareStudyDay').click());
       await f.locator('#shareStudyDayValue').selectOption('35');await f.locator('#shareStudyDayForm button[type="submit"]').click();
       assert.equal(await f.evaluate(()=>lessonForToday().index),34);
       await fresh.close();

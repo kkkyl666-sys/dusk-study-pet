@@ -204,16 +204,18 @@ function closeQuickDialog() {
 document.querySelectorAll("[data-quick-close]").forEach(b => b.onclick=closeQuickDialog);
 document.querySelectorAll(".quick-dialog").forEach(d => d.addEventListener("cancel",e => {e.preventDefault();closeQuickDialog();}));
 window.addEventListener("popstate",() => { if(activeDialog){activeDialog.close();activeDialog=null;} });
-document.querySelector("#englishView").addEventListener("click",event => {
-  const button=event.target.closest("[data-word-detail]"); if(!button)return;
-  const word=[...lessonForToday().words,...reviewWords()].find(w=>w.id===button.dataset.wordDetail); if(!word)return;
+function openWordExample(word) {
   saveResumePoint(word.id);
   const term=encodeURIComponent(word.word);
-  document.querySelector("#wordDetailBody").innerHTML=`<p class="dictionary-term">${escapeHtml(word.word)}</p><p>${escapeHtml(word.phonetic)} · ${escapeHtml(word.pos)}</p><p>${escapeHtml(word.meaning)}</p><p>${escapeHtml(exampleForWord(word))}</p><div class="dictionary-links"><a href="https://youdao.com/result?lang=en&word=${term}" target="_blank" rel="noopener noreferrer">有道详细释义</a><a href="https://dictionary.cambridge.org/dictionary/english-chinese-simplified/${term}" target="_blank" rel="noopener noreferrer">剑桥词典</a><a href="https://www.merriam-webster.com/dictionary/${term}" target="_blank" rel="noopener noreferrer">韦氏词典</a><button type="button" class="utility-button" id="copyDetailWord"><i data-lucide="copy"></i>复制</button></div><button type="button" class="mode utility-button" id="returnToStudy"><i data-lucide="arrow-left"></i>继续背词</button>`;
-  document.querySelector("#returnToStudy").onclick=closeQuickDialog;
-  document.querySelector("#copyDetailWord").onclick=()=>{if(navigator.clipboard?.writeText)navigator.clipboard.writeText(word.word).then(()=>showActionToast("已复制 "+word.word)).catch(()=>window.prompt("复制单词",word.word));else window.prompt("复制单词",word.word);};
+  document.querySelector("#wordDetailDialog").dataset.studyLookup='true';
+  document.querySelector("#wordDetailBody").innerHTML=`<p class="dictionary-term">${escapeHtml(word.word)}</p><p class="study-detail-example" lang="en">${escapeHtml(exampleForWord(word))}</p><div class="dictionary-links"><a href="https://youdao.com/result?lang=en&word=${term}" target="_blank" rel="noopener noreferrer">有道词条 <i data-lucide="external-link"></i></a></div>`;
   document.querySelectorAll("#wordDetailBody a").forEach(a=>a.onclick=()=>{saveResumePoint(word.id);persistLocalState();});
   openQuickDialog("wordDetailDialog");
+}
+document.querySelector("#wordDetailDialog").addEventListener('click',event=>{if(!event.target.closest('button,a,input,select,textarea,label,[role=button]'))closeQuickDialog();});
+document.querySelector("#englishView").addEventListener("click",event => {
+  const button=event.target.closest("[data-word-detail]"); if(!button)return;
+  const word=[...lessonForToday().words,...reviewWords()].find(w=>w.id===button.dataset.wordDetail); if(word)openWordExample(word);
 });
 
 const oldVisibleTasks=visibleTasks;

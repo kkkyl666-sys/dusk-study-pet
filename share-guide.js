@@ -32,8 +32,8 @@
     updates:['又添了几笔','趁你不在，又添了几笔。有空看看。',`<p class="share-guide-version">分享版 ${version} · 2026年10月14日</p><ul><li>当天课程与手动日程分开，新增随手速记、数字时间和长按菜单。</li><li>例句可按需提示，生词本可收藏、查词、补充并额外复习。</li><li>奖励可点击关闭，结束后不直接翻下一题，减少误触。</li></ul><p>分享版仍只存本机，完整备份包含生词本；没有连接制作者的个人云档，也不自动清空你的原计划。帮助入口常驻，更新只在首页简短提示，关闭后不再主动提醒。</p><p>这是个人制作的非商业体验版，不代表角色相关作品官方产品。</p><button type="button" class="mode utility-button" data-guide-action="journal">查看开发关卡册 ${icon('arrow-up-right')}</button>`]
   };
   sections.words[1]='一点一滴，记牢些就好。';
-  sections.words[2]=sections.words[2].replace('35天主题词库，每天10个新词','1000个去重新词，默认每天10词、100天完成；“每日词数”可按5递增，从当天开始生效').replace('原350词','1000词库');
-  sections.updates[2]=`<p class="share-guide-version">分享版 ${version} · 2026年10月14日</p><ul><li>扩充到1000个不重复词条，保留旧350词编号。</li><li>每日词数支持5至100词、步进5，从当天起接续，已完成记录保留。</li><li>内置英式音标与例句，提供在线英式发音及有道查词链接；声音需要网络或设备英音语音。</li></ul><p>分享版仍只存本机，完整备份包含词数配置。词表属于第三方六级备考辅助，不是官方完整词表；例句和发音质量仍欢迎反馈。</p><button type="button" class="mode utility-button" data-guide-action="journal">查看开发关卡册 ${icon('arrow-up-right')}</button>`;
+  sections.words[2]='<p>1000个去重新词，默认每天10词、100天完成。单词页先显示学习概览，点“继续学习”进入专注背词，返回概览不丢当前题目。</p><p>点大字单词查看英文例句，再点“有道词条”才外跳；详情不显示中文释义，查看不计为明天加练。点普通文字或空白返回原题。</p><p>“学习工具”中可调整每日5至100词、每次5词，从当天生效；也可切换一词/列表、选择天数、回档、导出和练习设置。生词本与额外复习保留，不占每日新词额度。</p><p>答错对照正确答案，再继续。奖励图片可点关闭，结束后留在当前答案；手机底部大按钮继续，电脑可点正确答案。</p><p>凌晨4点换日，忘记的词次日加练。发音需要网络或设备英式语音。分享版保存到本机，换设备请下载并恢复完整备份。</p><button type="button" class="speak utility-button" data-guide-action="words">翻开今日词页</button>';
+  sections.updates[2]=`<p class="share-guide-version">分享版 ${version} · 2026年10月14日</p><ul><li>学习概览与专注答题分开，管理操作集中到学习工具。</li><li>移除例句提示按钮；点单词只看英文例句和有道入口，查看不计为加练。</li><li>词数、生词本、显示模式、回档、导出和备份保留，原学习记录不重置。</li></ul><p>1000词库、凌晨4点换日与在线英式发音不变。分享版仍只存本机，换设备请下载完整备份。</p><button type="button" class="mode utility-button" data-guide-action="journal">查看开发关卡册 ${icon('arrow-up-right')}</button>`;
   function showChapter(tab='start') {
     if(!sections[tab])tab='start';
     welcomeMode=false;remember({welcomeDismissed:true});
