@@ -72,3 +72,7 @@
   #wordTraining .training-footer{position:static;flex-wrap:wrap}
   #wordTraining .training-footer>.training-continue{position:fixed;left:16px;right:16px;bottom:calc(72px + env(safe-area-inset-bottom));width:calc(100% - 32px);min-height:56px!important;font-size:18px!important;z-index:13;box-shadow:0 3px #b7c8b4,0 0 0 8px #fcfdf9}
 }
+/* End-of-scene gestures must not reach the next question. */
+.training-release-guard{position:fixed;inset:0;z-index:2147483000;background:transparent;touch-action:none}
+.training-example-hint{font-family:Georgia,serif;font-size:20px;line-height:1.65;padding:12px 0;margin:12px 0;border-block:1px solid #cbd8c5;overflow-wrap:anywhere}
+.training-hint-button{display:flex;align-items:center;gap:8px;margin:12px 0}

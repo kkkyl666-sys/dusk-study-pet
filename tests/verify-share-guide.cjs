@@ -54,7 +54,7 @@ const fixture={selectedCourses:[{name:'测试课程',teacher:'测试教师',room
     assert.equal(await p.locator('#shareUpdateNotice').count(),0);assert.equal(await p.locator('#shareGuideDialog[open]').count(),0);
     await p.locator('.atelier-nav [data-atelier-view="homeView"]').click();await p.locator('#shareUpdateNotice').waitFor();
     await p.locator('[data-share-update="read"]').click();await p.locator('#shareGuideDialog').waitFor();
-    assert.match(await p.locator('#shareGuideBody').innerText(),/2026.10.10.5/);
+    assert((await p.locator('#shareGuideBody').innerText()).includes(require('../app-targets.cjs').share.version));
     await p.locator('#shareGuideClose').click();await p.waitForFunction(()=>!history.state?.petDialog);await p.reload();assert.equal(await p.locator('#shareUpdateNotice').count(),0);
     await ctx.close();
     const blocked=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});

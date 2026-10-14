@@ -49,8 +49,11 @@ const fixture={selectedCourses:[
     const editDialog=edition==='share'?'#shareCourseDialog':'#courseQuickDialog',roomInput=edition==='share'?'#shareCourseRoom':'#quickCourseRoom';
     await p.locator('#atelierCourseEdit').click();await p.locator(editDialog).waitFor({state:'visible'});
     assert.equal(await p.locator(roomInput).inputValue(),'C101/C301');await p.locator(editDialog+' [data-quick-close]').first().click();
-    await p.evaluate(()=>scrollTo(0,0));await p.waitForFunction(()=>document.querySelector('#atelierMobileScene').naturalWidth>0);
-    await p.mouse.click(width/2,100);await p.locator('#atelierPaintingDialog').waitFor({state:'visible'});
+    await p.waitForFunction(()=>!history.state?.petDialog);
+    await p.evaluate(()=>{document.querySelector('.atelier-main-content').scrollTop=0;scrollTo(0,0);});await p.clock.runFor(60);await p.waitForFunction(()=>document.querySelector('#atelierMobileScene').naturalWidth>0);
+    // Focus restoration can scroll the reading surface; expose the picture deliberately.
+    await p.locator('#atelierDrawer').click();
+    await p.mouse.click(width/2,100);await p.screenshot({path:path.resolve(__dirname,`../../方案预览/画卷回归检查-${edition}-${width}.png`)});await p.locator('#atelierPaintingDialog').waitFor({state:'visible'});
     await p.locator('.painting-art img').click();assert(await p.locator('#atelierPaintingDialog').isHidden());
     if(width===390)await p.screenshot({path:path.resolve(__dirname,`../../方案预览/正式S2-A-${edition}.png`),fullPage:true});
    }

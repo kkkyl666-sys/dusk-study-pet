@@ -76,6 +76,7 @@ const data={selectedCourses:[{name:'Synthetic',teacher:'Test',room:'C102',day:1,
       await p.screenshot({path:path.resolve(__dirname,`../../方案预览/正式错答-${edition}-${size.width}.png`)});
       await p.locator('.training-scene-skip').click();
       assert.equal(await p.locator('.training-scene').count(),0,'skip reveals comparison');
+      await p.clock.runFor(451);
       await click('undo');
     }
     await p.clock.setSystemTime(new Date('2026-10-09T03:59:00+08:00'));await p.evaluate(()=>refreshCalendarNavigation());assert.equal(await p.evaluate(()=>englishProgress.trainingV1.key.endsWith(':20')),true);

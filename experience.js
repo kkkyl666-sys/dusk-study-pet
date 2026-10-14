@@ -4,6 +4,59 @@ const resumeKey = appStorageKey("dusk-study-pet-resume-v1");
 const editorDraftKey = appStorageKey("dusk-study-pet-draft-v1");
 let appointments = [];
 let englishAdjustments = [];
+let dailyFlow = {version:1,presetsCleared:false,words:[]};
+const cloudBaseKey=appStorageKey('dusk-cloud-base-v1');
+const dailyRecoveryKey=appStorageKey('dusk-daily-recovery-v1');
+const presetRecoveryKey=appStorageKey('dusk-preset-recovery-v1');
+function validateDailyAppointments(items) {
+  if(items==null)return [];
+  if(!Array.isArray(items)||items.length>2000)throw new Error('日程格式不正确，本机存档保留');
+  const ids=new Set();return items.map(t=>{if(!t||typeof t.id!=='string'||t.id.length>160||ids.has(t.id)||typeof t.title!=='string'||t.title.length>120||!/^\d{4}-\d{2}-\d{2}$/.test(t.date)||!['once','weekly'].includes(t.repeat)||typeof t.note!=='string'||t.note.length>500||!['start','end'].every(k=>typeof t[k]==='string'&&(!t[k]||/^([01]\d|2[0-3]):[0-5]\d$/.test(t[k])))||(t.end&&(!t.start||t.end<=t.start)))throw new Error('日程内容格式不正确，本机存档保留');ids.add(t.id);return structuredClone(t);});
+}
+function validateDailyFlow(value) {
+  if(value==null)return {version:1,presetsCleared:false,words:[]};
+  if(value.version!==1||!Array.isArray(value.words)||value.words.length>1000)throw new Error('生词本格式不正确，原存档保留');
+  const ids=new Set();
+  const words=value.words.map(w=>{
+    if(!w||typeof w.id!=='string'||w.id.length>100||ids.has(w.id)||typeof w.term!=='string'||w.term.length>80||typeof w.meaning!=='string'||w.meaning.length>300||typeof w.example!=='string'||w.example.length>500||!['n.','v.','adj.','adv.','phrase'].includes(w.pos)||typeof w.enroll!=='boolean'||!Number.isInteger(w.stage)||w.stage<0||w.stage>5||!/^\d{4}-\d{2}-\d{2}$/.test(w.due)||!Number.isFinite(w.updatedAt)||w.updatedAt<0)throw new Error('生词内容格式不正确，原存档保留');
+    ids.add(w.id);return {id:w.id,term:w.term,meaning:w.meaning,example:w.example,pos:w.pos,enroll:w.enroll,stage:w.stage,due:w.due,updatedAt:w.updatedAt,deleted:w.deleted===true,conflict:w.conflict===true};
+  });
+  return {version:1,presetsCleared:value.presetsCleared===true,words};
+}
+function rememberRecovery(data,reason) {
+  const list=readStored(dailyRecoveryKey)||[];
+  list.push({at:new Date().toISOString(),reason,data:structuredClone(data)});
+  if(reason.includes('周计划')&&!localStorage.getItem(presetRecoveryKey))localStorage.setItem(presetRecoveryKey,JSON.stringify(list.at(-1)));
+  localStorage.setItem(dailyRecoveryKey,JSON.stringify(list.slice(-3)));
+}
+function mergeDailyRecords(base,local,remote) {
+  const map=new Map(remote.map(x=>[x.id,structuredClone(x)])),before=new Map((base||[]).map(x=>[x.id,x]));
+  for(const item of local){
+    const old=before.get(item.id),other=map.get(item.id),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+    if(!other){map.set(item.id,structuredClone(item));continue;}
+    if(same(item,other)||same(item,old))continue;
+    if(same(other,old)){map.set(item.id,structuredClone(item));continue;}
+    // Keep both edits for explicit review; never silently replace a competing item.
+    const main=item.deleted?item:other.deleted?other:item,copy=main===item?other:item;
+    map.set(item.id,structuredClone(main));
+    const id='conflict-'+item.id.slice(0,50)+'-'+String(copy.updatedAt||0)+'-'+Array.from(JSON.stringify(copy)).reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,0);
+    if(!map.has(id))map.set(id,{...structuredClone(copy),id,conflict:true});
+  }
+  return [...map.values()];
+}
+function reconcileDailySnapshot(remote) {
+  const base=readStored(cloudBaseKey),local=snapshot(),flow=validateDailyFlow(remote.dailyFlow);
+  const preferLocal=selectedCourses.length&&stateUpdatedAt>Number(remote.changedAt||0);
+  if(!preferLocal&&base&&stateUpdatedAt>Number(base.changedAt||0))rememberRecovery(local,'应用较新云档前保留本机修改');
+  const result={...(preferLocal?local:remote),appointments:mergeDailyRecords(base?.appointments,appointments,validateDailyAppointments(remote.appointments)),dailyFlow:{...flow,presetsCleared:flow.presetsCleared||dailyFlow.presetsCleared,words:mergeDailyRecords(base?.dailyFlow?.words,dailyFlow.words,flow.words)}};
+  if(!isDemo&&!preferLocal&&result.dailyFlow.presetsCleared&&!remote.dailyFlow?.presetsCleared){
+    if(result.days.some(d=>d.tasks.some(t=>!t[4]||String(t[4]).startsWith('weekly-'))))rememberRecovery(result,'移除旧云档中的预排周计划前');
+    result.days=result.days.map(d=>({...d,tasks:d.tasks.filter(t=>t[4]&&!String(t[4]).startsWith('weekly-'))}));
+  }
+  if(JSON.stringify(result.appointments)!==JSON.stringify(remote.appointments||[])||JSON.stringify(result.dailyFlow)!==JSON.stringify(remote.dailyFlow||{})||JSON.stringify(result.days)!==JSON.stringify(remote.days))result.changedAt=Math.max(Date.now(),stateUpdatedAt+1,Number(remote.changedAt||0)+1);
+  return result;
+}
+function confirmCloudBaseline(data){try{localStorage.setItem(cloudBaseKey,JSON.stringify(data));}catch{updateSyncStatus('已同步，但本机恢复空间不足，请导出备份');}}
 let committedState = null;
 let activeDialog = null;
 let editedItem = null;
@@ -17,7 +70,7 @@ function dateISO(date) { return `${date.getFullYear()}-${String(date.getMonth()+
 function selectedDateISO(dayIndex = activeDay) { const date = new Date(semesterStart); date.setDate(date.getDate() + (activeWeek()-1)*7 + dayIndex); return dateISO(date); }
 function validSnapshot(data) { return !!data && Array.isArray(data.selectedCourses) && (isDemo || data.selectedCourses.length > 0) && data.selectedCourses.every(c => c && typeof c.name === "string" && Array.isArray(c.weeks) && Array.isArray(c.periods)) && Array.isArray(data.days) && data.days.length === 7 && data.days.every(d => d && Array.isArray(d.tasks)); }
 const originalSnapshot = snapshot;
-snapshot = function() { return { ...originalSnapshot(), appointments, englishAdjustments, ...(isDemo ? {shareCalendar:dateISO(semesterStart)} : {}) }; };
+snapshot = function() { return { ...originalSnapshot(), appointments, englishAdjustments, dailyFlow, ...(isDemo ? {shareCalendar:dateISO(semesterStart)} : {}) }; };
 function ensureTaskIds() {
   days.forEach((day, dayIndex) => day.tasks.forEach((task,index) => {
     if (task[4]) return;
@@ -84,11 +137,13 @@ function refreshCalendarNavigation(force = false) {
 const oldApplySnapshot = applySnapshot;
 applySnapshot = function(data) {
   if (!validSnapshot(data)) throw new Error("云端课表格式异常，本机记录保留");
+  const safeAppointments=validateDailyAppointments(data.appointments),safeFlow=validateDailyFlow(data.dailyFlow);
   if (!selectedCourses.length && stateUpdatedAt > Number(data.changedAt || 0)) {
     data = { ...data, changedAt:stateUpdatedAt, checked:{...data.checked,...checked}, englishProgress:{...data.englishProgress,...englishProgress,
       remembered:{...data.englishProgress?.remembered,...englishProgress.remembered}, forgotten:{...data.englishProgress?.forgotten,...englishProgress.forgotten}} };
   }
-  appointments = Array.isArray(data.appointments) ? data.appointments : [];
+  appointments = safeAppointments;
+  dailyFlow=safeFlow;
   englishAdjustments = Array.isArray(data.englishAdjustments) ? data.englishAdjustments : [];
   if (isDemo && /^\d{4}-\d{2}-\d{2}$/.test(data.shareCalendar || "")) {
     const start = new Date(data.shareCalendar + "T00:00:00");
@@ -97,6 +152,11 @@ applySnapshot = function(data) {
   const scroll = window.scrollY;
   oldApplySnapshot(data);
   ensureTaskIds();
+  if(!isDemo&&!dailyFlow.presetsCleared&&selectedCourses.length&&days.some(d=>d.tasks.some(t=>String(t[4]).startsWith('weekly-')))){
+    rememberRecovery(snapshot(),'清理旧预排周计划前');
+    days.forEach(d=>d.tasks=d.tasks.filter(t=>!String(t[4]).startsWith('weekly-')));
+    dailyFlow.presetsCleared=true;stateUpdatedAt=Math.max(Date.now(),stateUpdatedAt+1);persistLocalState();startApp();
+  }else if(!isDemo&&selectedCourses.length&&!dailyFlow.presetsCleared){dailyFlow.presetsCleared=true;persistLocalState();}
   window.scrollTo(0,scroll);
 };
 const oldPullOrPush = pullOrPushCloudState;
@@ -168,7 +228,7 @@ checkId=function(dayIndex,task,taskIndex){
 };
 visibleTasks=function(day) {
   const date=selectedDateISO();
-  const added=appointments.filter(t=>t.repeat==="weekly" ? date>=t.date && new Date(t.date+"T12:00:00").getDay()===new Date(date+"T12:00:00").getDay() : t.date===date)
+  const added=appointments.filter(t=>!t.deleted&&(t.repeat==="weekly" ? date>=t.date && new Date(t.date+"T12:00:00").getDay()===new Date(date+"T12:00:00").getDay() : t.date===date))
     .map(t=>[`${t.start ? t.start+(t.end?"-"+t.end:"")+" " : ""}${t.title}`,"规划",t.note||"",null,t.id]);
   return [...oldVisibleTasks(day),...added];
 };
@@ -179,11 +239,11 @@ renderTasks=function() {
   document.querySelectorAll("#tasks .task").forEach((row,index) => {
     const task=list[index]; if(!task || String(task[4]).startsWith("english-"))return;
     const button=document.createElement("button");button.type="button";button.className="task-edit-button utility-button";button.title="修改这项任务";button.setAttribute("aria-label","修改这项任务");button.innerHTML='<i data-lucide="pencil"></i>';
-    button.onclick=e=>{e.preventDefault();e.stopPropagation();openTaskEditor(task[4]);};row.classList.add("task-editable");row.append(button);
+    button.dataset.dailyTask=task[4];button.onclick=e=>{e.preventDefault();e.stopPropagation();openTaskEditor(task[4]);};row.classList.add("task-editable");row.append(button);
   });refreshIcons();
 };
 function renderAppointments() {
-  document.querySelector("#appointmentEditor").innerHTML=appointments.map(t=>`<button type="button" class="mode" data-appointment-edit="${escapeHtml(t.id)}">${escapeHtml(t.date)} · ${escapeHtml(t.title)}${t.repeat==="weekly"?" · 每周重复":""}</button>`).join("")||'<p class="tip">暂无日期日程</p>';
+  document.querySelector("#appointmentEditor").innerHTML=appointments.filter(t=>!t.deleted).map(t=>`<button type="button" class="mode" data-appointment-edit="${escapeHtml(t.id)}">${escapeHtml(t.date)} · ${escapeHtml(t.title)}${t.repeat==="weekly"?" · 每周重复":""}${t.conflict?' · 两端修改待核对':''}</button>`).join("")||'<p class="tip">暂无日期日程</p>';
   document.querySelectorAll("[data-appointment-edit]").forEach(b=>b.onclick=()=>openTaskEditor(b.dataset.appointmentEdit));
 }
 const oldRenderEditor=renderEditor;
@@ -229,7 +289,7 @@ document.querySelector("#taskQuickForm").onsubmit=e=>{
   if(!title || (end&&!start) || (end&&end<=start)){document.querySelector("#quickTaskError").textContent="请填写任务；结束时间应晚于开始时间。";return;}
   const before={appointments:structuredClone(appointments),days:structuredClone(days)},weekly=editedItem?findWeeklyTask(editedItem):null;
   if(weekly){weekly.task[0]=`${start?start+(end?"-"+end:"")+" ":""}${title}`;weekly.task[2]=note;}
-  else{const task={id:editedItem||crypto.randomUUID(),title,date,start,end,note,repeat:document.querySelector("#quickTaskRepeat").value};const i=appointments.findIndex(t=>t.id===editedItem);if(i>=0)appointments[i]=task;else appointments.push(task);}
+  else{const task={id:editedItem||crypto.randomUUID(),title,date,start,end,note,repeat:document.querySelector("#quickTaskRepeat").value,updatedAt:Date.now(),deleted:false};const i=appointments.findIndex(t=>t.id===editedItem);if(i>=0)appointments[i]=task;else appointments.push(task);}
   if (!commitQuickChange("日程已保存"+(date!==selectedDateISO()?" · "+date:""),()=>{appointments=before.appointments;days=before.days;})) {
     appointments=before.appointments;days=before.days;document.querySelector("#quickTaskError").textContent="未保存，请保留当前草稿，释放本机空间后重试。";return;
   }
@@ -237,7 +297,7 @@ document.querySelector("#taskQuickForm").onsubmit=e=>{
 };
 document.querySelector("#quickTaskDelete").onclick=()=>{
   const before={appointments:structuredClone(appointments),days:structuredClone(days)},weekly=findWeeklyTask(editedItem);
-  if(weekly)days[weekly.day].tasks.splice(weekly.index,1);else appointments=appointments.filter(t=>t.id!==editedItem);
+  if(weekly)days[weekly.day].tasks.splice(weekly.index,1);else appointments=appointments.map(t=>t.id===editedItem?{...t,deleted:true,updatedAt:Date.now()}:t);
   if (!commitQuickChange("已删除日程",()=>{appointments=before.appointments;days=before.days;})) { appointments=before.appointments;days=before.days;return; }
   closeQuickDialog();
 };

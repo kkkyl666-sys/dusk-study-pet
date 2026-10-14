@@ -18,7 +18,7 @@ const fixture={selectedCourses:[{name:'Test',day:0,periods:[1,2],weeks:[[1,17]],
    await p.clock.install({time:new Date('2026-10-10T12:00:00+08:00')});await p.clock.pauseAt(new Date('2026-10-10T12:00:01+08:00'));
    await p.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>days.length===7&&!restoringResume&&window.DuskMedia&&document.querySelector('#wordTraining'));console.log(edition,'ready');
    const savedDraw=await p.evaluate(()=>{window.testDraw=DuskMedia.drawPraise;DuskMedia.drawPraise=()=>false;return true;});assert(savedDraw);
-   const next=()=>p.locator('[data-training="continue"]:visible:enabled').first().click();
+   const next=async()=>{if(await p.locator('.training-release-guard').count())await p.clock.runFor(451);await p.locator('[data-training="continue"]:visible:enabled').first().click();};
    const answer=async correct=>{const i=await p.evaluate(v=>englishProgress.trainingV1.options.findIndex(x=>x.correct===v),correct);await p.locator(`[data-option="${i}"]`).click();};
    await p.locator('button[data-atelier-view="englishView"]').click();
    await answer(false);await p.clock.runFor(2000);assert.equal(await p.locator('.training-scene').count(),0);
@@ -61,7 +61,7 @@ const fixture={selectedCourses:[{name:'Test',day:0,periods:[1,2],weeks:[[1,17]],
    assert.equal(await p.evaluate(()=>localStorage.getItem(appStorageKey('dusk-praise-chance-v1'))),'15','hit resets to base');
    assert(await p.locator('.training-scene img').evaluate(x=>x.complete&&x.naturalWidth>0),'first praise decoded');
    const id=await p.evaluate(()=>englishProgress.trainingV1.feedback.id);await p.clock.runFor(1999);assert.equal(await p.locator('.training-scene').count(),1);assert.equal(await p.locator('.training-scene').evaluate(n=>getComputedStyle(n).animationDuration),'2s');assert.equal(await p.evaluate(()=>englishProgress.trainingV1.feedback.id),id,'no auto behind praise');
-   await p.clock.runFor(1);await p.clock.runFor(799);assert.equal(await p.evaluate(()=>englishProgress.trainingV1.feedback.id),id);await p.clock.runFor(1);assert.equal(await p.evaluate(()=>englishProgress.trainingV1.feedback),null);
+   await p.clock.runFor(1);await p.clock.runFor(1200);assert.equal(await p.evaluate(()=>englishProgress.trainingV1.feedback.id),id,'praise returns to comparison, never auto advances');await next();assert.equal(await p.evaluate(()=>englishProgress.trainingV1.feedback),null);
    // Every media resource can be decoded; random functions visit different members, never adjacent duplicates.
    const stats=await p.evaluate(async()=>{
     const all=[...DuskMedia.art.anger,...DuskMedia.art.praise,...DuskMedia.art.wallpapers.flatMap(x=>[x.file,x.preview])];

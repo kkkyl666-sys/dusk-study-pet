@@ -181,7 +181,7 @@
     if (!Array.isArray(items) || items.length > 1000) throw Error('日程内容格式不正确');
     const appts = items.map(t => {
       if (!t || typeof t.id !== 'string' || typeof t.title !== 'string' || t.title.length > 120 || !dateValid(t.date) || !['once','weekly'].includes(t.repeat) || !['start','end'].every(k => typeof t[k] === 'string' && (!t[k] || /^([01]\d|2[0-3]):[0-5]\d$/.test(t[k]))) || (t.end && (!t.start || t.end <= t.start)) || typeof t.note !== 'string' || t.note.length > 500) throw Error('日程内容格式不正确');
-      return {id:t.id,title:t.title,date:t.date,start:t.start,end:t.end,note:t.note,repeat:t.repeat};
+      return {id:t.id,title:t.title,date:t.date,start:t.start,end:t.end,note:t.note,repeat:t.repeat,deleted:t.deleted===true,conflict:t.conflict===true,...(Number.isFinite(t.updatedAt)?{updatedAt:t.updatedAt}:{})};
     });
     if (d.shareCalendar && (!dateValid(d.shareCalendar) || new Date(d.shareCalendar+'T00:00:00').getDay() !== 1)) throw Error('开学日期不正确');
     if (!dateValid(d.englishStart) || !d.englishProgress || typeof d.englishProgress !== 'object' || Array.isArray(d.englishProgress) || !d.checked || typeof d.checked !== 'object' || Array.isArray(d.checked) || !Array.isArray(d.englishAdjustments || [])) throw Error('背词进度格式不正确');
@@ -198,7 +198,7 @@
     }
     if(Object.values(d.checked).some(value=>typeof value!=='boolean'))throw Error('打勾记录不正确');
     // Only study fields are imported; credentials and arbitrary browser keys never are.
-    return {selectedCourses:courses,days:d.days.map(day=>({name:day.name,date:typeof day.date==='string'?day.date:'',line:day.line,tasks:structuredClone(day.tasks)})),appointments:appts,checked:structuredClone(d.checked),englishProgress:learner,englishStart:d.englishStart,englishAdjustments:structuredClone(d.englishAdjustments || []),shareCalendar:d.shareCalendar || '2026-09-07',mode:'full',changedAt:Date.now()};
+    return {selectedCourses:courses,days:d.days.map(day=>({name:day.name,date:typeof day.date==='string'?day.date:'',line:day.line,tasks:structuredClone(day.tasks)})),appointments:appts,dailyFlow:validateDailyFlow(d.dailyFlow),checked:structuredClone(d.checked),englishProgress:learner,englishStart:d.englishStart,englishAdjustments:structuredClone(d.englishAdjustments || []),shareCalendar:d.shareCalendar || '2026-09-07',mode:'full',changedAt:Date.now()};
   }
   $('#shareRestore').onclick = () => {if(readyToEdit()) $('#shareBackupFile').click();};
   $('#shareBackupFile').onchange = async e => {
@@ -216,6 +216,7 @@
     localStorage.setItem(localSnapshotKey, JSON.stringify(data));
     selectedCourses=structuredClone(data.selectedCourses);days=structuredClone(data.days);
     appointments=structuredClone(data.appointments || []);checked=structuredClone(data.checked);
+    dailyFlow=validateDailyFlow(data.dailyFlow);
     englishProgress=structuredClone(data.englishProgress);englishStart=data.englishStart;
     englishAdjustments=structuredClone(data.englishAdjustments || []);
     semesterStart.setTime(new Date(data.shareCalendar+'T00:00:00').getTime());stateUpdatedAt=data.changedAt;

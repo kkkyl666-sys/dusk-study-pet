@@ -24,14 +24,14 @@ const mime = {'.html':'text/html', '.js':'text/javascript', '.css':'text/css', '
   if (server) await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = baseURL || `http://127.0.0.1:${server.address().port}/`;
   const browser = await chromium.launch({channel:'msedge', headless:true});
-  let writes = 0, runtimeRequests = 0, cloudMode = 'ok';
+  let writes = 0, runtimeRequests = 0, cloudMode = 'ok', currentRemote=structuredClone(fixture);
   try {
     const context = await browser.newContext({viewport:{width:390, height:844}, timezoneId:'Asia/Shanghai', serviceWorkers:'block'});
     await context.route('**/experience.js*', route => {runtimeRequests++; return route.abort();});
     await context.route('**/rest/v1/rpc/*', route => {
-      if (route.request().url().endsWith('/pet_save')) {writes++; return route.fulfill({json:null});}
+      if (route.request().url().endsWith('/pet_save')) {writes++;currentRemote=route.request().postDataJSON().new_payload; return route.fulfill({json:null});}
       if (cloudMode === 'offline') return route.abort();
-      return route.fulfill({json:cloudMode === 'invalid' ? {selectedCourses:[]} : fixture});
+      return route.fulfill({json:cloudMode === 'invalid' ? {selectedCourses:[]} : currentRemote});
     });
     await context.addInitScript(() => localStorage.setItem('dusk-study-pet-access-code-v1','test-only'));
     const page = await context.newPage(), errors = [];
@@ -50,14 +50,15 @@ const mime = {'.html':'text/html', '.js':'text/javascript', '.css':'text/css', '
     assert.equal(await page.evaluate(() => document.body.classList.contains('private-wait')),false);
     assert.equal(await page.evaluate(() => selectedCourses[0].name),fixture.selectedCourses[0].name);
     assert.equal(await page.evaluate(() => checked['test-completion']),true);
+    const baselineWrites=writes;
     await page.locator('[data-home-sync]').click(); await page.locator('#syncNowBtn').click();
     await page.waitForFunction(() => !document.querySelector('#syncDialog').open);
-    assert.equal(writes,0);
+    assert.equal(writes,baselineWrites);
     cloudMode = 'invalid';
     await page.locator('[data-home-sync]').click(); await page.locator('#syncNowBtn').click();
     await page.waitForFunction(() => document.querySelector('#syncDialogText').textContent.includes('本机存档仍保留'));
     assert.equal(await page.evaluate(() => selectedCourses[0].name),fixture.selectedCourses[0].name);
-    assert.equal(writes,0);
+    assert.equal(writes,baselineWrites);
     await page.locator('#syncCloseBtn').click();
     cloudMode = 'offline'; await page.reload();
     await page.waitForFunction(() => days.length === 7 && !restoringResume);
@@ -66,19 +67,19 @@ const mime = {'.html':'text/html', '.js':'text/javascript', '.css':'text/css', '
     assert.equal(await page.evaluate(() => englishProgress.remembered['test-word']),fixture.englishProgress.remembered['test-word']);
     cloudMode = 'ok'; await page.locator('[data-home-sync]').click(); await page.locator('#syncNowBtn').click();
     await page.waitForFunction(() => !document.querySelector('#syncDialog').open);
-    assert.equal(writes,0); assert.deepEqual(errors,[]);
+    assert.equal(writes,baselineWrites); assert.deepEqual(errors,[]);
     await context.close();
     const fresh = await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
     await fresh.route('**/experience.js*', route => {runtimeRequests++; return route.abort();});
     await fresh.route('**/rest/v1/rpc/*', route => {
-      if(route.request().url().endsWith('/pet_save')) {writes++; return route.fulfill({json:null});}
-      return route.fulfill({json:fixture});
+      if(route.request().url().endsWith('/pet_save')) {writes++;currentRemote=route.request().postDataJSON().new_payload; return route.fulfill({json:null});}
+      return route.fulfill({json:currentRemote});
     });
     const login = await fresh.newPage(); await login.goto(url, {waitUntil:'domcontentloaded'});
     await login.locator('#privateGateLogin').click(); await login.locator('#syncEmail').fill('test-only'); await login.locator('#syncLoginBtn').click();
     await login.waitForFunction(() => !document.body.classList.contains('private-wait') && !document.querySelector('#syncDialog').open);
     assert.equal(await login.evaluate(() => selectedCourses[0].name),fixture.selectedCourses[0].name);
-    assert.equal(runtimeRequests,0); assert.equal(writes,0);
+    assert.equal(runtimeRequests,0); assert.equal(writes,baselineWrites);
     await fresh.close();
     console.log('PASS: cold start, fresh unlock, manual sync, invalid remote rejection, offline local recovery and retry; runtime needs no separate request; no personal cloud writes (cloud mocked).');
   } finally {await browser.close(); if(server) await new Promise(resolve => server.close(resolve));}

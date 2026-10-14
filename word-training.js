@@ -11,6 +11,15 @@
   let sceneTimer, sceneKey, sceneRequest=0, sceneElement;
   const scenePane=view.closest('.atelier-main-content');
   let paneWasInert=false;
+  const hintPreference=appStorageKey('dusk-example-hint-v1');
+  const exampleMode=()=>localStorage.getItem(hintPreference)==='always'?'always':'hint';
+  const pointers=new Set();let guardTimer,guard;
+  function settleGuard(){clearTimeout(guardTimer);if(pointers.size)return;guardTimer=setTimeout(()=>{guard?.remove();guard=null;},450);}
+  document.addEventListener('pointerdown',e=>{if(sceneElement||guard)pointers.add(e.pointerId);},true);
+  for(const type of ['pointerup','pointercancel'])document.addEventListener(type,e=>{pointers.delete(e.pointerId);if(guard)settleGuard();},true);
+  document.addEventListener('click',e=>{if(guard){e.preventDefault();e.stopImmediatePropagation();}},true);
+  window.addEventListener('blur',()=>{pointers.clear();if(guard)settleGuard();});
+  function protectRelease(){guard?.remove();guard=document.createElement('div');guard.className='training-release-guard';document.body.append(guard);settleGuard();}
   const readingOpen=()=>document.body.dataset.mobileDrawer!=='collapsed';
   DuskMedia.prepare('assets/dusk-sword.webp');
   function layoutScene() {
@@ -44,8 +53,9 @@
     document.body.append(sceneElement);layoutScene();
     paneWasInert=scenePane.inert;scenePane.inert=true;scenePane.classList.add('training-pane-hidden');
     const skip=sceneElement.querySelector('.training-scene-skip');
-    const finish=()=>{endScene();if(!document.querySelector('dialog[open]'))[...root.querySelectorAll('[data-training="continue"]')].find(b=>b.getClientRects().length&&!b.disabled)?.focus({preventScroll:true});resumeTimer();};
-    skip.onclick=finish;skip.focus({preventScroll:true});refreshIcons();
+    const finish=()=>{if(!sceneElement)return;protectRelease();endScene();const s=state();if(s.feedback){s.feedback.sceneReviewed=true;try{saveEnglish();}catch{showActionToast('反馈已关闭，请导出备份保留进度');}}render();if(!document.querySelector('dialog[open]'))[...root.querySelectorAll('[data-training="continue"]')].find(b=>b.getClientRects().length&&!b.disabled)?.focus({preventScroll:true});};
+    sceneElement.addEventListener('pointerup',e=>{e.preventDefault();e.stopPropagation();finish();});
+    sceneElement.onclick=e=>{e.preventDefault();e.stopPropagation();finish();};skip.focus({preventScroll:true});refreshIcons();
     sceneTimer=setTimeout(finish,kind==='praise'?2000:1000);
   }
   new ResizeObserver(layoutScene).observe(scenePane);
@@ -122,7 +132,7 @@
     clearTimeout(timer);
     if (!enabled || !readingOpen() || sceneKey || currentViewId()!=='englishView') return;
     const s=state();
-    if (enabled && browsing===null && s.feedback?.success && s.auto && !document.hidden && !document.querySelector('dialog[open]') && currentViewId()==='englishView') {
+    if (enabled && browsing===null && s.feedback?.success && !s.feedback.sceneReviewed && s.auto && !document.hidden && !document.querySelector('dialog[open]') && currentViewId()==='englishView') {
       const key=s.key, id=s.feedback.id;
       timer=setTimeout(() => {
         const live=state();
@@ -135,7 +145,8 @@
     if (!item || s.feedback || browsing!==null) return;
     const previous = clone({...s,undo:[]});
     const marks = {remembered:englishProgress.remembered?.[item.id], forgotten:englishProgress.forgotten?.[item.id]};
-    const success=raw && !s.hint;
+    const help=s.hint||(s.track==='new'&&exampleMode()==='always');
+    const success=raw && !help;
     s.serial++;
     if (!item.retry) {
       englishProgress.remembered ||= {}; englishProgress.forgotten ||= {};
@@ -143,7 +154,7 @@
       else { englishProgress.forgotten[item.id]=englishDayIndex(); delete englishProgress.remembered[item.id]; }
     }
     if (!success && !item.retry && !s.retries.some(r => r.id===item.id)) s.retries.push({id:item.id,track:s.track,after:s.serial+3,queued:false});
-    s.feedback={...item,raw,success,help:s.hint,track:s.track};
+    s.feedback={...item,raw,success,help,track:s.track};
     if (typeof selectedMeaning==='string') {s.feedback.selectedMeaning=selectedMeaning;s.feedback.answerOptions=clone(s.options);}
     s.events.push(clone(s.feedback));
     s.undo.push({previous,marks,id:item.id}); s.undo=s.undo.slice(-5);
@@ -193,7 +204,8 @@
       }).join('')}</div>`;
     }
     const status=feedback ? historical ? '已答记录 · 浏览不改进度' : feedback.success ? item.retry?'再练答对 · 明天仍会复习':'答对了' : feedback.help?'已看提示 · 明天加练':'没关系，明天加练' : '选出正确释义';
-    root.innerHTML=heading+`<article class="training-card" data-pos="${esc(w.pos)}"><div class="training-word-row"><h3>${esc(w.word)}</h3><button type="button" data-pronounce-word="${esc(w.word)}" title="播放英式发音" aria-label="播放英式发音">${icon('volume-2')}</button></div><p class="training-ipa">${esc(w.phonetic||'')}</p><div class="training-prompt" role="status">${status}</div>${compare?answers:''}${explanation?`<div class="training-explanation">${compare?'':`<p><small>${esc(w.pos)}</small> ${esc(w.meaning)}</p>`}<p lang="en">${esc(exampleForWord(w))}</p></div>`:''}${compare?'':answers}</article><footer class="training-footer"><div>${button('previous','chevron-left','上一个单词',historical?browsing===0:!history(s).length)}${button('next','chevron-right',feedback?'下一个单词':'请先作答，再看下一个',!feedback)}<button type="button" data-training="details">词条 ${icon('book-open')}</button>${button('undo','undo-2','撤销上一次作答',!s.undo.length)}</div>${feedback&&!historical?`<button type="button" class="training-continue" data-training="continue">${feedback.success&&s.auto?'0.8 秒后继续':'看懂了，继续'} ${icon('arrow-right')}</button>`:historical?'<button type="button" data-training="return">回到当前单词</button>':''}</footer>`;
+    const exampleHint=!explanation?(s.hint||(s.track==='new'&&exampleMode()==='always')?`<p class="training-example-hint" lang="en">${esc(exampleForWord(w))}</p><small>借助例句回想，稍后再独立认词。</small>`:'<button type="button" class="training-hint-button" data-training="example-hint">'+icon('lightbulb')+' 例句提示</button>'):'';
+    root.innerHTML=heading+`<article class="training-card" data-pos="${esc(w.pos)}"><div class="training-word-row"><h3>${esc(w.word)}</h3><button type="button" data-pronounce-word="${esc(w.word)}" title="播放英式发音" aria-label="播放英式发音">${icon('volume-2')}</button></div><p class="training-ipa">${esc(w.phonetic||'')}</p>${exampleHint}<div class="training-prompt" role="status">${status}</div>${compare?answers:''}${explanation?`<div class="training-explanation">${compare?'':`<p><small>${esc(w.pos)}</small> ${esc(w.meaning)}</p>`}<p lang="en">${esc(exampleForWord(w))}</p></div>`:''}${compare?'':answers}</article><footer class="training-footer"><div>${button('previous','chevron-left','上一个单词',historical?browsing===0:!history(s).length)}${button('next','chevron-right',feedback?'下一个单词':'请先作答，再看下一个',!feedback)}<button type="button" data-training="details">词条 ${icon('book-open')}</button>${button('undo','undo-2','撤销上一次作答',!s.undo.length)}</div>${feedback&&!historical?`<button type="button" class="training-continue" data-training="continue">${feedback.success&&s.auto&&!feedback.sceneReviewed?'0.8 秒后继续':'看懂了，继续'} ${icon('arrow-right')}</button>`:historical?'<button type="button" data-training="return">回到当前单词</button>':''}</footer>`;
     root.classList.toggle('training-answered',!!feedback);
     root.classList.toggle('training-compared',!!compare);
     updateContinueTargets();refreshIcons(); resumeTimer();
@@ -217,6 +229,7 @@
     clearTimeout(timer);
     if (action==='answer') {const option=s.options[Number(b.dataset.option)];if(option)return grade(option.correct===true,option.meaning);return;}
     if (action==='unknown') return grade(false);
+    if (action==='example-hint'&&!s.feedback&&browsing===null){s.hint=true;saveEnglish();render();return;}
     if (action==='recalled') return grade(true);
     if (action==='reveal') { revealed=true; render(); return; }
     if (action==='continue') return advance();
@@ -243,12 +256,14 @@
   document.body.insertAdjacentHTML('beforeend',`<dialog class="quick-dialog" id="trainingSettings"><header><h2>练习设置</h2><button type="button" id="trainingSettingsClose" aria-label="关闭">${icon('x')}</button></header><form class="quick-form" id="trainingSettingsForm"><label>练习方式<select id="trainingMode"><option value="choice">选义练习</option><option value="recall">回想自评</option></select></label><label><input type="checkbox" id="trainingAuto">答对后 0.8 秒自动继续</label><button type="submit">保存</button></form></dialog>`);
   document.querySelector('#trainingSettingsClose').onclick=closeQuickDialog;
   document.querySelector('#trainingSettings').addEventListener('cancel',e=>{e.preventDefault();closeQuickDialog();});
-  document.querySelector('#trainingSettingsForm').onsubmit=e=>{e.preventDefault();const s=state();s.mode=document.querySelector('#trainingMode').value;s.auto=document.querySelector('#trainingAuto').checked;saveEnglish();closeQuickDialog();render();};
+  document.querySelector('#trainingSettingsForm').insertAdjacentHTML('afterbegin','<label>新词例句<select id="trainingExampleMode"><option value="hint">点击提示才显示</option><option value="always">新词直接显示，复习仍隐藏</option></select></label>');
+  document.querySelector('#trainingExampleMode').value=exampleMode();
+  document.querySelector('#trainingSettingsForm').onsubmit=e=>{e.preventDefault();const s=state();s.mode=document.querySelector('#trainingMode').value;s.auto=document.querySelector('#trainingAuto').checked;localStorage.setItem(hintPreference,document.querySelector('#trainingExampleMode').value);saveEnglish();closeQuickDialog();render();};
   const toggle=document.createElement('button'); toggle.type='button';toggle.dataset.wordLayout='training';toggle.title='选义背词';toggle.innerHTML=icon('book-open-check')+'背词';
   view.querySelector('.word-layout-switch').prepend(toggle);
   view.querySelectorAll('[data-word-layout]').forEach(b=>b.addEventListener('click',()=>{enabled=b.dataset.wordLayout==='training';browsing=null;localStorage.setItem(preference,enabled?'training':'reference');render();}));
   const base=renderEnglish; renderEnglish=function(){base();render();};
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)endScene();resumeTimer();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){pointers.clear();if(guard)settleGuard();endScene();}resumeTimer();});
   new MutationObserver(records=>{
     if(!readingOpen()||document.querySelector('dialog[open]'))endScene();
     if(records.some(r=>r.attributeName==='data-atelier-view'))render();

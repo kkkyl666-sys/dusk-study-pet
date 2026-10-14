@@ -32,6 +32,7 @@ const fixture={selectedCourses:[{name:'Test',teacher:'Test',room:'T1',day:0,peri
     assert.equal(await p.locator('.training-scene img').evaluate(img=>img.complete&&img.naturalWidth>0),true,'image decoded before hiding answers');
     await p.clock.runFor(999);assert.equal(await p.locator('.training-scene').count(),1);
     await p.clock.runFor(1);assert.equal(await p.locator('.training-scene').count(),0);
+    await p.clock.runFor(451);
     for(const size of [{width:1440,height:1000},{width:900,height:650},{width:390,height:844},{width:320,height:568}]){
      await p.setViewportSize(size);
      await p.locator('button[data-atelier-view="englishView"]').click();
@@ -55,6 +56,7 @@ const fixture={selectedCourses:[{name:'Test',teacher:'Test',room:'T1',day:0,peri
       await p.evaluate(old=>{const main=document.querySelector('.app main');if(old===null)main.removeAttribute('style');else main.setAttribute('style',old);},oldStyle);
      }
      await p.locator('.training-scene-skip').click();
+     await p.clock.runFor(451);
     }
    }else if(mode==='cancel'){
     await p.clock.runFor(251);

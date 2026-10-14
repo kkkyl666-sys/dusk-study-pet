@@ -329,7 +329,8 @@
   </style>
   <link rel="preload" as="image" href="assets/dusk-pet.webp" fetchpriority="high">
   <link rel="stylesheet" href="atelier.css?v=27">
-  <link rel="stylesheet" href="word-training.css?v=5">
+  <link rel="stylesheet" href="word-training.css?v=6">
+  <link rel="stylesheet" href="daily-flow.css?v=1">
 {{EDITION_STYLES}}
 </head>
 <body>
@@ -1050,13 +1051,16 @@
       const remote = await cloudRpc("pet_unlock", { access_code: accessCode });
       if (editorDirty && !forcePush) { updateSyncStatus("本机有编辑草稿，保存后继续同步"); return; }
       if (!validSnapshot(remote)) throw new Error("云端返回的课表暂不可用；本机存档仍保留，请重试");
-      const remoteChangedAt = Number(remote?.changedAt || 0);
-      if (!forcePush && (!selectedCourses.length || !days.length || remoteChangedAt >= stateUpdatedAt)) {
-        applySnapshot(remote); cacheCommittedState();
-      } else if (selectedCourses.length && days.length) {
-        await cloudRpc("pet_save", { access_code: accessCode, new_payload: snapshot() });
-        cacheCommittedState();
-        startApp();
+      const merged=reconcileDailySnapshot(remote);
+      if (validSnapshot(merged)) {
+        if(forcePush){merged.selectedCourses=structuredClone(selectedCourses);merged.days=structuredClone(days);merged.changedAt=Math.max(Date.now(),stateUpdatedAt+1,Number(remote.changedAt||0)+1);}
+        applySnapshot(merged);cacheCommittedState();
+        const sending=structuredClone(snapshot());
+        if(forcePush||JSON.stringify(sending)!==JSON.stringify(remote)){
+          await cloudRpc("pet_save", { access_code: accessCode, new_payload: sending });
+          confirmCloudBaseline(sending);
+          if(stateUpdatedAt!==sending.changedAt){scheduleCloudSync();updateSyncStatus('本机有新修改，等待继续同步');return;}
+        }else confirmCloudBaseline(remote);
       } else {
         document.body.classList.add("private-wait");
         document.querySelector("#privateGateText").textContent = "课表暂未加载。请重新连接；已有云端数据不会被清空。";
@@ -1125,7 +1129,8 @@
         accessCode = code;
         localStorage.setItem(accessCodeKey, accessCode);
         if (!validSnapshot(remote)) throw new Error("课表暂未加载，请重试");
-        applySnapshot(remote); cacheCommittedState();
+        const merged=reconcileDailySnapshot(remote);applySnapshot(merged);cacheCommittedState();confirmCloudBaseline(remote);
+        if(JSON.stringify(merged)!==JSON.stringify(remote))scheduleCloudSync();
         updateSyncStatus("已解锁并同步");
         syncDialog.close();
       } catch (error) {
@@ -1146,8 +1151,9 @@
   <script src="assets/motion.js" defer></script>
   {{COMPANION_ART}}
   {{COMPANION_RUNTIME}}
-  <script src="atelier.js?v=34"></script>
-  <script src="word-training.js?v=5"></script>
+  <script src="atelier.js?v=35"></script>
+  <script src="word-training.js?v=6"></script>
+  <script src="daily-flow.js?v=1"></script>
 {{EDITION_SCRIPTS}}
 </body>
 </html>
