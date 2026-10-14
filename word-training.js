@@ -67,8 +67,7 @@
   const button = (action, name, label, disabled = false) => `<button type="button" data-training="${action}" title="${label}" aria-label="${label}" ${disabled ? 'disabled' : ''}>${icon(name)}</button>`;
   const clone = value => structuredClone(value);
   function lookup(id) {
-    const day = Number(String(id).split('-')[0]);
-    return englishLessons[day] && wordsFromLesson(englishLessons[day], day).find(w => w.id === id);
+    return StudyPlan.lookup(id);
   }
   function valid(s, nested=false) {
     const options=a=>Array.isArray(a)&&a.length<=4&&a.every(o=>o&&typeof o.meaning==='string'&&o.meaning.length<=300&&typeof o.correct==='boolean'&&lookup(o.forId));
@@ -96,6 +95,9 @@
       // Skip marks made in list mode or another device, but retain this answer's feedback.
       s.queues[track] = s.queues[track].filter(item => lookup(item.id) && (item.retry || !wordHandled(lookup(item.id)) || s.feedback?.id === item.id));
     }
+    const assigned=lessonForToday().words;
+    s.queues.new=s.queues.new.filter(x=>x.retry||x.id===s.feedback?.id||assigned.some(w=>w.id===x.id));
+    for(const w of assigned)if(!wordHandled(w)&&!s.queues.new.some(x=>x.id===w.id)&&s.feedback?.id!==w.id)s.queues.new.push({id:w.id});
     return s;
   }
   function history(s) { return s.events.filter(e => e.track === s.track); }
