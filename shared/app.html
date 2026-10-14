@@ -463,6 +463,7 @@
   </dialog>
   {{BOOTSTRAP}}
   <script src="cet6-35.js"></script>
+  {{STUDY_PLAN_RUNTIME}}
   <script>
     const isDemo = window.PET_DEMO === true;
     function appStorageKey(key) { return isDemo ? `dusk-demo-v1:${key}` : key; }
@@ -560,8 +561,8 @@
       return studyDate;
     }
     function englishDayIndex(now = new Date()) { return Math.max(0, Math.floor((englishStudyDate(now) - localDateStart(englishStart)) / 86400000)); }
-    function wordsFromLesson(lesson, day) { if (lesson.words) return lesson.words.map(item => ({ ...item, id: `${day}-${item.word}` })); return lesson[2].split(",").map(pair => { const [word, meaning] = pair.split("|"); return { word, pos: wordParts[word] || "n.", meaning, id: `${day}-${word}` }; }); }
-    function lessonForToday() { const index = Math.min(englishDayIndex(), englishLessons.length - 1); const lesson = englishLessons[index]; return { index, title: lesson.title || lesson[0], scene: lesson.scene || lesson[1], words: wordsFromLesson(lesson, index) }; }
+    function wordsFromLesson(lesson, day) { if (lesson.words) return lesson.words.map(item => ({ ...item, id: item.id || `${day}-${item.word}` })); return lesson[2].split(",").map(pair => { const [word, meaning] = pair.split("|"); return { word, pos: wordParts[word] || "n.", meaning, id: `${day}-${word}` }; }); }
+    function lessonForToday() { return StudyPlan.lesson(); }
     function exampleForWord(word) {
       if (word.example) return word.example;
       if (word.pos.startsWith("v")) return `Try to use "${word.word}" in your own sentence.`;
@@ -573,6 +574,9 @@
       if (!("speechSynthesis" in window)) return false;
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.lang = "en-GB";
+      const voices=window.speechSynthesis.getVoices(),british=voices.find(v=>v.lang.toLowerCase()==='en-gb');
+      if(voices.length&&!british)return false;
+      if(british)utterance.voice=british;
       utterance.rate = 0.86;
       utterance.pitch = 1;
       window.speechSynthesis.cancel();
@@ -621,7 +625,7 @@
     async function playWordPronunciation(word, button) {
       const originalText = button.textContent;
       const key = word.toLowerCase();
-      const cached = pronunciationCache.get(key);
+      const cached = pronunciationCache.get(key) || StudyPlan.all().find(w=>w.word.toLowerCase()===key);
       if (cached?.audio) {
         try {
           setSoundButton(button, "播", true);
@@ -645,20 +649,12 @@
     function courseDate(dayIndex, week = activeWeek()) { const date = new Date(semesterStart); date.setDate(date.getDate() + (week - 1) * 7 + dayIndex); return `${date.getMonth() + 1}月${date.getDate()}日`; }
     function saveEnglish() { localStorage.setItem(englishStateKey, JSON.stringify(englishProgress)); markStateChanged(); }
     function isReviewDue(wordDay) { const gap = englishDayIndex() - wordDay; return [1, 3, 7, 14, 30].includes(gap); }
-    function reviewWords() {
-      const result = [];
-      for (let day = Math.max(0, englishDayIndex() - 30); day < englishDayIndex(); day++) {
-        const lesson = englishLessons[Math.min(day, englishLessons.length - 1)];
-        // Keep handled extra-practice words in today's list for feedback and undo.
-        wordsFromLesson(lesson, day).forEach(word => { if (isReviewDue(day) || englishProgress.forgotten?.[word.id] === englishDayIndex() - 1 || wordHandled(word)) result.push({ ...word, day }); });
-      }
-      return result;
-    }
+    function reviewWords() { return StudyPlan.review(); }
     function pendingReviewWords(words = reviewWords()) { return words.filter(word => !wordHandled(word)); }
     function englishTaskItems() {
       if (activeDay !== todayIndex || activeWeek() !== currentWeek) return [];
       const lesson = lessonForToday();
-      return [[`英语单词 · 第${lesson.index + 1}天`, "英语", `${lesson.title} · 10 个新词，另有 ${pendingReviewWords().length} 个待复习`, null, `english-${lesson.index}-words`], ["豆包英语对话 20min", "英语", "围绕今日主题用英语对话，至少说出 3 个今日单词。", null, `english-${lesson.index}-dialogue`]];
+      return [[`英语单词 · 第${lesson.index + 1}天`, "英语", `${lesson.title} · ${lesson.words.length} 个新词，另有 ${pendingReviewWords().length} 个待复习`, null, `english-${lesson.index}-words`], ["豆包英语对话 20min", "英语", "围绕今日主题用英语对话，至少说出 3 个今日单词。", null, `english-${lesson.index}-dialogue`]];
     }
     function wordActionHtml(word) {
       if (englishProgress.forgotten?.[word.id] === englishDayIndex()) return `<p class="word-status forgot">已标记：明天加练</p>`;
@@ -707,8 +703,8 @@
       ["Finish the small thing. Let it prove you can.", "完成这件小事，让它证明你可以。"]
     ];
     function completionQuoteHtml(lesson) {
-      if (!lesson.words.every(wordHandled)) return "";
-      const quote = completionQuotes[lesson.index % completionQuotes.length];
+      if (!lesson.words.length || !lesson.words.every(wordHandled)) return "";
+      const quote = lesson.index<completionQuotes.length?completionQuotes[lesson.index]:StudyPlan.encouragement(lesson.index-completionQuotes.length);
       return `<div class="completion-quote"><strong>${quote[0]}</strong><span>${quote[1]}</span></div>`;
     }
     function checkId(dayIndex, task, taskIndex) { return task[4] || taskId(dayIndex, taskIndex); }
@@ -791,6 +787,7 @@
       document.querySelector("#newWords").insertAdjacentHTML("afterend", completionQuoteHtml(lesson));
       document.querySelector("#reviewWords").innerHTML = reviews.length ? reviews.map(wordCard).join("") : `<p class="tip">今天没有到期复习词。学完新词后，明天会开始第 1 次复习。</p>`;
       const quizWord = reviews[0] || lesson.words[0];
+      if(!quizWord){document.querySelector('#quizPrompt').textContent='本轮新词已完成，继续到期复习即可。';document.querySelector('#quizOptions').innerHTML='';document.querySelector('#quizResult').textContent='';return;}
       const choices = [...new Set([quizWord.meaning, ...lesson.words.filter(word => word.meaning !== quizWord.meaning).slice(1, 4).map(word => word.meaning)])].sort(() => Math.random() - .5);
       document.querySelector("#quizPrompt").textContent = `“${quizWord.word}” 最接近下面哪一个意思？`;
       document.querySelector("#quizOptions").innerHTML = choices.map(choice => `<button type="button" data-quiz-answer="${choice === quizWord.meaning}">${choice}</button>`).join("");
@@ -1151,9 +1148,10 @@
   <script src="assets/motion.js" defer></script>
   {{COMPANION_ART}}
   {{COMPANION_RUNTIME}}
-  <script src="atelier.js?v=35"></script>
-  <script src="word-training.js?v=6"></script>
+  <script src="atelier.js?v=36"></script>
+  <script src="word-training.js?v=7"></script>
   <script src="daily-flow.js?v=1"></script>
+  <script src="study-quota-ui.js?v=1"></script>
 {{EDITION_SCRIPTS}}
 </body>
 </html>

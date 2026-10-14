@@ -31,6 +31,9 @@
     feedback:['留张反馈便签','哪里用得不顺，留张便签给我。','<p>编辑 → 反馈 → 选择类型 → 写下情况 → 发送便签。</p><p>告诉我：点了什么、出现了什么、原本希望怎样。设备、浏览器和操作步骤有助于排查，截图请遮住私人信息。</p><p>只有看到“便签已送达”才表示成功；失败时请保留文字，稍后重试或联系邀请你的人。</p><p>反馈不会自动附带课表、计划、背词记录或解锁码，联系方式可不填。</p><p>网站目前托管于 GitHub Pages，不保证所有国内网络都能直连。打不开时请反馈网络和错误画面，不必为公测购买 VPN。首次使用需要网络，不保证所有图片或音频均可离线。</p><p>若颜色异常，检查浏览器是否强制网页深色；记录不见时，先核对网址与浏览器，不要急着清数据。</p><button type="button" class="speak utility-button" data-guide-action="feedback">留张便签</button>'],
     updates:['又添了几笔','趁你不在，又添了几笔。有空看看。',`<p class="share-guide-version">分享版 ${version} · 2026年10月14日</p><ul><li>当天课程与手动日程分开，新增随手速记、数字时间和长按菜单。</li><li>例句可按需提示，生词本可收藏、查词、补充并额外复习。</li><li>奖励可点击关闭，结束后不直接翻下一题，减少误触。</li></ul><p>分享版仍只存本机，完整备份包含生词本；没有连接制作者的个人云档，也不自动清空你的原计划。帮助入口常驻，更新只在首页简短提示，关闭后不再主动提醒。</p><p>这是个人制作的非商业体验版，不代表角色相关作品官方产品。</p><button type="button" class="mode utility-button" data-guide-action="journal">查看开发关卡册 ${icon('arrow-up-right')}</button>`]
   };
+  sections.words[1]='一点一滴，记牢些就好。';
+  sections.words[2]=sections.words[2].replace('35天主题词库，每天10个新词','1000个去重新词，默认每天10词、100天完成；“每日词数”可按5递增，从当天开始生效').replace('原350词','1000词库');
+  sections.updates[2]=`<p class="share-guide-version">分享版 ${version} · 2026年10月14日</p><ul><li>扩充到1000个不重复词条，保留旧350词编号。</li><li>每日词数支持5至100词、步进5，从当天起接续，已完成记录保留。</li><li>内置英式音标与例句，提供在线英式发音及有道查词链接；声音需要网络或设备英音语音。</li></ul><p>分享版仍只存本机，完整备份包含词数配置。词表属于第三方六级备考辅助，不是官方完整词表；例句和发音质量仍欢迎反馈。</p><button type="button" class="mode utility-button" data-guide-action="journal">查看开发关卡册 ${icon('arrow-up-right')}</button>`;
   function showChapter(tab='start') {
     if(!sections[tab])tab='start';
     welcomeMode=false;remember({welcomeDismissed:true});

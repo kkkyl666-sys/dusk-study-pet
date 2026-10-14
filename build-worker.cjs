@@ -3,7 +3,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 function buildWorker(target, files) {
   const source=fs.readFileSync(path.join(__dirname,'shared','worker.js'),'utf8');
-  const required = ['./index.html','./cet6-35.js','./atelier.js?v=35','./atelier.css?v=27','./word-training.js?v=6','./word-training.css?v=6','./daily-flow.js?v=1','./daily-flow.css?v=1'];
+  const required = ['./index.html','./cet6-35.js','./study-quota-ui.js?v=1','./atelier.js?v=36','./atelier.css?v=27','./word-training.js?v=7','./word-training.css?v=6','./daily-flow.js?v=1','./daily-flow.css?v=1'];
   const entry=files['index.html'].toString();
   for(const url of required.filter(url=>url.includes('?'))){
     if(!entry.includes(url.slice(2)+'"'))throw new Error('Launch cache URL differs from entry: '+url);

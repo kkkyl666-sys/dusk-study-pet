@@ -137,6 +137,7 @@ function refreshCalendarNavigation(force = false) {
 const oldApplySnapshot = applySnapshot;
 applySnapshot = function(data) {
   if (!validSnapshot(data)) throw new Error("云端课表格式异常，本机记录保留");
+  data=structuredClone(data);
   const safeAppointments=validateDailyAppointments(data.appointments),safeFlow=validateDailyFlow(data.dailyFlow);
   if (!selectedCourses.length && stateUpdatedAt > Number(data.changedAt || 0)) {
     data = { ...data, changedAt:stateUpdatedAt, checked:{...data.checked,...checked}, englishProgress:{...data.englishProgress,...englishProgress,
@@ -304,7 +305,7 @@ document.querySelector("#quickTaskDelete").onclick=()=>{
 
 function rewindPreview() {
   const input=document.querySelector("#rewindTarget"),target=Number(input.value);
-  document.querySelector("#rewindPreview").textContent=`现在第 ${lessonForToday().index+1} 天 → 今天第 ${target} 天；下个学习日接续第 ${Math.min(35,target+1)} 天。`;
+  document.querySelector("#rewindPreview").textContent=`现在第 ${lessonForToday().index+1} 天 → 今天第 ${target} 天；下个学习日接续第 ${Math.min(StudyPlan.totalDays(),target+1)} 天。`;
 }
 document.querySelector("#englishRewindBtn").onclick=()=>{
   if(editorDirty){showActionToast("请先保存或撤销编辑草稿");return;}

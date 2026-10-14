@@ -35,6 +35,7 @@ function buildEntry(edition) {
   const identity = `<script id="app-target">window.PET_APP=${JSON.stringify({edition,version:target.version,shareURL:target.shareURL})};</script>`;
   const values = {
     TITLE:target.title, SHORT_NAME:target.shortName, VERSION:target.version, LABEL:target.label,
+    STUDY_PLAN_RUNTIME:'<script id="study-plan-runtime">\n'+fs.readFileSync(path.join(root,'study-plan.js'),'utf8')+'\n</script>',
     COMPANION_ART:'<script>window.DUSK_ART='+JSON.stringify(JSON.parse(fs.readFileSync(path.join(root,'companion-art.json'),'utf8')))+';</script>',
     COMPANION_RUNTIME:'<script id="companion-media-runtime">\n'+fs.readFileSync(path.join(root,'companion-media.js'),'utf8').trimEnd()+'\n</script>',
     MANIFEST:edition === 'share' ? 'manifest-demo.webmanifest' : 'manifest.webmanifest',

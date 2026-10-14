@@ -1,0 +1,7 @@
+{
+  "at": "2026-10-14T13:45:44.860Z",
+  "checked": 1000,
+  "passed": 1000,
+  "failures": [],
+  "kind": "HTTP/audio content check; not mobile playback validation or offline audio"
+}

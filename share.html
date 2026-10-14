@@ -451,7 +451,7 @@
   <dialog id="syncDialog" aria-labelledby="syncTitle">
     <form class="sync-dialog" method="dialog">
       <h2 id="syncTitle">云同步</h2>
-      <small id="appRevision">版本 2026.10.14.1 · 分享版</small>
+      <small id="appRevision">版本 2026.10.14.2 · 分享版</small>
       <p id="syncDialogText">在这台设备输入一次个人解锁码。之后课表、计划和完成记录会自动同步。</p>
       <label id="syncEmailLabel">个人解锁码
         <input id="syncEmail" type="password" autocomplete="current-password" placeholder="输入解锁码">
@@ -463,7 +463,7 @@
       </div>
     </form>
   </dialog>
-  <script id="app-target">window.PET_APP={"edition":"share","version":"2026.10.14.1","shareURL":"https://kkkyl666-sys.github.io/dusk-handbook/"};</script>
+  <script id="app-target">window.PET_APP={"edition":"share","version":"2026.10.14.2","shareURL":"https://kkkyl666-sys.github.io/dusk-handbook/"};</script>
 <script id="share-bootstrap">
 // This entry has no sync configuration and never reads the personal storage keys.
 window.PET_DEMO = true;
@@ -494,6 +494,29 @@ window.createDemoData = function(mode) {
 };
 </script>
   <script src="cet6-35.js"></script>
+  <script id="study-plan-runtime">
+// Word IDs remain canonical; daily assignments depend on quota history, not IDs.
+(() => {
+  let pool;
+  const all=()=>pool||(pool=englishLessons.flatMap((l,day)=>wordsFromLesson(l,day)));
+  function valid(p){return !!p&&p.version===1&&Array.isArray(p.changes)&&p.changes.length<=1000&&p.changes.every((x,i)=>Number.isInteger(x.day)&&x.day>=0&&x.day<=10000&&Number.isInteger(x.count)&&x.count>=5&&x.count<=100&&x.count%5===0&&(!i||x.day>p.changes[i-1].day))&&p.changes[0]?.day===0&&p.overrides&&typeof p.overrides==='object'&&!Array.isArray(p.overrides)&&Object.entries(p.overrides).every(([d,n])=>/^\d+$/.test(d)&&Number(d)<=10000&&Number.isInteger(n)&&n>=1&&n<=100)&&(!p.legacyGap||(p.legacyGap.start===35&&Number.isInteger(p.legacyGap.end)&&p.legacyGap.end>35&&p.legacyGap.end<=10000));}
+  function plan(){if(!valid(englishProgress.learningPlanV1)){const day=englishDayIndex(),old=Object.keys({...englishProgress.remembered,...englishProgress.forgotten}).some(id=>Number(id.split('-')[0])<35);englishProgress.learningPlanV1={version:1,changes:[{day:0,count:10}],overrides:{},...(day>35&&day<=10000&&old?{legacyGap:{start:35,end:day}}:{})};}return englishProgress.learningPlanV1;}
+  function quota(day=englishDayIndex()){const changes=plan().changes;return changes.filter(x=>x.day<=day).at(-1)?.count||10;}
+  function range(day){const p=plan(),countFor=d=>p.legacyGap&&d>=p.legacyGap.start&&d<p.legacyGap.end?0:p.overrides[d]||quota(d);let start=0;for(let d=0;d<day;d++){start+=countFor(d);if(start>=all().length)return {start:all().length,count:0};}return {start,count:Math.max(0,Math.min(countFor(day),all().length-start))};}
+  function lesson(day=englishDayIndex()){const r=range(day),words=all().slice(r.start,r.start+r.count),source=englishLessons[Math.floor(r.start/10)];return {index:day,title:words.length?(source?.title||'六级核心词汇'):'本轮新词已完成',scene:source?.scene||'',words};}
+  function totalDays(){let day=0;while(day<10000&&range(day).start<all().length)day++;return day;}
+  function setCount(count){if(!Number.isInteger(count)||count<5||count>100||count%5)throw Error('每日词数须为5至100之间的5的倍数');const day=englishDayIndex(),old=lesson(),p=plan();let retained=0;old.words.forEach((w,i)=>{if(wordHandled(w)||englishProgress.trainingV1?.feedback?.id===w.id)retained=Math.max(retained,i+1);});p.changes=p.changes.filter(x=>x.day<day);p.changes.push({day,count});if(p.changes[0].day!==0)p.changes.unshift({day:0,count:10});for(const key of Object.keys(p.overrides))if(Number(key)>=day)delete p.overrides[key];if(retained>count)p.overrides[day]=retained;return {requested:count,today:lesson().words.length,retained};}
+  function review(){const day=englishDayIndex(),found=new Map(),today=new Set(lesson(day).words.map(w=>w.id));for(let d=Math.max(0,day-30);d<day;d++)if([1,3,7,14,30].includes(day-d))lesson(d).words.forEach(w=>found.set(w.id,{...w,day:d}));for(const w of all())if(!today.has(w.id)&&(englishProgress.forgotten?.[w.id]===day-1||wordHandled(w)))found.set(w.id,w);return [...found.values()];}
+  function lookup(id){return all().find(w=>w.id===id);}
+  function encouragement(index){
+    const leads=[['Take the next small step.','走好眼前的一小步。'],['Let this word become familiar.','让这个词慢慢变得熟悉。'],['Give your attention to one thing.','先把注意力放在一件事上。'],['Read one sentence with care.','认真读好一个句子。'],['Leave room for steady progress.','给稳定的进步留一点空间。'],['Return to the words that challenge you.','再见一见那些难住你的词。'],['Trust the work you repeat.','相信你一次次做下的功课。'],['Notice what you understand today.','留意今天已经读懂的东西。'],['Choose patience over haste.','选一点耐心，不必急着赶路。'],['Make a little space for learning.','给学习留一小块地方。']];
+    const ends=[['Small efforts matter.','小小的努力也算数。'],['Practice makes the next attempt easier.','练习会让下一次尝试更轻松。'],['Understanding grows through use.','理解会在使用中生长。'],['A mistake can show you where to look.','错误能告诉你该往哪里看。'],['You can begin again without starting over.','再出发，不等于从头失去一切。'],['Quiet progress is still progress.','安静的进步，也是进步。'],['Rest can be part of a good routine.','休息也能成为好习惯的一部分。'],['Your pace does not need to match anyone else.','你的步调不必和别人相同。'],['A clear example can open a new connection.','一个清楚的例子能牵出新的联系。'],['Remembering takes more than one meeting.','记住，往往需要不止一次见面。'],['What you practise becomes more available to you.','练过的东西，会更容易被你用起来。'],['One useful phrase can carry a whole idea.','一个有用的短语，就能承载一个想法。'],['Good habits can start very small.','好习惯可以从很小的地方开始。'],['The next page does not erase this one.','翻到下一页，不会抹去这一页。'],['You have already learned something worth keeping.','你已经学到了值得留下的东西。'],['Curiosity gives effort a direction.','好奇心会给努力一个方向。'],['A steady return is more useful than a perfect start.','稳定地回来，比完美地开始更有用。'],['Learning leaves traces even when progress feels slow.','即使觉得进步很慢，学习也留下了痕迹。'],['Your work belongs to you, even when it is unseen.','即使无人看见，做下的功课也属于你。'],['Tomorrow can build on what you do now.','明天可以接着此刻的努力向前。']];
+    const a=leads[index%leads.length],b=ends[Math.floor(index/leads.length)%ends.length];return [a[0]+' '+b[0],a[1]+b[1]];
+  }
+  window.StudyPlan={all,plan,valid,quota,range,lesson,totalDays,setCount,review,lookup,encouragement};
+})();
+
+</script>
   <script>
     const isDemo = window.PET_DEMO === true;
     function appStorageKey(key) { return isDemo ? `dusk-demo-v1:${key}` : key; }
@@ -591,8 +614,8 @@ window.createDemoData = function(mode) {
       return studyDate;
     }
     function englishDayIndex(now = new Date()) { return Math.max(0, Math.floor((englishStudyDate(now) - localDateStart(englishStart)) / 86400000)); }
-    function wordsFromLesson(lesson, day) { if (lesson.words) return lesson.words.map(item => ({ ...item, id: `${day}-${item.word}` })); return lesson[2].split(",").map(pair => { const [word, meaning] = pair.split("|"); return { word, pos: wordParts[word] || "n.", meaning, id: `${day}-${word}` }; }); }
-    function lessonForToday() { const index = Math.min(englishDayIndex(), englishLessons.length - 1); const lesson = englishLessons[index]; return { index, title: lesson.title || lesson[0], scene: lesson.scene || lesson[1], words: wordsFromLesson(lesson, index) }; }
+    function wordsFromLesson(lesson, day) { if (lesson.words) return lesson.words.map(item => ({ ...item, id: item.id || `${day}-${item.word}` })); return lesson[2].split(",").map(pair => { const [word, meaning] = pair.split("|"); return { word, pos: wordParts[word] || "n.", meaning, id: `${day}-${word}` }; }); }
+    function lessonForToday() { return StudyPlan.lesson(); }
     function exampleForWord(word) {
       if (word.example) return word.example;
       if (word.pos.startsWith("v")) return `Try to use "${word.word}" in your own sentence.`;
@@ -604,6 +627,9 @@ window.createDemoData = function(mode) {
       if (!("speechSynthesis" in window)) return false;
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.lang = "en-GB";
+      const voices=window.speechSynthesis.getVoices(),british=voices.find(v=>v.lang.toLowerCase()==='en-gb');
+      if(voices.length&&!british)return false;
+      if(british)utterance.voice=british;
       utterance.rate = 0.86;
       utterance.pitch = 1;
       window.speechSynthesis.cancel();
@@ -652,7 +678,7 @@ window.createDemoData = function(mode) {
     async function playWordPronunciation(word, button) {
       const originalText = button.textContent;
       const key = word.toLowerCase();
-      const cached = pronunciationCache.get(key);
+      const cached = pronunciationCache.get(key) || StudyPlan.all().find(w=>w.word.toLowerCase()===key);
       if (cached?.audio) {
         try {
           setSoundButton(button, "播", true);
@@ -676,20 +702,12 @@ window.createDemoData = function(mode) {
     function courseDate(dayIndex, week = activeWeek()) { const date = new Date(semesterStart); date.setDate(date.getDate() + (week - 1) * 7 + dayIndex); return `${date.getMonth() + 1}月${date.getDate()}日`; }
     function saveEnglish() { localStorage.setItem(englishStateKey, JSON.stringify(englishProgress)); markStateChanged(); }
     function isReviewDue(wordDay) { const gap = englishDayIndex() - wordDay; return [1, 3, 7, 14, 30].includes(gap); }
-    function reviewWords() {
-      const result = [];
-      for (let day = Math.max(0, englishDayIndex() - 30); day < englishDayIndex(); day++) {
-        const lesson = englishLessons[Math.min(day, englishLessons.length - 1)];
-        // Keep handled extra-practice words in today's list for feedback and undo.
-        wordsFromLesson(lesson, day).forEach(word => { if (isReviewDue(day) || englishProgress.forgotten?.[word.id] === englishDayIndex() - 1 || wordHandled(word)) result.push({ ...word, day }); });
-      }
-      return result;
-    }
+    function reviewWords() { return StudyPlan.review(); }
     function pendingReviewWords(words = reviewWords()) { return words.filter(word => !wordHandled(word)); }
     function englishTaskItems() {
       if (activeDay !== todayIndex || activeWeek() !== currentWeek) return [];
       const lesson = lessonForToday();
-      return [[`英语单词 · 第${lesson.index + 1}天`, "英语", `${lesson.title} · 10 个新词，另有 ${pendingReviewWords().length} 个待复习`, null, `english-${lesson.index}-words`], ["豆包英语对话 20min", "英语", "围绕今日主题用英语对话，至少说出 3 个今日单词。", null, `english-${lesson.index}-dialogue`]];
+      return [[`英语单词 · 第${lesson.index + 1}天`, "英语", `${lesson.title} · ${lesson.words.length} 个新词，另有 ${pendingReviewWords().length} 个待复习`, null, `english-${lesson.index}-words`], ["豆包英语对话 20min", "英语", "围绕今日主题用英语对话，至少说出 3 个今日单词。", null, `english-${lesson.index}-dialogue`]];
     }
     function wordActionHtml(word) {
       if (englishProgress.forgotten?.[word.id] === englishDayIndex()) return `<p class="word-status forgot">已标记：明天加练</p>`;
@@ -738,8 +756,8 @@ window.createDemoData = function(mode) {
       ["Finish the small thing. Let it prove you can.", "完成这件小事，让它证明你可以。"]
     ];
     function completionQuoteHtml(lesson) {
-      if (!lesson.words.every(wordHandled)) return "";
-      const quote = completionQuotes[lesson.index % completionQuotes.length];
+      if (!lesson.words.length || !lesson.words.every(wordHandled)) return "";
+      const quote = lesson.index<completionQuotes.length?completionQuotes[lesson.index]:StudyPlan.encouragement(lesson.index-completionQuotes.length);
       return `<div class="completion-quote"><strong>${quote[0]}</strong><span>${quote[1]}</span></div>`;
     }
     function checkId(dayIndex, task, taskIndex) { return task[4] || taskId(dayIndex, taskIndex); }
@@ -822,6 +840,7 @@ window.createDemoData = function(mode) {
       document.querySelector("#newWords").insertAdjacentHTML("afterend", completionQuoteHtml(lesson));
       document.querySelector("#reviewWords").innerHTML = reviews.length ? reviews.map(wordCard).join("") : `<p class="tip">今天没有到期复习词。学完新词后，明天会开始第 1 次复习。</p>`;
       const quizWord = reviews[0] || lesson.words[0];
+      if(!quizWord){document.querySelector('#quizPrompt').textContent='本轮新词已完成，继续到期复习即可。';document.querySelector('#quizOptions').innerHTML='';document.querySelector('#quizResult').textContent='';return;}
       const choices = [...new Set([quizWord.meaning, ...lesson.words.filter(word => word.meaning !== quizWord.meaning).slice(1, 4).map(word => word.meaning)])].sort(() => Math.random() - .5);
       document.querySelector("#quizPrompt").textContent = `“${quizWord.word}” 最接近下面哪一个意思？`;
       document.querySelector("#quizOptions").innerHTML = choices.map(choice => `<button type="button" data-quiz-answer="${choice === quizWord.meaning}">${choice}</button>`).join("");
@@ -1319,6 +1338,7 @@ function refreshCalendarNavigation(force = false) {
 const oldApplySnapshot = applySnapshot;
 applySnapshot = function(data) {
   if (!validSnapshot(data)) throw new Error("云端课表格式异常，本机记录保留");
+  data=structuredClone(data);
   const safeAppointments=validateDailyAppointments(data.appointments),safeFlow=validateDailyFlow(data.dailyFlow);
   if (!selectedCourses.length && stateUpdatedAt > Number(data.changedAt || 0)) {
     data = { ...data, changedAt:stateUpdatedAt, checked:{...data.checked,...checked}, englishProgress:{...data.englishProgress,...englishProgress,
@@ -1486,7 +1506,7 @@ document.querySelector("#quickTaskDelete").onclick=()=>{
 
 function rewindPreview() {
   const input=document.querySelector("#rewindTarget"),target=Number(input.value);
-  document.querySelector("#rewindPreview").textContent=`现在第 ${lessonForToday().index+1} 天 → 今天第 ${target} 天；下个学习日接续第 ${Math.min(35,target+1)} 天。`;
+  document.querySelector("#rewindPreview").textContent=`现在第 ${lessonForToday().index+1} 天 → 今天第 ${target} 天；下个学习日接续第 ${Math.min(StudyPlan.totalDays(),target+1)} 天。`;
 }
 document.querySelector("#englishRewindBtn").onclick=()=>{
   if(editorDirty){showActionToast("请先保存或撤销编辑草稿");return;}
@@ -1594,9 +1614,10 @@ setupCloudSync().then(()=>{if(validSnapshot(snapshot())){if(!committedState)cach
   warm();
 })();
 </script>
-  <script src="atelier.js?v=35"></script>
-  <script src="word-training.js?v=6"></script>
+  <script src="atelier.js?v=36"></script>
+  <script src="word-training.js?v=7"></script>
   <script src="daily-flow.js?v=1"></script>
+  <script src="study-quota-ui.js?v=1"></script>
 <script src="demo.js?v=29"></script>
 <script src="papaparse.min.js"></script>
 <script src="feedback-config.js?v=1"></script>
