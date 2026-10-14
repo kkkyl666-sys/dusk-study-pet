@@ -511,7 +511,7 @@
     else{app.prepend(pet);restoreWindows();}
     applyFocus();refreshIcons();backgroundActivity();
   }
-  mobile.addEventListener('change',()=>{placePet();if(days.length)activateView(mobile.matches?'homeView':currentViewId());});
+  mobile.addEventListener('change',()=>{const studying=window.DuskStudyUI?.isPracticing();placePet();if(days.length)activateView(mobile.matches&&!studying?'homeView':currentViewId());});
   window.addEventListener('resize',()=>{if(!mobile.matches)restoreWindows();loadScene();});
   function petReact(line,celebrate=false) {
     if(ui.pet===false)return;
