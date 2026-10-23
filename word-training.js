@@ -122,6 +122,7 @@
   function refresh() { renderEnglish(); renderTasks(); }
   function advance() {
     clearTimeout(timer);
+    window.DuskStudyUI?.releaseAutoPause?.();
     const s=state();
     if (!s.feedback || browsing !== null) return;
     s.queues[s.track].shift(); s.feedback=null; s.hint=false; s.options=[]; revealed=false;
@@ -131,7 +132,7 @@
   }
   function resumeTimer() {
     clearTimeout(timer);
-    if (!enabled || !readingOpen() || sceneKey || currentViewId()!=='englishView' || window.DuskStudyUI&&!DuskStudyUI.isPracticing()) return;
+    if (!enabled || !readingOpen() || sceneKey || currentViewId()!=='englishView' || window.DuskStudyUI&&(!DuskStudyUI.isPracticing()||DuskStudyUI.autoPaused?.())) return;
     const s=state();
     if (enabled && browsing===null && s.feedback?.success && !s.feedback.sceneReviewed && s.auto && !document.hidden && !document.querySelector('dialog[open]') && currentViewId()==='englishView') {
       const key=s.key, id=s.feedback.id;
@@ -144,6 +145,7 @@
   function grade(raw, selectedMeaning) {
     const s=state(), item=s.queues[s.track][0];
     if (!item || s.feedback || browsing!==null) return;
+    window.DuskStudyUI?.releaseAutoPause?.();
     const previous = clone({...s,undo:[]});
     const marks = {remembered:englishProgress.remembered?.[item.id], forgotten:englishProgress.forgotten?.[item.id]};
     const help=false;
@@ -257,7 +259,7 @@
   view.querySelector('.word-layout-switch').prepend(toggle);
   view.querySelectorAll('[data-word-layout]').forEach(b=>b.addEventListener('click',()=>{enabled=b.dataset.wordLayout==='training';browsing=null;localStorage.setItem(preference,enabled?'training':'reference');render();}));
   const base=renderEnglish; renderEnglish=function(){base();render();};
-  window.DuskTraining={render,selectTrack(track){const s=state();if(s.track!==track){if(s.feedback){s.queues[s.feedback.track].shift();s.feedback=null;}s.track=track;s.options=[];browsing=null;revealed=false;saveEnglish();}render();},currentWord(){const s=state(),item=current(s);return item&&lookup(item.id);},pause(){clearTimeout(timer);endScene();}};
+  window.DuskTraining={render,selectTrack(track){const s=state();if(s.track!==track){if(s.feedback){s.queues[s.feedback.track].shift();s.feedback=null;}s.track=track;s.options=[];browsing=null;revealed=false;saveEnglish();}render();},restoreReading(id,track){const s=state();if(s.track!==track)return false;if(current(s)?.id===id)return true;const i=history(s).findLastIndex(x=>x.id===id);if(i<0)return false;browsing=i;return true;},currentWord(){const s=state(),item=current(s);return item&&lookup(item.id);},pause(){clearTimeout(timer);endScene();}};
   root.addEventListener('click',e=>{const term=e.target.closest('.study-term');if(term){const s=state(),item=current(s);if(item)showDetails(s,lookup(item.id));}});
   document.addEventListener('visibilitychange',()=>{if(document.hidden){pointers.clear();if(guard)settleGuard();endScene();}resumeTimer();});
   new MutationObserver(records=>{

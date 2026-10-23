@@ -33,7 +33,7 @@
   };
   sections.words[1]='一点一滴，记牢些就好。';
   sections.words[2]='<p>1000个去重新词，默认每天10词、100天完成。单词页先显示学习概览，点“继续学习”进入专注背词，返回概览不丢当前题目。</p><p>点大字单词查看英文例句，再点“有道词条”才外跳；详情不显示中文释义，查看不计为明天加练。点普通文字或空白返回原题。</p><p>“学习工具”中可调整每日5至100词、每次5词，从当天生效；也可切换一词/列表、选择天数、回档、导出和练习设置。生词本与额外复习保留，不占每日新词额度。</p><p>答错对照正确答案，再继续。奖励图片可点关闭，结束后留在当前答案；手机底部大按钮继续，电脑可点正确答案。</p><p>凌晨4点换日，忘记的词次日加练。发音需要网络或设备英式语音。分享版保存到本机，换设备请下载并恢复完整备份。</p><button type="button" class="speak utility-button" data-guide-action="words">翻开今日词页</button>';
-  sections.updates[2]=`<p class="share-guide-version">分享版 ${version} · 2026年10月14日</p><ul><li>学习概览与专注答题分开，管理操作集中到学习工具。</li><li>移除例句提示按钮；点单词只看英文例句和有道入口，查看不计为加练。</li><li>词数、生词本、显示模式、回档、导出和备份保留，原学习记录不重置。</li></ul><p>1000词库、凌晨4点换日与在线英式发音不变。分享版仍只存本机，换设备请下载完整备份。</p><button type="button" class="mode utility-button" data-guide-action="journal">查看开发关卡册 ${icon('arrow-up-right')}</button>`;
+  sections.updates[2]=`<p class="share-guide-version">分享版 ${version} · 2026年10月23日</p><ul><li>背词时重新露出壁纸，点画卷可完整欣赏；文字仍在不透明阅读面上。</li><li>工具补回画室设置和复制当前单词，词页重新显示剩余词数。</li><li>例句页有明确的返回背词按钮；手机有道查词使用当前页，保存原词与进度，浏览器返回后接续。桌面仍开独立窗口。</li></ul><p>查阅不计加练，原词序与记录不重置。外部浏览器或有道App的接管行为由设备决定；分享版仍只存本机，换设备请下载完整备份。</p><button type="button" class="mode utility-button" data-guide-action="journal">查看开发关卡册 ${icon('arrow-up-right')}</button>`;
   function showChapter(tab='start') {
     if(!sections[tab])tab='start';
     welcomeMode=false;remember({welcomeDismissed:true});

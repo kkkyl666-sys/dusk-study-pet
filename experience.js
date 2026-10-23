@@ -1,6 +1,7 @@
 // Local recovery and focused editing share the existing course/English model.
 const localSnapshotKey = appStorageKey("dusk-study-pet-full-state-v1");
 const resumeKey = appStorageKey("dusk-study-pet-resume-v1");
+const wordReturnKey = appStorageKey('dusk-dictionary-return-v1');
 const editorDraftKey = appStorageKey("dusk-study-pet-draft-v1");
 let appointments = [];
 let englishAdjustments = [];
@@ -80,12 +81,17 @@ function ensureTaskIds() {
   }));
 }
 function persistLocalState() {
-  if (!validSnapshot(snapshot())) return;
-  if (isDemo && Number(readStored(localSnapshotKey)?.changedAt) > stateUpdatedAt) return;
+  if (!validSnapshot(snapshot())) return false;
+  if (isDemo && Number(readStored(localSnapshotKey)?.changedAt) > stateUpdatedAt) return false;
   const data = snapshot();
   if (editorDirty && committedState) { data.selectedCourses = committedState.selectedCourses; data.days = committedState.days; }
-  try { localStorage.setItem(localSnapshotKey,JSON.stringify(data)); }
-  catch { updateSyncStatus("本机空间不足，请联网同步后导出备份"); }
+  try { localStorage.setItem(localSnapshotKey,JSON.stringify(data)); return true; }
+  catch { updateSyncStatus("本机空间不足，请联网同步后导出备份"); return false; }
+}
+function pendingWordReturn() {
+  const value=readStored(wordReturnKey);
+  if(!value||value.version!==1||typeof value.wordId!=='string'||value.wordId.length>160||!['new','review'].includes(value.track)||value.layout!==undefined&&!['training','focus','list'].includes(value.layout)||value.key!==`${englishStart}:${englishDayIndex()}`||!Number.isFinite(value.at)||Date.now()-value.at<0||Date.now()-value.at>2*60*60*1000)return null;
+  return value;
 }
 function cacheCommittedState() { ensureTaskIds(); committedState = structuredClone(snapshot()); persistLocalState(); }
 function persistEditorDraft() {
@@ -103,6 +109,7 @@ function saveResumePoint(wordId) {
 function restoreResumePoint() {
   if (resumeRestored) return;
   resumeRestored = true;
+  if (pendingWordReturn()) { startApp('englishView'); return; }
   if (matchMedia("(max-width: 760px)").matches) { startApp("homeView"); return; }
   const resume = readStored(resumeKey);
   if (!resume) return;
@@ -208,8 +215,22 @@ function openWordExample(word) {
   saveResumePoint(word.id);
   const term=encodeURIComponent(word.word);
   document.querySelector("#wordDetailDialog").dataset.studyLookup='true';
-  document.querySelector("#wordDetailBody").innerHTML=`<p class="dictionary-term">${escapeHtml(word.word)}</p><p class="study-detail-example" lang="en">${escapeHtml(exampleForWord(word))}</p><div class="dictionary-links"><a href="https://youdao.com/result?lang=en&word=${term}" target="_blank" rel="noopener noreferrer">有道词条 <i data-lucide="external-link"></i></a></div>`;
-  document.querySelectorAll("#wordDetailBody a").forEach(a=>a.onclick=()=>{saveResumePoint(word.id);persistLocalState();});
+  const mobile=matchMedia('(max-width:760px)').matches;
+  document.querySelector("#wordDetailBody").innerHTML=`<p class="dictionary-term">${escapeHtml(word.word)}</p><p class="study-detail-example" lang="en">${escapeHtml(exampleForWord(word))}</p><div class="dictionary-links"><a href="https://youdao.com/result?lang=en&word=${term}" target="${mobile?'_self':'_blank'}" rel="noopener noreferrer">有道词条 <i data-lucide="external-link"></i></a></div><button type="button" class="utility-button study-return-button" id="wordReturnToStudy"><i data-lucide="arrow-left"></i>返回背词</button>`;
+  document.querySelector('#wordReturnToStudy').onclick=closeQuickDialog;
+  document.querySelectorAll("#wordDetailBody a").forEach(a=>a.onclick=event=>{
+    saveResumePoint(word.id);
+    try {
+      if(!persistLocalState())throw new Error('snapshot not saved');
+      const english=document.querySelector('#englishView');
+      const layout=english.dataset.training==='true'?'training':english.dataset.wordLayout==='focus'?'focus':'list';
+      localStorage.setItem(wordReturnKey,JSON.stringify({version:1,wordId:word.id,layout,track:englishProgress.trainingV1?.track==='review'?'review':'new',key:`${englishStart}:${englishDayIndex()}`,at:Date.now()}));
+    } catch {event.preventDefault();showActionToast('进度暂未保存，请先下载备份再查词');return;}
+    window.dispatchEvent(new Event('dusk:dictionary-leave'));
+    // Do not leave the detail dialog as the top history entry on the return trip.
+    if(history.state?.petDialog==='wordDetailDialog')history.replaceState({petWordReturn:true},'');
+    closeQuickDialog();
+  });
   openQuickDialog("wordDetailDialog");
 }
 document.querySelector("#wordDetailDialog").addEventListener('click',event=>{if(!event.target.closest('button,a,input,select,textarea,label,[role=button]'))closeQuickDialog();});
@@ -346,7 +367,9 @@ document.querySelector("#retryCloudBtn").onclick=()=>setupCloudSync().then(resto
 document.querySelectorAll("#planTodayBtn,#scheduleTodayBtn").forEach(button => button.onclick=()=>refreshCalendarNavigation(true));
 window.addEventListener("pagehide",()=>{saveResumePoint();persistLocalState();if(editorDirty)persistEditorDraft();});
 document.addEventListener("visibilitychange",()=>{if(document.hidden){saveResumePoint();persistLocalState();}else{refreshCalendarNavigation(true);if(accessCode)pullOrPushCloudState().catch(handleSyncFailure);}});
-window.addEventListener("pageshow",event=>{if(event.persisted)refreshCalendarNavigation(true);});
+window.addEventListener("pageshow",event=>{if(event.persisted)refreshCalendarNavigation(true);window.dispatchEvent(new Event('dusk:dictionary-return'));});
+window.addEventListener('focus',()=>window.dispatchEvent(new Event('dusk:dictionary-return')));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)window.dispatchEvent(new Event('dusk:dictionary-return'));});
 window.setInterval(()=>{if(!document.hidden)refreshCalendarNavigation();},30000);
 window.addEventListener("online",()=>{if(accessCode)pullOrPushCloudState().catch(handleSyncFailure);});
 window.addEventListener("offline",()=>updateSyncStatus("离线使用，联网后补传"));
