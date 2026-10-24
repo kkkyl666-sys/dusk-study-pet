@@ -62,6 +62,7 @@
     } finally {recovering=false;}
   }
   window.addEventListener('dusk:dictionary-leave',()=>{autoHold=true;externalLeaving=true;externalAway=false;DuskTraining.pause();});
+  window.addEventListener('dusk:dictionary-panel',()=>{autoHold=true;DuskTraining.pause();});
   window.addEventListener('pagehide',()=>{if(externalLeaving)externalAway=true;});
   window.addEventListener('blur',()=>{if(externalLeaving)externalAway=true;});
   document.addEventListener('visibilitychange',()=>{if(externalLeaving&&document.hidden)externalAway=true;});
