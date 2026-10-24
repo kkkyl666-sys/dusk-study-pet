@@ -331,7 +331,7 @@
   <link rel="stylesheet" href="atelier.css?v=27">
   <link rel="stylesheet" href="word-training.css?v=6">
   <link rel="stylesheet" href="daily-flow.css?v=1">
-  <link rel="stylesheet" href="study-shell.css?v=2">
+  <link rel="stylesheet" href="study-shell.css?v=3">
 
 </head>
 <body>
@@ -450,7 +450,7 @@
   <dialog id="syncDialog" aria-labelledby="syncTitle">
     <form class="sync-dialog" method="dialog">
       <h2 id="syncTitle">云同步</h2>
-      <small id="appRevision">版本 2026.10.23.1 · 自用版</small>
+      <small id="appRevision">版本 2026.10.23.2 · 自用版</small>
       <p id="syncDialogText">在这台设备输入一次个人解锁码。之后课表、计划和完成记录会自动同步。</p>
       <label id="syncEmailLabel">个人解锁码
         <input id="syncEmail" type="password" autocomplete="current-password" placeholder="输入解锁码">
@@ -462,7 +462,7 @@
       </div>
     </form>
   </dialog>
-  <script id="app-target">window.PET_APP={"edition":"personal","version":"2026.10.23.1","shareURL":"https://kkkyl666-sys.github.io/dusk-handbook/"};</script>
+  <script id="app-target">window.PET_APP={"edition":"personal","version":"2026.10.23.2","shareURL":"https://kkkyl666-sys.github.io/dusk-handbook/"};</script>
 <script src="sync-config.js"></script>
   <script src="cet6-35.js"></script>
   <script id="study-plan-runtime">
@@ -1377,35 +1377,86 @@ function openQuickDialog(id) {
 }
 function closeQuickDialog() {
   if (!activeDialog) return;
+  const embeddedDictionary=activeDialog.id==='wordDetailDialog'&&activeDialog.dataset.dictionaryFrame==='true';
   activeDialog.close(); activeDialog=null;
-  if (history.state?.petDialog) history.back();
+  if (history.state?.petDialog) {
+    if(embeddedDictionary)history.replaceState(null,'');
+    else history.back();
+  }
 }
 document.querySelectorAll("[data-quick-close]").forEach(b => b.onclick=closeQuickDialog);
 document.querySelectorAll(".quick-dialog").forEach(d => d.addEventListener("cancel",e => {e.preventDefault();closeQuickDialog();}));
 window.addEventListener("popstate",() => { if(activeDialog){activeDialog.close();activeDialog=null;} });
+let dictionaryLoadTimer, dictionaryBackdropDown=false;
+function resetWordDictionary() {
+  const dialog=document.querySelector('#wordDetailDialog');
+  clearTimeout(dictionaryLoadTimer);
+  if(dialog.dataset.dictionaryFrame==='true'){
+    dialog.querySelector('iframe')?.remove();
+    document.querySelector('#wordDetailBody').replaceChildren();
+  }
+  delete dialog.dataset.dictionaryFrame;dialog.removeAttribute('style');
+  dialog.querySelector('header').innerHTML='<h2>词汇详情</h2><button class="utility-button" type="button" data-quick-close aria-label="回到单词"><i data-lucide="x"></i></button>';
+  dialog.querySelector('header button').onclick=closeQuickDialog;
+}
+function layoutWordDictionary() {
+  const dialog=document.querySelector('#wordDetailDialog');
+  if(!dialog.open||dialog.dataset.dictionaryFrame!=='true')return;
+  const rect=document.querySelector('#englishView').getBoundingClientRect();
+  const mobile=matchMedia('(max-width:760px)').matches;
+  const left=Math.max(12,Math.min(rect.left,innerWidth-252));
+  const width=Math.max(240,Math.min(rect.right-left,innerWidth-left-12));
+  const top=Math.max(mobile?64:12,Math.min(rect.top,innerHeight-212));
+  const bottom=Math.min(innerHeight-12,Math.max(top+200,rect.bottom));
+  Object.assign(dialog.style,{left:left+'px',top:top+'px',width:width+'px',height:(bottom-top)+'px'});
+}
+function openWordDictionary(word) {
+  const dialog=document.querySelector('#wordDetailDialog');
+  clearTimeout(dictionaryLoadTimer);
+  dialog.dataset.dictionaryFrame='true';
+  dialog.querySelector('header').innerHTML=`<h2>有道 · ${escapeHtml(word.word)}</h2><div><button type="button" id="wordDictionaryReload" class="utility-button" title="重新加载有道" aria-label="重新加载有道"><i data-lucide="rotate-cw"></i></button><button type="button" id="wordDictionaryClose" class="utility-button"><i data-lucide="arrow-left"></i>返回单词</button></div>`;
+  const body=document.querySelector('#wordDetailBody');body.replaceChildren();
+  const status=document.createElement('p');status.className='dictionary-frame-status';status.setAttribute('role','status');status.textContent='有道加载中…';
+  const frame=document.createElement('iframe');frame.title=`有道词条：${word.word}`;
+  // The dictionary may run its own UI, but cannot navigate or open windows over the pet.
+  frame.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms');
+  frame.referrerPolicy='no-referrer';
+  const url=`https://youdao.com/result?lang=en&word=${encodeURIComponent(word.word)}`;
+  const load=()=>{clearTimeout(dictionaryLoadTimer);status.hidden=false;status.textContent='有道加载中…';frame.src=url;dictionaryLoadTimer=setTimeout(()=>{if(dialog.contains(frame)){status.hidden=false;status.textContent='有道加载较慢，可重试';}},12000);};
+  frame.onload=()=>{if(dialog.contains(frame)){clearTimeout(dictionaryLoadTimer);status.hidden=true;}};
+  frame.onerror=()=>{clearTimeout(dictionaryLoadTimer);status.hidden=false;status.textContent='有道暂时无法加载，原单词已保留';};
+  body.append(status,frame);
+  document.querySelector('#wordDictionaryClose').onclick=closeQuickDialog;
+  document.querySelector('#wordDictionaryReload').onclick=load;
+  window.dispatchEvent(new Event('dusk:dictionary-panel'));
+  if(!dialog.open)openQuickDialog('wordDetailDialog');
+  layoutWordDictionary();refreshIcons();load();
+  document.querySelector('#wordDictionaryClose').focus({preventScroll:true});
+}
+window.addEventListener('resize',layoutWordDictionary);
+window.addEventListener('scroll',layoutWordDictionary,true);
+window.visualViewport?.addEventListener('resize',layoutWordDictionary);
+document.querySelector('#wordDetailDialog').addEventListener('close',()=>{if(!document.querySelector('#wordDetailDialog').open)resetWordDictionary();});
 function openWordExample(word) {
   saveResumePoint(word.id);
+  resetWordDictionary();
   const term=encodeURIComponent(word.word);
   document.querySelector("#wordDetailDialog").dataset.studyLookup='true';
   const mobile=matchMedia('(max-width:760px)').matches;
   document.querySelector("#wordDetailBody").innerHTML=`<p class="dictionary-term">${escapeHtml(word.word)}</p><p class="study-detail-example" lang="en">${escapeHtml(exampleForWord(word))}</p><div class="dictionary-links"><a href="https://youdao.com/result?lang=en&word=${term}" target="${mobile?'_self':'_blank'}" rel="noopener noreferrer">有道词条 <i data-lucide="external-link"></i></a></div><button type="button" class="utility-button study-return-button" id="wordReturnToStudy"><i data-lucide="arrow-left"></i>返回背词</button>`;
   document.querySelector('#wordReturnToStudy').onclick=closeQuickDialog;
-  document.querySelectorAll("#wordDetailBody a").forEach(a=>a.onclick=event=>{
-    saveResumePoint(word.id);
-    try {
-      if(!persistLocalState())throw new Error('snapshot not saved');
-      const english=document.querySelector('#englishView');
-      const layout=english.dataset.training==='true'?'training':english.dataset.wordLayout==='focus'?'focus':'list';
-      localStorage.setItem(wordReturnKey,JSON.stringify({version:1,wordId:word.id,layout,track:englishProgress.trainingV1?.track==='review'?'review':'new',key:`${englishStart}:${englishDayIndex()}`,at:Date.now()}));
-    } catch {event.preventDefault();showActionToast('进度暂未保存，请先下载备份再查词');return;}
-    window.dispatchEvent(new Event('dusk:dictionary-leave'));
-    // Do not leave the detail dialog as the top history entry on the return trip.
-    if(history.state?.petDialog==='wordDetailDialog')history.replaceState({petWordReturn:true},'');
-    closeQuickDialog();
-  });
+  document.querySelectorAll("#wordDetailBody a").forEach(a=>a.onclick=event=>{event.preventDefault();openWordDictionary(word);});
   openQuickDialog("wordDetailDialog");
 }
-document.querySelector("#wordDetailDialog").addEventListener('click',event=>{if(!event.target.closest('button,a,input,select,textarea,label,[role=button]'))closeQuickDialog();});
+function outsideWordDictionary(event) {const rect=document.querySelector('#wordDetailDialog').getBoundingClientRect();return event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom;}
+document.querySelector('#wordDetailDialog').addEventListener('pointerdown',event=>{dictionaryBackdropDown=event.target===event.currentTarget&&outsideWordDictionary(event);});
+document.querySelector("#wordDetailDialog").addEventListener('click',event=>{
+  if(event.currentTarget.dataset.dictionaryFrame==='true'){
+    if(dictionaryBackdropDown&&event.target===event.currentTarget&&outsideWordDictionary(event))closeQuickDialog();
+    dictionaryBackdropDown=false;return;
+  }
+  if(!event.target.closest('button,a,input,select,textarea,label,[role=button]'))closeQuickDialog();
+});
 document.querySelector("#englishView").addEventListener("click",event => {
   const button=event.target.closest("[data-word-detail]"); if(!button)return;
   const word=[...lessonForToday().words,...reviewWords()].find(w=>w.id===button.dataset.wordDetail); if(word)openWordExample(word);
@@ -1615,7 +1666,7 @@ setupCloudSync().then(()=>{if(validSnapshot(snapshot())){if(!committedState)cach
   <script src="daily-flow.js?v=1"></script>
   <script src="study-quota-ui.js?v=1"></script>
 
-  <script src="study-shell.js?v=2"></script>
+  <script src="study-shell.js?v=3"></script>
 </body>
 </html>
 

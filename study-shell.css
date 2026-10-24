@@ -30,6 +30,16 @@
 #wordDetailDialog[data-study-lookup=true] .dictionary-links{grid-template-columns:1fr}
 #wordDetailDialog[data-study-lookup=true] .dictionary-links a{text-align:left;min-height:44px}
 .study-return-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;color:#416754;border:1px solid #bacab5;background:#f2f7ed;border-radius:6px;padding:10px 14px}
+#wordDetailDialog[data-dictionary-frame=true]{position:fixed;right:auto;bottom:auto;margin:0!important;max-width:none;max-height:none;border:1px solid #a9bfa8;border-radius:6px;padding:0;overflow:hidden;box-shadow:0 6px 24px #26382b33}
+#wordDetailDialog[data-dictionary-frame=true][open]{display:flex;flex-direction:column}
+#wordDetailDialog[data-dictionary-frame=true]::backdrop{background:transparent}
+#wordDetailDialog[data-dictionary-frame=true]>header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;padding:6px 10px;border-bottom:1px solid #ccd8c5;background:#fcfdfb}
+#wordDetailDialog[data-dictionary-frame=true]>header h2{font-size:15px;line-height:1.4;margin:0;overflow-wrap:anywhere;min-width:0}
+#wordDetailDialog[data-dictionary-frame=true]>header>div{display:flex;flex-shrink:0;gap:2px}
+#wordDetailDialog[data-dictionary-frame=true]>header button{border:0;background:transparent;min-height:44px;padding:8px 6px;font-size:13px;color:#416754}
+#wordDetailDialog[data-dictionary-frame=true] #wordDetailBody{display:flex;flex-direction:column;flex:1;min-height:0;padding:0;gap:0;overflow:hidden}
+#wordDetailDialog[data-dictionary-frame=true] iframe{display:block;border:0;width:100%;flex:1;min-height:0;background:#fff}
+.dictionary-frame-status{font-size:13px;color:#61775f;margin:0;padding:8px 12px;background:#f2f6ed}
 body[data-study-focus=true] .action-toast{bottom:90px}
 #wordTraining .training-explanation{min-height:0!important}#wordTraining .training-card{padding-top:24px}#wordTraining .training-options{margin-top:20px}
 #studyPaintingBanner{display:none}
