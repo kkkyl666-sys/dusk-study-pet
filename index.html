@@ -313,6 +313,11 @@
     .quick-form label { display:grid; gap:6px; font-size:13px; color:var(--muted); min-width:0; }
     .quick-form input, .quick-form select { background:var(--panel-3); color:var(--text); border:1px solid var(--line); min-width:0; width:100%; min-height:44px; padding:9px; font-size:16px; }
     .quick-form .field-pair { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .quick-form .time-field { display:grid;gap:6px;min-width:0;font-size:13px;color:var(--muted); }
+    .quick-form .time-choice { display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) 36px;align-items:center;gap:4px; }
+    .quick-form .time-choice select { min-width:0;padding:8px 3px;text-align:center; }
+    .quick-form .time-choice button { width:36px;min-height:44px;padding:0;display:grid;place-items:center; }
+    .quick-form .time-source { display:none; }
     .quick-form .form-error { color:var(--red); min-height:18px; font-size:13px; }
     .quick-form .form-footer { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; }
     .quick-form p { line-height:1.6; overflow-wrap:anywhere; }
@@ -450,7 +455,7 @@
   <dialog id="syncDialog" aria-labelledby="syncTitle">
     <form class="sync-dialog" method="dialog">
       <h2 id="syncTitle">云同步</h2>
-      <small id="appRevision">版本 2026.10.23.2 · 自用版</small>
+      <small id="appRevision">版本 2026.10.26.1 · 自用版</small>
       <p id="syncDialogText">在这台设备输入一次个人解锁码。之后课表、计划和完成记录会自动同步。</p>
       <label id="syncEmailLabel">个人解锁码
         <input id="syncEmail" type="password" autocomplete="current-password" placeholder="输入解锁码">
@@ -462,7 +467,7 @@
       </div>
     </form>
   </dialog>
-  <script id="app-target">window.PET_APP={"edition":"personal","version":"2026.10.23.2","shareURL":"https://kkkyl666-sys.github.io/dusk-handbook/"};</script>
+  <script id="app-target">window.PET_APP={"edition":"personal","version":"2026.10.26.1","shareURL":"https://kkkyl666-sys.github.io/dusk-handbook/"};</script>
 <script src="sync-config.js"></script>
   <script src="cet6-35.js"></script>
   <script id="study-plan-runtime">
@@ -1357,7 +1362,7 @@ function handleSyncFailure(error) {
 document.body.insertAdjacentHTML("beforeend",`
   <div class="action-toast" id="actionToast" hidden role="status" aria-live="polite"><span id="actionToastText"></span><button type="button" id="actionUndo" hidden>撤销</button></div>
   <dialog class="quick-dialog" id="wordDetailDialog"><header><h2>词汇详情</h2><button class="utility-button" type="button" data-quick-close aria-label="回到单词"><i data-lucide="x"></i></button></header><div class="quick-form" id="wordDetailBody"></div></dialog>
-  <dialog class="quick-dialog" id="taskQuickDialog"><header><h2 id="taskQuickTitle">添加日程</h2><button class="utility-button" type="button" data-quick-close aria-label="关闭"><i data-lucide="x"></i></button></header><form class="quick-form" id="taskQuickForm"><label>任务<input id="quickTaskTitle" required maxlength="120"></label><div class="field-pair"><label>日期<input id="quickTaskDate" type="date" required></label><label>重复<select id="quickTaskRepeat"><option value="once">仅此日期</option><option value="weekly">每周这一天</option></select></label><label>开始<input id="quickTaskStart" type="time"></label><label>结束<input id="quickTaskEnd" type="time"></label></div><label>说明<input id="quickTaskNote" maxlength="500"></label><p class="form-error" id="quickTaskError"></p><div class="form-footer"><button type="button" id="quickTaskDelete" hidden>删除</button><button type="button" data-quick-close>取消</button><button class="speak utility-button" type="submit"><i data-lucide="check"></i>保存</button></div></form></dialog>
+  <dialog class="quick-dialog" id="taskQuickDialog"><header><h2 id="taskQuickTitle">添加日程</h2><button class="utility-button" type="button" data-quick-close aria-label="关闭"><i data-lucide="x"></i></button></header><form class="quick-form" id="taskQuickForm"><label>任务<input id="quickTaskTitle" required maxlength="120"></label><div class="field-pair"><label>日期<input id="quickTaskDate" type="date" required></label><label>重复<select id="quickTaskRepeat"><option value="once">仅此日期</option><option value="weekly">每周这一天</option></select></label></div><div class="field-pair"><div class="time-field"><span>开始</span><div class="time-choice" data-time-target="quickTaskStart"><select data-part="hour" aria-label="开始小时"></select><span>:</span><select data-part="minute" aria-label="开始分钟"></select><button type="button" data-time-clear aria-label="清空开始时间" title="清空开始时间"><i data-lucide="x"></i></button></div><input id="quickTaskStart" type="time" class="time-source" tabindex="-1" aria-hidden="true"></div><div class="time-field"><span>结束</span><div class="time-choice" data-time-target="quickTaskEnd"><select data-part="hour" aria-label="结束小时"></select><span>:</span><select data-part="minute" aria-label="结束分钟"></select><button type="button" data-time-clear aria-label="清空结束时间" title="清空结束时间"><i data-lucide="x"></i></button></div><input id="quickTaskEnd" type="time" class="time-source" tabindex="-1" aria-hidden="true"></div></div><label>说明<input id="quickTaskNote" maxlength="500"></label><p id="quickTaskError" class="form-error" role="alert"></p><div class="form-footer"><button type="button" id="quickTaskDelete" hidden>删除</button><button type="button" data-quick-close>取消</button><button class="speak utility-button" type="submit"><i data-lucide="check"></i>保存</button></div></form></dialog>
   <dialog class="quick-dialog" id="rewindQuickDialog"><header><h2>补学 / 回档</h2><button class="utility-button" type="button" data-quick-close aria-label="关闭"><i data-lucide="x"></i></button></header><form class="quick-form" id="rewindQuickForm"><label>今天补学第几天<input id="rewindTarget" type="number" min="1" max="35" required></label><p id="rewindPreview"></p><p class="tip">保留完成记录和词序。仍在凌晨 4 点换日。</p><div class="form-footer"><button type="button" data-quick-close>取消</button><button class="speak" type="submit">确认回档</button></div></form></dialog>
   <dialog class="quick-dialog" id="courseQuickDialog"><header><h2>修改这段课程</h2><button class="utility-button" type="button" data-quick-close aria-label="关闭"><i data-lucide="x"></i></button></header><form class="quick-form" id="courseQuickForm"><label>课程名称<input id="quickCourseName" required></label><div class="field-pair"><label>教师<input id="quickCourseTeacher"></label><label>教室<input id="quickCourseRoom"></label><label>周次<input id="quickCourseWeeks" required placeholder="1-8,10-17"></label><label>节次<input id="quickCoursePeriods" required placeholder="1-2"></label></div><p class="form-error" id="quickCourseError"></p><div class="form-footer"><button type="button" data-quick-close>取消</button><button class="speak" type="submit">保存这段课程</button></div></form></dialog>`);
 function refreshIcons() { window.lucide?.createIcons(); }
@@ -1499,6 +1504,28 @@ function findWeeklyTask(id) {
   for(let d=0;d<days.length;d++){const i=days[d].tasks.findIndex(t=>t[4]===id);if(i>=0)return {day:d,index:i,task:days[d].tasks[i]};}
   return null;
 }
+function setupTaskTimeChoices() {
+  document.querySelectorAll("#taskQuickDialog [data-time-target]").forEach(choice=>{
+    const source=document.getElementById(choice.dataset.timeTarget);
+    const hour=choice.querySelector('[data-part="hour"]'),minute=choice.querySelector('[data-part="minute"]');
+    const pad=n=>String(n).padStart(2,"0");
+    hour.add(new Option("时", ""));minute.add(new Option("分", ""));
+    for(let n=0;n<24;n++)hour.add(new Option(pad(n),pad(n)));
+    for(let n=0;n<60;n++)minute.add(new Option(pad(n),pad(n)));
+    function sync(){const match=/^(\d{2}):(\d{2})$/.exec(source.value);hour.value=match?match[1]:"";minute.value=match?match[2]:"";}
+    function write(){
+      if(hour.value&&!minute.value)minute.value="00";
+      if(minute.value&&!hour.value)hour.value="00";
+      source.value=hour.value&&minute.value?`${hour.value}:${minute.value}`:"";
+      source.dispatchEvent(new Event("change",{bubbles:true}));
+    }
+    hour.addEventListener("change",write);minute.addEventListener("change",write);
+    source.addEventListener("change",sync);
+    choice.querySelector("[data-time-clear]").addEventListener("click",()=>{source.value="";sync();hour.focus();});
+    choice.syncFromSource=sync;
+  });
+}
+setupTaskTimeChoices();
 function openTaskEditor(id=null) {
   if(editorDirty){showActionToast("请先保存或撤销编辑草稿，再修改日程");activateView("editView");return;}
   editedItem=id;
@@ -1513,6 +1540,7 @@ function openTaskEditor(id=null) {
   document.querySelector("#quickTaskRepeat").disabled=!!weekly;
   document.querySelector("#quickTaskStart").value=task.start||(match?.[1]||"");
   document.querySelector("#quickTaskEnd").value=task.end||(match?.[2]||"");
+  document.querySelectorAll("#taskQuickDialog [data-time-target]").forEach(choice=>choice.syncFromSource());
   document.querySelector("#quickTaskNote").value=task.note;
   document.querySelector("#quickTaskError").textContent="";
   document.querySelector("#quickTaskDelete").hidden=!id;
